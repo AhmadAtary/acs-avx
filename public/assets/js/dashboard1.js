@@ -384,55 +384,7 @@ chart.render();
 
     
     // chart 6
-    var options = {
-        series: [58, 25, 25],
-        chart: {
-            height: 290,
-            type: 'donut',
-        },
-        legend: {
-            position: 'bottom',
-            show: !1
-        },
-        fill: {
-            type: 'gradient',
-            gradient: {
-                shade: 'dark',
-                gradientToColors: ['#ee0979', '#17ad37', '#ec6ead'],
-                shadeIntensity: 1,
-                type: 'vertical',
-                opacityFrom: 1,
-                opacityTo: 1,
-                //stops: [0, 100, 100, 100]
-            },
-        },
-        colors: ["#ff6a00", "#98ec2d", "#3494e6"],
-        dataLabels: {
-            enabled: !1
-        },
-        plotOptions: {
-            pie: {
-                donut: {
-                    size: "85%"
-                }
-            }
-        },
-        responsive: [{
-            breakpoint: 480,
-            options: {
-                chart: {
-                    height: 270
-                },
-                legend: {
-                    position: 'bottom',
-                    show: !1
-                }
-            }
-        }]
-    };
-
-    var chart = new ApexCharts(document.querySelector("#chart6"), options);
-    chart.render();
+    
 
 
 
