@@ -21,6 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'is_otp_verified',
     ];
 
     /**
@@ -41,8 +42,14 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
+            'is_otp_verified' => 'boolean',
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function hasRole($role)
+    {
+        return $this->role === $role;
     }
 }
