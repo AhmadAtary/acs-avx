@@ -1,13 +1,18 @@
 <?php
-
 namespace App\Models;
 
-use MongoDB\Laravel\Eloquent\Model;
+use Illuminate\Database\Eloquent\Model;
 
 class Host extends Model
 {
-    //
-    protected $connection = 'mongodb';
-    protected $collection = 'Host';
-
+    protected $table = 'hosts'; // Specify the table name
+    protected $fillable = [
+        'Model', 
+        'Product_Class', 
+        'HostName', 
+        'IPAddress', 
+        'MACAddress', 
+        'RSSI', 
+        'hostPath'
+    ];
 }

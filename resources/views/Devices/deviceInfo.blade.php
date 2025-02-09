@@ -4,15 +4,26 @@
 @section('content')
 <div class="container">
     <div class="row">
-        <div class="col-md-12">
+        <div class="col-md-6">
             <h1>Device Info</h1>
-            <hr>
         </div>
+        <div class="col-md-6 text-end">
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    Actions
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="reboot-device dropdown-item" href="#" data-serial-number="{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? 'Unknown' }}">Reboot</a></li>
+                    <li><a class="reset-device dropdown-item" href="#" data-serial-number="{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? 'Unknown' }}">Factory Reset</a></li>
+                    <li><a class="dropdown-item" href="#">Push Upgrade</a></li>
+                </ul>
+            </div>
+        </div>
+        <hr>
     </div>
 
     <div class="row">
         <div class="col-md-6">
-            <h2>Basic Device Information</h2>
             <table class="table table-striped">
                 <tbody>
                     <tr>
@@ -38,25 +49,29 @@
                 </tbody>
             </table>
         </div>
-        <div class="col-md-6">
-
-            <div class="btn-group">
-                <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    Actions
-                </button>
-                <ul class="dropdown-menu">
-                    <li><a class="reboot-device dropdown-item" href="#" data-serial-number="{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? 'Unknown' }}">Reboot</a></li>
-                    <li><a class="reset-device dropdown-item" href="#" data-serial-number="{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? 'Unknown' }}">Factory Reset</a></li>
-                    <li><a class="dropdown-item" href="#">Push Upgrade</a></li>
-                </ul>
-            </div>
-        </div>
+ 
     </div>
 
-    <div class="row mt-4">
-        <div class="col-md-12">
+    <div class="row">
+        <div class="col-md-8">
             <h2>Heatmap</h2>
             @include('partials.heatmap')
+        </div>
+        <div class="col-md-4">
+            <h2>Connected Devices</h2>
+            <div class="d-flex justify-content-center">
+            <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Device Name</th>
+                <th>RSSI</th>
+            </tr>
+        </thead>
+        <tbody id="deviceTableBody">
+            <!-- Table rows will be populated dynamically -->
+        </tbody>
+    </table>
+            </div>
         </div>
     </div>
 
@@ -199,130 +214,129 @@
 
 @section('scripts')
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // Function to show the loading overlay
-        function showLoadingOverlay() {
-            document.getElementById('loadingOverlay').style.display = 'block';
-        }
+        document.addEventListener("DOMContentLoaded", function () {
+            // Function to show the loading overlay
+            function showLoadingOverlay() {
+                document.getElementById('loadingOverlay').style.display = 'block';
+            }
 
-        // Function to hide the loading overlay
-        function hideLoadingOverlay() {
-            document.getElementById('loadingOverlay').style.display = 'none';
-        }
+            // Function to hide the loading overlay
+            function hideLoadingOverlay() {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
 
-        // Function to show the popup with a message
-        function showSimplePopup(message) {
-            const popup = document.getElementById('simplePopup');
-            const popupMessage = document.getElementById('popupMessage');
+            // Function to show the popup with a message
+            function showSimplePopup(message) {
+                const popup = document.getElementById('simplePopup');
+                const popupMessage = document.getElementById('popupMessage');
 
-            popupMessage.textContent = message;
-            popup.style.display = 'block';
-            popup.style.opacity = '1';
-            popup.style.transform = 'translateY(0)';
+                popupMessage.textContent = message;
+                popup.style.display = 'block';
+                popup.style.opacity = '1';
+                popup.style.transform = 'translateY(0)';
 
-            // Hide the popup after 3 seconds
-            setTimeout(hideSimplePopup, 3000);
-        }
+                // Hide the popup after 3 seconds
+                setTimeout(hideSimplePopup, 3000);
+            }
 
-        // Function to hide the popup
-        function hideSimplePopup() {
-            const popup = document.getElementById('simplePopup');
-            popup.style.opacity = '0';
-            popup.style.transform = 'translateY(-20px)';
-            setTimeout(() => {
-                popup.style.display = 'none';
-            }, 300); // Matches CSS transition duration
-        }
+            // Function to hide the popup
+            function hideSimplePopup() {
+                const popup = document.getElementById('simplePopup');
+                popup.style.opacity = '0';
+                popup.style.transform = 'translateY(-20px)';
+                setTimeout(() => {
+                    popup.style.display = 'none';
+                }, 300); // Matches CSS transition duration
+            }
 
-        // Expand/Collapse functionality for tree items
-        const toggles = document.querySelectorAll(".expand-icon");
-        toggles.forEach((toggle) => {
-            toggle.addEventListener("click", function () {
-                const parentLi = this.closest("li");
-                const childUl = parentLi.querySelector("ul");
-                if (childUl) {
-                    childUl.classList.toggle("collapsed");
-                    childUl.classList.toggle("expanded");
-                    this.textContent = childUl.classList.contains("expanded") ? "▼" : "▶";
-                }
+            // Expand/Collapse functionality for tree items
+            const toggles = document.querySelectorAll(".expand-icon");
+            toggles.forEach((toggle) => {
+                toggle.addEventListener("click", function () {
+                    const parentLi = this.closest("li");
+                    const childUl = parentLi.querySelector("ul");
+                    if (childUl) {
+                        childUl.classList.toggle("collapsed");
+                        childUl.classList.toggle("expanded");
+                        this.textContent = childUl.classList.contains("expanded") ? "▼" : "▶";
+                    }
+                });
             });
-        });
 
-        // Function to handle fetching node data (GET action)
-        function handleGetButton(button) {
-        const path = button.dataset.path; // The path to the field being fetched
-        const type = button.dataset.type; // The type of the field
-        const serialNumber = "{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? 'Unknown' }}";
+            // Function to handle fetching node data (GET action)
+            function handleGetButton(button) {
+            const path = button.dataset.path; // The path to the field being fetched
+            const type = button.dataset.type; // The type of the field
+            const serialNumber = "{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? 'Unknown' }}";
 
-        showLoadingOverlay();
+            showLoadingOverlay();
 
-        fetch('/device-action/get-Node', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({ serialNumber, path, type }) // Send the required data
-        })
-        .then(response => {
-            hideLoadingOverlay();
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.status_code === 200) {
-                const value = data.value; // The fetched value from the server
-                updateFieldValue(path, value); // Update the UI with the new value
-                showSimplePopup('Value fetched successfully.');
-            } else if (data.status_code === 202) {
-                showSimplePopup('Fetch value saved as a task.');
-            } else {
-                showSimplePopup('Failed to fetch the value.');
-            }
-        })
-        .catch(error => {
-            hideLoadingOverlay();
-            console.error('Error fetching value:', error);
-            showSimplePopup('An error occurred while fetching the value.');
-        });
-    }
-
-    /**
-     * Update the field value in the UI based on the path.
-     *
-     * @param {string} path - The dot-separated path of the field to update.
-     * @param {string|number} value - The new value to display.
-     */
-    function updateFieldValue(path, value) {
-
-         // Check if the element already exists
-        const fieldElement = document.getElementById(path);
-
-
-        // it's return null
-        
-        if (fieldElement) {
-            fieldElement.textContent = value;
-            console.log(`Field "${path}" updated successfully.`);
-            return;
+            fetch('/device-action/get-Node', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ serialNumber, path, type }) // Send the required data
+            })
+            .then(response => {
+                hideLoadingOverlay();
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status_code === 200) {
+                    const value = data.value; // The fetched value from the server
+                    updateFieldValue(path, value); // Update the UI with the new value
+                    showSimplePopup('Value fetched successfully.');
+                } else if (data.status_code === 202) {
+                    showSimplePopup('Fetch value saved as a task.');
+                } else {
+                    showSimplePopup('Failed to fetch the value.');
+                }
+            })
+            .catch(error => {
+                hideLoadingOverlay();
+                console.error('Error fetching value:', error);
+                showSimplePopup('An error occurred while fetching the value.');
+            });
         }
 
-        // If the element doesn't exist, set up a MutationObserver to watch for its creation
-        const observer = new MutationObserver((mutationsList, observer) => {
+        /**
+         * Update the field value in the UI based on the path.
+         *
+         * @param {string} path - The dot-separated path of the field to update.
+         * @param {string|number} value - The new value to display.
+         */
+        function updateFieldValue(path, value) {
+
+            // Check if the element already exists
             const fieldElement = document.getElementById(path);
+
+
+            // it's return null
+            
             if (fieldElement) {
                 fieldElement.textContent = value;
                 console.log(`Field "${path}" updated successfully.`);
-                observer.disconnect(); // Stop observing once the element is found
+                return;
             }
-        });
 
-        // Start observing the entire document for child node additions
-        observer.observe(document.body, { childList: true, subtree: true });
-    }
+            // If the element doesn't exist, set up a MutationObserver to watch for its creation
+            const observer = new MutationObserver((mutationsList, observer) => {
+                const fieldElement = document.getElementById(path);
+                if (fieldElement) {
+                    fieldElement.textContent = value;
+                    console.log(`Field "${path}" updated successfully.`);
+                    observer.disconnect(); // Stop observing once the element is found
+                }
+            });
 
+            // Start observing the entire document for child node additions
+            observer.observe(document.body, { childList: true, subtree: true });
+        }
 
 
         // Function to handle setting a new value
@@ -467,87 +481,126 @@
         document.querySelectorAll(".get-button").forEach(button => button.addEventListener('click', () => handleGetButton(button)));
         document.querySelectorAll(".set-button").forEach(button => button.addEventListener('click', () => handleSetValue(button)));
         
-        const devices = [
-            { name: 'Device 1', rssi: -40 },
-            { name: 'Device 2', rssi: -50 },
-            { name: 'Device 3', rssi: -65 },
-            { name: 'Device 4', rssi: -80 },
-            { name: 'Device 5', rssi: -30 },
-        ];
+        const heatmapContainer = document.getElementById("heatmap");
+        const tooltip = document.getElementById("tooltip");
+        const tableBody = document.getElementById("deviceTableBody");
+        const serialNumber = "{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] }}";
 
-        const container = document.getElementById('heatmap');
-        const tooltip = document.getElementById('tooltip');
+        // Fetch connected device data from the Laravel API
+        async function fetchConnectedDevices(serialNumber) {
+            try {
+                const response = await fetch(`/device/hosts/${serialNumber}`);
+                if (!response.ok) {
+                    console.error("Failed to fetch connected device data");
+                    return [];
+                }
+                const data = await response.json();
+                return data.data || [];
+            } catch (error) {
+                console.error("Error fetching connected devices:", error);
+                return [];
+            }
+        }
 
-        const containerWidth = container.offsetWidth;
-        const containerHeight = container.offsetHeight;
-
-        // Create Circular Range Indicators
-        const radarRanges = [50, 100, 150, 200, 250, 300, 350, 400]; // Distances for circles
-        radarRanges.forEach((radius) => {
-            const circle = document.createElement('div');
-            circle.className = 'radar-circle';
-            circle.style.width = `${radius * 2}px`;
-            circle.style.height = `${radius * 2}px`;
-            circle.style.left = `${containerWidth / 2 - radius}px`;
-            circle.style.top = `${containerHeight / 2 - radius}px`;
-            container.appendChild(circle);
-        });
-
-        // Map RSSI to Distance
+        // Map RSSI to Distance (Smaller distances)
         function mapRssiToDistance(rssi) {
-            const minRssi = -90; // Weakest
-            const maxRssi = -30; // Strongest
-            const minDistance = 400; // Furthest
-            const maxDistance = 100; // Closest
+            const minRssi = 30; // Closest measurable RSSI
+            const maxRssi = 100; // Furthest measurable RSSI
+            const minDistance = 20; // Closest for measurable RSSI
+            const maxDistance = 200; // Furthest for measurable RSSI
 
-            return (
-                maxDistance +
-                ((rssi - maxRssi) / (minRssi - maxRssi)) * (minDistance - maxDistance)
-            );
+            // If RSSI is 0, place it nearest to the WiFi icon
+            if (rssi === 0) {
+                return 40; // Minimum distance for RSSI = 0
+            }
+
+            // Map RSSI to distance for other values
+            return maxDistance - ((rssi - minRssi) / (maxRssi - minRssi)) * (maxDistance - minDistance);
         }
 
-        // Map RSSI to Color (Red to Blue)
-        function mapRssiToColor(rssi) {
-            const minRssi = -90;
-            const maxRssi = -30;
 
-            const ratio = (rssi - minRssi) / (maxRssi - minRssi);
-            const red = Math.round(255 * (1 - ratio));
-            const blue = Math.round(255 * ratio);
+        // Initialize Heatmap and Table
+        async function initializeHeatmapAndTable() {
+            const devices = await fetchConnectedDevices(serialNumber);
 
-            return `rgb(${red}, 0, ${blue})`;
+            if (!devices.length) {
+                console.error("No devices found for the provided serial number.");
+                return;
+            }
+
+            // Set heatmap container to fixed dimensions
+            heatmapContainer.style.width = "500px";
+            heatmapContainer.style.height = "500px";
+
+            const containerWidth = heatmapContainer.offsetWidth;
+            const containerHeight = heatmapContainer.offsetHeight;
+
+            // Create Circular Range Indicators
+            const radarRanges = [30, 60, 90, 120, 150,  200];
+            radarRanges.forEach((radius) => {
+                const circle = document.createElement("div");
+                circle.className = "radar-circle";
+                circle.style.width = `${radius * 2}px`;
+                circle.style.height = `${radius * 2}px`;
+                circle.style.left = `${containerWidth / 2 - radius}px`;
+                circle.style.top = `${containerHeight / 2 - radius}px`;
+                heatmapContainer.appendChild(circle);
+            });
+
+            // Place Devices and Populate Table
+            devices.forEach((device, index) => {
+                const rssi = device.signalStrength || 0; // Default to 0 if undefined
+
+                const angle = (index / devices.length) * 2 * Math.PI; // Distribute evenly
+                const distance = mapRssiToDistance(rssi);
+                const x = containerWidth / 2 + Math.cos(angle) * distance;
+                const y = containerHeight / 2 + Math.sin(angle) * distance;
+
+                // Create Device Node for Heatmap
+                const deviceNode = document.createElement("div");
+                deviceNode.className = "device-node";
+                deviceNode.style.left = `${x - 15}px`; // Center the node
+                deviceNode.style.top = `${y - 15}px`; // Center the node
+
+                // Add a client icon inside the node
+                const icon = document.createElement("i");
+                icon.className = "fa-solid fa-user"; // FontAwesome user icon
+                icon.style.color = rssi === 0 ? "green" : "white"; // Green for LAN devices
+                deviceNode.appendChild(icon);
+
+                // Tooltip on Hover
+                deviceNode.addEventListener("mouseenter", () => {
+                    tooltip.style.opacity = 1;
+                    tooltip.style.left = `${x + 20}px`;
+                    tooltip.style.top = `${y}px`;
+                    tooltip.innerHTML = `
+                        <strong>${device.hostName || "Unknown"}</strong><br>
+                        IP: ${device.ipAddress || "N/A"}<br>
+                        MAC: ${device.macAddress || "N/A"}<br>
+                        RSSI: - ${rssi} dBm
+                    `;
+                });
+
+                deviceNode.addEventListener("mouseleave", () => {
+                    tooltip.style.opacity = 0;
+                });
+
+                heatmapContainer.appendChild(deviceNode);
+
+                // Add Row to Table
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${device.hostName || "Unknown"}</td>
+                    <td>${rssi} dBm</td>
+                `;
+                tableBody.appendChild(row);
+            });
         }
 
-        // Place Devices in Circular Layout
-        devices.forEach((device, index) => {
-            const angle = (index / devices.length) * 2 * Math.PI; // Distribute evenly
-            const distance = mapRssiToDistance(device.rssi); // Map RSSI to distance
-            const x = containerWidth / 2 + Math.cos(angle) * distance;
-            const y = containerHeight / 2 + Math.sin(angle) * distance;
+        // Initialize Heatmap and Table
+        initializeHeatmapAndTable();
 
-            // Create Device Node
-            const deviceNode = document.createElement('div');
-            deviceNode.className = 'device-node';
-            deviceNode.style.backgroundColor = mapRssiToColor(device.rssi);
-            deviceNode.style.left = `${x - 15}px`; // Center the node
-            deviceNode.style.top = `${y - 15}px`; // Center the node
-
-            // Tooltip on Hover
-            deviceNode.addEventListener('mouseenter', () => {
-                tooltip.style.opacity = 1;
-                tooltip.style.left = `${x + 20}px`;
-                tooltip.style.top = `${y}px`;
-                tooltip.textContent = `${device.name}\nRSSI: ${device.rssi} dBm`;
-            });
-
-            deviceNode.addEventListener('mouseleave', () => {
-                tooltip.style.opacity = 0;
-            });
-
-            container.appendChild(deviceNode);
         });
-
-    });
 
 </script>
 @endsection

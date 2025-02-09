@@ -47,70 +47,7 @@
 
 
    <!--start sidebar-->
-  <aside class="sidebar-wrapper" data-simplebar="true">
-    <div class="sidebar-header">
-      <div class="logo-icon">
-        <img src="{{ asset('assets/AVXAV Logos/logo.png') }}" class="logo-img" alt="">
-      </div>
-      <div class="logo-name flex-grow-1">
-        <h5 class="mb-0">AVXAV</h5>
-      </div>
-      <div class="sidebar-close">
-        <span class="material-icons-outlined">close</span>
-      </div>
-    </div>
-    <div class="sidebar-nav">
-      <ul class="metismenu" id="sidenav">
-        @php
-          $user = Auth::user();
-        @endphp
-
-        @if($user->hasRole('owner'))
-          <li>
-            <a href="{{ route('owner.dashboard') }}" class="menu-label">
-              <div class="parent-icon"><i class="material-icons-outlined">home</i></div>
-              <div class="menu-title">Dashboard</div>
-            </a>
-          </li>
-        @elseif($user->hasRole('eng'))
-          <li>
-            <a href="{{ route('engineer.dashboard') }}" class="menu-label">
-              <div class="parent-icon"><i class="material-icons-outlined">home</i></div>
-              <div class="menu-title">Dashboard</div>
-            </a>
-          </li>
-        @elseif($user->hasRole('cs'))
-          <li>
-            <a href="{{ route('cs') }}" class="menu-label">
-              <div class="parent-icon"><i class="material-icons-outlined">home</i></div>
-              <div class="menu-title">Dashboard</div>
-            </a>
-          </li>
-        @endif
-        <li>
-          <a href="javascript:;" class="has-arrow">
-            <div class="parent-icon"><i class="material-icons-outlined">devices</i></div>
-            <div class="menu-title">Devices</div>
-          </a>
-          <ul>
-            <li><a href="{{ route('devices.all') }}"><i class="material-icons-outlined">arrow_right</i>All Devices</a></li>
-            <li><a href="devices-per-model.html"><i class="material-icons-outlined">arrow_right</i>Devices per Model</a></li>
-          </ul>
-        </li>
-        <li>
-          <a href="javascript:;" class="has-arrow">
-            <div class="parent-icon"><i class="material-icons-outlined">widgets</i></div>
-            <div class="menu-title">Widgets</div>
-          </a>
-          <ul>
-            <li><a href="widgets-data.html"><i class="material-icons-outlined">arrow_right</i>Data</a></li>
-            <li><a href="widgets-static.html"><i class="material-icons-outlined">arrow_right</i>Static</a></li>
-          </ul>
-        </li>
-
-      </ul>
-    </div>
-  </aside>
+   @include('partials.sidebar')
 <!--end sidebar-->
 
   <!--start main wrapper-->

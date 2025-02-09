@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Models\Device;
+use App\Models\Host;
 
 class DeviceController extends Controller
 {
@@ -37,6 +38,10 @@ class DeviceController extends Controller
     {
         // Fetch the device data based on the serial number
         $device = Device::where('_deviceId._SerialNumber', $serialNumber)->first();
+        $modelName = $device['_deviceId']['_ProductClass'] ?? null;
+        $hostNodes = Host::where('Model', $modelName)->first();
+
+
     
         if ($device) {
             // Convert the device data to an array and process it using traverseJson

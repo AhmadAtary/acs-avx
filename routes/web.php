@@ -6,6 +6,8 @@ use App\Http\Controllers\CustomerSupportController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\ModelController;
+use App\Http\Controllers\HostController;
+
 
 
 use Illuminate\Support\Facades\Route;
@@ -36,6 +38,13 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/device-action/get-Node' , [DeviceController::class, 'getNodevalue'])->name('node.get');
     Route::post('/device-action/reboot' , [DeviceController::class, 'RebootDevice'])->name('device.reboot');
     Route::post('/device-action/reset', [DeviceController::class, 'ResetDevice'])->name('device.reset');
+
+    Route::get('/device/hosts/{serialNumber}' , [HostController::class, 'HostsInfo'])->name('device.host');
+    Route::get('/admin/hosts/create', [HostController::class, 'create'])->name('hosts.create');
+    Route::post('/admin/hosts/store', [HostController::class, 'store'])->name('hosts.store');
+    Route::get('/admin/hosts/{id}/edit', [HostController::class, 'edit'])->name('hosts.edit');
+    Route::post('/admin/hosts/{id}/update', [HostController::class, 'update'])->name('hosts.update');
+
 
     Route::post('/model', [ModelController::class, 'store'])->name('models.store'); 
 });
