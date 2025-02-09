@@ -24,11 +24,13 @@ class LoginController extends Controller
             'password' => 'required',
         ]);
 
-
         $user = User::where('email', $request->email)->first();
 
+        if (!$user) {
+            return back()->withErrors(['email' => 'No account found with this email.']);
+        }
 
-        if ($user && \Hash::check($request->password, $user->password)) {
+        if (\Hash::check($request->password, $user->password)) {
             Auth::login($user);
 
             // Check if OTP verification is needed

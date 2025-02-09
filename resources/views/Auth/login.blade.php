@@ -11,7 +11,7 @@
             <div class="col-12 col-xl-7 col-xxl-8 auth-cover-left align-items-center justify-content-center d-none d-xl-flex border-end bg-transparent">
                 <div class="card rounded-0 mb-0 border-0 shadow-none bg-transparent bg-none">
                     <div class="card-body">
-                        <img src="{{ asset('assets/logos/logo.png') }}" class="img-fluid auth-img-cover-login" width="650" alt="">
+                        <img src="{{ asset('assets/AVXAV Logos/logo.png') }}" class="img-fluid auth-img-cover-login" width="650" alt="">
                     </div>
                 </div>
             </div>
@@ -19,7 +19,7 @@
             <div class="col-12 col-xl-5 col-xxl-4 auth-cover-right align-items-center justify-content-center border-top border-4 border-primary border-gradient-1">
                 <div class="card rounded-0 m-3 mb-0 border-0 shadow-none bg-none">
                     <div class="card-body p-sm-5">
-                        <img src="{{ asset('assets/logos/logo_white.png') }}" class="mb-4" width="145" alt="">
+                        <img src="{{ asset('assets/AVXAV Logos/logo 3 white.png') }}" class="mb-4" width="145" alt="">
                         <h4 class="fw-bold">Get Started Now</h4>
                         <p class="mb-0">Enter your credentials to login to your account</p>
 
@@ -29,6 +29,24 @@
                         </div>
 
                         <div class="form-body mt-4">
+                            @if ($errors->any())
+                                <div class="alert alert-danger border-0 bg-grd-danger alert-dismissible fade show">
+                                    <div class="d-flex align-items-center">
+                                        <div class="font-35 text-white"><span class="material-icons-outlined fs-2">report_gmailerrorred</span>
+                                        </div>
+                                        <div class="ms-3">
+                                            <h6 class="mb-0 text-white">Danger Alerts</h6>
+                                            <div class="text-white">
+                                                @foreach ($errors->all() as $error)
+                                                    <div>{{ $error }}</div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            @endif
+
                             <form class="row g-3" method="POST" action="{{ route('login') }}">
                                 @csrf
                                 <div class="col-12">

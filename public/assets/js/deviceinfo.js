@@ -1,204 +1,4 @@
-@extends('layouts.app')
-@section('title', 'Device Info')
 
-@section('content')
-<div class="container">
-    <div class="row">
-        <div class="col-md-12">
-            <h1>Device Info</h1>
-            <hr>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-md-6">
-            <h2>Basic Device Information</h2>
-            <table class="table table-striped">
-                <tbody>
-                    <tr>
-                        <th>Serial Number:</th>
-                        <td>{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? 'Unknown Serial Number' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Device ID:</th>
-                        <td>{{ $deviceData['_id'] ?? 'Unknown' }}</td>
-                    </tr>
-                    <tr>
-                        <th>OUI:</th>
-                        <td>{{ $deviceData['_deviceId']['children']['_OUI']['value'] ?? 'Unknown' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Manufacturer:</th>
-                        <td>{{ $deviceData['_deviceId']['children']['_Manufacturer']['value'] ?? 'Unknown' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Product Class:</th>
-                        <td>{{ $deviceData['_deviceId']['children']['_ProductClass']['value'] ?? 'Unknown' }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div class="col-md-6">
-
-            <div class="btn-group">
-                <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                    Actions
-                </button>
-                <ul class="dropdown-menu">
-                    <li><a class="reboot-device dropdown-item" href="#" data-serial-number="{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? 'Unknown' }}">Reboot</a></li>
-                    <li><a class="reset-device dropdown-item" href="#" data-serial-number="{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? 'Unknown' }}">Factory Reset</a></li>
-                    <li><a class="dropdown-item" href="#">Push Upgrade</a></li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <div class="row mt-4">
-        <div class="col-md-12">
-            <h2>Heatmap</h2>
-            @include('partials.heatmap')
-        </div>
-    </div>
-
-    <div class="row mt-4">
-        <div class="col-md-12">
-            <h2>Device Data Tree</h2>
-            @if ($deviceData)
-                @foreach ($deviceData as $key => $value)
-                    @include('partials.tree-item', ['key' => $key, 'value' => $value])
-                @endforeach
-            @else
-                <p>No device information found.</p>
-            @endif
-        </div>
-    </div>
-
-
-<!-- Modal for Set Value -->
-<div class="modal fade" id="setValueModal" tabindex="-1" role="dialog" aria-labelledby="setValueModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="setValueModalLabel">Set New Value</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form>
-                    <div class="form-group">
-                        <label for="currentValue">Current Value:</label>
-                        <input type="text" class="form-control" id="currentValue" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="newValue">New Value:</label>
-                        <input type="text" class="form-control" id="newValue" placeholder="Enter new value">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="saveValueButton">Save</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Loading Overlay -->
-<div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9998;">
-    <div id="loadingSpinner" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999;">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-    </div>
-</div>
-
-<!-- Simple Popup -->
-<div id="simplePopup" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 300px; background-color: #fff; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); border-radius: 8px; padding: 20px; font-family: Arial, sans-serif;">
-    <div id="popupMessage" style="font-size: 16px; color: #333;"></div>
-</div>
-@endsection
-
-@section('styles')
-<style>
-    ul {
-        list-style-type: none;
-        padding-left: 20px;
-    }
-    li {
-        margin: 5px 0;
-        position: relative;
-        padding: 5px 0;
-    }
-    .expand-icon {
-        margin-right: 10px;
-        font-size: 12px;
-        cursor: pointer;
-    }
-    .node-content {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .node-name {
-        font-family: monospace;
-        font-weight: bold;
-        flex-grow: 1;
-    }
-    .node-value {
-        font-family: monospace;
-        margin-left: 10px;
-    }
-    .actions {
-        display: flex;
-        align-items: center;
-    }
-    .actions button {
-        margin-left: 10px;
-        padding: 3px 8px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-    .actions .get {
-        background-color: #007bff;
-        color: white;
-    }
-    .actions .set {
-        background-color: #28a745;
-        color: white;
-    }
-    ul.collapsed {
-        display: none;
-    }
-    ul.expanded {
-        display: block;
-    }
-    .fas {
-        font-size: 12px;
-    }
-    /* Child Node Font Size */
-    ul ul .node-name {
-        font-size: 14px;
-    }
-    ul ul .node-value {
-        font-size: 14px;
-    }
-    /* Simple Popup Styles */
-    #simplePopup {
-        transition: opacity 0.3s ease-in-out;
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    #simplePopup.show {
-        opacity: 1;
-        transform: translateY(0);
-    }
-</style>
-@endsection
-
-@section('scripts')
-<script>
     document.addEventListener("DOMContentLoaded", function () {
         // Function to show the loading overlay
         function showLoadingOverlay() {
@@ -250,80 +50,40 @@
 
         // Function to handle fetching node data (GET action)
         function handleGetButton(button) {
-        const path = button.dataset.path; // The path to the field being fetched
-        const type = button.dataset.type; // The type of the field
-        const serialNumber = "{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? 'Unknown' }}";
+            const path = button.dataset.path;
+            const type = button.dataset.type;
+            const serialNumber = "{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? 'Unknown' }}";
 
-        showLoadingOverlay();
+            showLoadingOverlay();
 
-        fetch('/device-action/get-Node', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({ serialNumber, path, type }) // Send the required data
-        })
-        .then(response => {
-            hideLoadingOverlay();
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.status_code === 200) {
-                const value = data.value; // The fetched value from the server
-                updateFieldValue(path, value); // Update the UI with the new value
-                showSimplePopup('Value fetched successfully.');
-            } else if (data.status_code === 202) {
-                showSimplePopup('Fetch value saved as a task.');
-            } else {
-                showSimplePopup('Failed to fetch the value.');
-            }
-        })
-        .catch(error => {
-            hideLoadingOverlay();
-            console.error('Error fetching value:', error);
-            showSimplePopup('An error occurred while fetching the value.');
-        });
-    }
-
-    /**
-     * Update the field value in the UI based on the path.
-     *
-     * @param {string} path - The dot-separated path of the field to update.
-     * @param {string|number} value - The new value to display.
-     */
-    function updateFieldValue(path, value) {
-
-         // Check if the element already exists
-        const fieldElement = document.getElementById(path);
-
-
-        // it's return null
-        
-        if (fieldElement) {
-            fieldElement.textContent = value;
-            console.log(`Field "${path}" updated successfully.`);
-            return;
+            fetch('/device-action/get-Node', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ serialNumber, path, type })
+            })
+            .then(response => {
+                hideLoadingOverlay();
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status_code === 200) {
+                    showSimplePopup('Value fetched successfully.');
+                } else if (data.status_code === 202) {
+                    showSimplePopup('Fetch value saved as a task.');
+                }
+            })
+            .catch(error => {
+                hideLoadingOverlay();
+                console.error('Error fetching value:', error);
+                showSimplePopup('An error occurred while fetching the value.');
+            });
         }
-
-        // If the element doesn't exist, set up a MutationObserver to watch for its creation
-        const observer = new MutationObserver((mutationsList, observer) => {
-            const fieldElement = document.getElementById(path);
-            if (fieldElement) {
-                fieldElement.textContent = value;
-                console.log(`Field "${path}" updated successfully.`);
-                observer.disconnect(); // Stop observing once the element is found
-            }
-        });
-
-        // Start observing the entire document for child node additions
-        observer.observe(document.body, { childList: true, subtree: true });
-    }
-
-
 
         // Function to handle setting a new value
         function handleSetValue(button) {
@@ -373,10 +133,9 @@
             })
             .then(data => {
                 if (data.status_code === 200) {
-                    showSimplePopup(`Value set successfully`);
-                    updateFieldValue(path, newValue);
+                    showSimplePopup(`Value set successfully for ${path}: ${newValue}`);
                 } else if (data.status_code === 202) {
-                    showSimplePopup(`Set value saved as a task`);
+                    showSimplePopup(`Set value saved as a task: ${data.message}`);
                 }
             })
             .catch(error => {
@@ -546,8 +305,6 @@
 
             container.appendChild(deviceNode);
         });
-
+    
     });
 
-</script>
-@endsection

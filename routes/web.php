@@ -32,5 +32,10 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/device-info/{serialNumber}', [DeviceController::class, 'info'])->name('device.info');
 
-    Route::post('/model', [ModelController::class, 'store'])->name('models.store');
+    Route::post('/device-action/set-Node', [DeviceController::class, 'setNodeValue'])->name('node.set');
+    Route::post('/device-action/get-Node' , [DeviceController::class, 'getNodevalue'])->name('node.get');
+    Route::post('/device-action/reboot' , [DeviceController::class, 'RebootDevice'])->name('device.reboot');
+    Route::post('/device-action/reset', [DeviceController::class, 'ResetDevice'])->name('device.reset');
+
+    Route::post('/model', [ModelController::class, 'store'])->name('models.store'); 
 });
