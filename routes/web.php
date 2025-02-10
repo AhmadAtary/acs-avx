@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\ModelController;
 use App\Http\Controllers\HostController;
+use App\Http\Controllers\UserController;
 
 
 
@@ -44,6 +45,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/admin/hosts/store', [HostController::class, 'store'])->name('hosts.store');
     Route::get('/admin/hosts/{id}/edit', [HostController::class, 'edit'])->name('hosts.edit');
     Route::post('/admin/hosts/{id}/update', [HostController::class, 'update'])->name('hosts.update');
+
+    Route::get('/device-per-Model', [DeviceController::class, 'device_model'])->name('device.model');
+    Route::get('/device-per-Model/{model}', [DeviceController::class, 'index_Models'])->name('device.modelShow');
+
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
+    Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
 
 
     Route::post('/model', [ModelController::class, 'store'])->name('models.store'); 

@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'AVXAV ACS | All Devices')
+@section('title', "AVXAV ACS | Devices {$model}")
 
 @section('content')
 <div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
-  <div class="breadcrumb-title pe-3">All Devices</div>
+  <div class="breadcrumb-title pe-3">Devices {{ $model }}</div>
 </div>
 
 <div class="row">

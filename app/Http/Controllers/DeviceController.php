@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Models\Device;
+use App\Models\DModel;
 use App\Models\Host;
 
 class DeviceController extends Controller
@@ -33,7 +34,6 @@ class DeviceController extends Controller
         return response()->json($devices);
     }
 
-
     public function info($serialNumber)
     {
         // Fetch the device data based on the serial number
@@ -54,6 +54,29 @@ class DeviceController extends Controller
         // dd($deviceData['_deviceId']['children']['_SerialNumber']);
         // Pass the processed data to the view
         return view('Devices.deviceInfo', compact('deviceData'));
+    }
+    
+    Public function device_model()
+    {
+
+        $devices_Models = DModel::get();
+
+        return view('Devices.devicesModel', compact('devices_Models'));
+    }
+
+    public function index_Models($model)
+    {
+        $devices = Device::select(
+            '_deviceId._SerialNumber', 
+            '_deviceId._Manufacturer', 
+            '_deviceId._OUI', 
+            '_deviceId._ProductClass', 
+            'InternetGatewayDevice.DeviceInfo.SoftwareVersion._value', 
+            'InternetGatewayDevice.DeviceInfo.UpTime._value', 
+            '_lastInform'
+        )->where('_deviceId._ProductClass', $model)->paginate(200);
+    
+        return view('Devices.devicesModelIndex', compact('devices', 'model'));
     }
     
     /**

@@ -1,4 +1,3 @@
-
     document.addEventListener("DOMContentLoaded", function () {
         // Function to show the loading overlay
         function showLoadingOverlay() {
@@ -226,107 +225,84 @@
         document.querySelectorAll(".get-button").forEach(button => button.addEventListener('click', () => handleGetButton(button)));
         document.querySelectorAll(".set-button").forEach(button => button.addEventListener('click', () => handleSetValue(button)));
         
-        async function fetchHosts(serialNumber) {
-            try {
-                const response = await fetch(`/device/hosts/${serialNumber}`);
-                if (!response.ok) {
-                    throw new Error(`Error fetching hosts: ${response.statusText}`);
-                }
-                const data = await response.json();
-                return data; // Assuming the API response contains a `data` field with the host info
-            } catch (error) {
-                console.error(error);
-                return null;
-            }
+        const devices = [
+            { name: 'Device 1', rssi: -40 },
+            { name: 'Device 2', rssi: -50 },
+            { name: 'Device 3', rssi: -65 },
+            { name: 'Device 4', rssi: -80 },
+            { name: 'Device 5', rssi: -30 },
+        ];
+
+        const container = document.getElementById('heatmap');
+        const tooltip = document.getElementById('tooltip');
+
+        const containerWidth = container.offsetWidth;
+        const containerHeight = container.offsetHeight;
+
+        // Create Circular Range Indicators
+        const radarRanges = [50, 100, 150, 200, 250, 300, 350, 400]; // Distances for circles
+        radarRanges.forEach((radius) => {
+            const circle = document.createElement('div');
+            circle.className = 'radar-circle';
+            circle.style.width = `${radius * 2}px`;
+            circle.style.height = `${radius * 2}px`;
+            circle.style.left = `${containerWidth / 2 - radius}px`;
+            circle.style.top = `${containerHeight / 2 - radius}px`;
+            container.appendChild(circle);
+        });
+
+        // Map RSSI to Distance
+        function mapRssiToDistance(rssi) {
+            const minRssi = -90; // Weakest
+            const maxRssi = -30; // Strongest
+            const minDistance = 400; // Furthest
+            const maxDistance = 100; // Closest
+
+            return (
+                maxDistance +
+                ((rssi - maxRssi) / (minRssi - maxRssi)) * (minDistance - maxDistance)
+            );
         }
 
-        // Initialize Heatmap
-        async function initHeatmap(serialNumber) {
-            const container = document.getElementById('heatmap');
-            const tooltip = document.getElementById('tooltip');
+        // Map RSSI to Color (Red to Blue)
+        function mapRssiToColor(rssi) {
+            const minRssi = -90;
+            const maxRssi = -30;
 
-            const containerWidth = container.offsetWidth;
-            const containerHeight = container.offsetHeight;
+            const ratio = (rssi - minRssi) / (maxRssi - minRssi);
+            const red = Math.round(255 * (1 - ratio));
+            const blue = Math.round(255 * ratio);
 
-            // Fetch hosts from the API
-            const hostsData = await fetchHosts(serialNumber);
-            if (!hostsData || !hostsData.success || !hostsData.data) {
-                console.error("No hosts data available");
-                return;
-            }
-
-            const devices = hostsData.data;
-
-            // Create Circular Range Indicators
-            const radarRanges = [50, 100, 150, 200, 250, 300, 350, 400]; // Distances for circles
-            radarRanges.forEach((radius) => {
-                const circle = document.createElement('div');
-                circle.className = 'radar-circle';
-                circle.style.width = `${radius * 2}px`;
-                circle.style.height = `${radius * 2}px`;
-                circle.style.left = `${containerWidth / 2 - radius}px`;
-                circle.style.top = `${containerHeight / 2 - radius}px`;
-                container.appendChild(circle);
-            });
-
-            // Map RSSI to Distance
-            function mapRssiToDistance(rssi) {
-                const minRssi = -90; // Weakest
-                const maxRssi = -30; // Strongest
-                const minDistance = 400; // Furthest
-                const maxDistance = 100; // Closest
-
-                return (
-                    maxDistance +
-                    ((rssi - maxRssi) / (minRssi - maxRssi)) * (minDistance - maxDistance)
-                );
-            }
-
-            // Map RSSI to Color (Red to Blue)
-            function mapRssiToColor(rssi) {
-                const minRssi = -90;
-                const maxRssi = -30;
-
-                const ratio = (rssi - minRssi) / (maxRssi - minRssi);
-                const red = Math.round(255 * (1 - ratio));
-                const blue = Math.round(255 * ratio);
-
-                return `rgb(${red}, 0, ${blue})`;
-            }
-
-            // Place Devices in Circular Layout
-            devices.forEach((device, index) => {
-                const angle = (index / devices.length) * 2 * Math.PI; // Distribute evenly
-                const distance = mapRssiToDistance(device.signalStrength); // Map RSSI to distance
-                const x = containerWidth / 2 + Math.cos(angle) * distance;
-                const y = containerHeight / 2 + Math.sin(angle) * distance;
-
-                // Create Device Node
-                const deviceNode = document.createElement('div');
-                deviceNode.className = 'device-node';
-                deviceNode.style.backgroundColor = mapRssiToColor(device.signalStrength);
-                deviceNode.style.left = `${x - 15}px`; // Center the node
-                deviceNode.style.top = `${y - 15}px`; // Center the node
-
-                // Tooltip on Hover
-                deviceNode.addEventListener('mouseenter', () => {
-                    tooltip.style.opacity = 1;
-                    tooltip.style.left = `${x + 20}px`;
-                    tooltip.style.top = `${y}px`;
-                    tooltip.textContent = `${device.hostName}\nRSSI: ${device.signalStrength} dBm`;
-                });
-
-                deviceNode.addEventListener('mouseleave', () => {
-                    tooltip.style.opacity = 0;
-                });
-
-                container.appendChild(deviceNode);
-            });
+            return `rgb(${red}, 0, ${blue})`;
         }
 
-        // Initialize the heatmap with a sample serial number
-        const serialNumber = 'M026TE231023020702'; // Replace with the actual serial number
-        initHeatmap(serialNumber);
+        // Place Devices in Circular Layout
+        devices.forEach((device, index) => {
+            const angle = (index / devices.length) * 2 * Math.PI; // Distribute evenly
+            const distance = mapRssiToDistance(device.rssi); // Map RSSI to distance
+            const x = containerWidth / 2 + Math.cos(angle) * distance;
+            const y = containerHeight / 2 + Math.sin(angle) * distance;
+
+            // Create Device Node
+            const deviceNode = document.createElement('div');
+            deviceNode.className = 'device-node';
+            deviceNode.style.backgroundColor = mapRssiToColor(device.rssi);
+            deviceNode.style.left = `${x - 15}px`; // Center the node
+            deviceNode.style.top = `${y - 15}px`; // Center the node
+
+            // Tooltip on Hover
+            deviceNode.addEventListener('mouseenter', () => {
+                tooltip.style.opacity = 1;
+                tooltip.style.left = `${x + 20}px`;
+                tooltip.style.top = `${y}px`;
+                tooltip.textContent = `${device.name}\nRSSI: ${device.rssi} dBm`;
+            });
+
+            deviceNode.addEventListener('mouseleave', () => {
+                tooltip.style.opacity = 0;
+            });
+
+            container.appendChild(deviceNode);
+        });
     
     });
-
