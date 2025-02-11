@@ -6,9 +6,11 @@ namespace App\Models;
 
 use MongoDB\Laravel\Eloquent\Model;
 
-class Device extends Model
+class File extends Model
 {
     protected $connection = 'mongodb';
-    protected $table = 'devices';
+    protected $table = 'fs.files';
+
 }
+
 

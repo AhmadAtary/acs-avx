@@ -1,7 +1,7 @@
 
 <aside class="sidebar-wrapper" data-simplebar="true">
     <div class="sidebar-header">
-      <div class="logo-icon">
+      <div class="logo-name flex-grow-1">
         <img src="{{ asset('assets/AVXAV Logos/logo_black.png') }}" class="logo-img" alt="">
       </div>
       <div class="logo-name flex-grow-1">
@@ -17,28 +17,12 @@
           $user = Auth::user();
         @endphp
 
-        @if($user->hasRole('owner'))
-          <li>
-            <a href="{{ route('owner.dashboard') }}" class="menu-label">
+        <li>
+            <a href="{{ route('dashboard') }}" class="menu-label">
               <div class="parent-icon"><i class="material-icons-outlined">home</i></div>
               <div class="menu-title">Dashboard</div>
             </a>
           </li>
-        @elseif($user->hasRole('eng'))
-          <li>
-            <a href="{{ route('engineer.dashboard') }}" class="menu-label">
-              <div class="parent-icon"><i class="material-icons-outlined">home</i></div>
-              <div class="menu-title">Dashboard</div>
-            </a>
-          </li>
-        @elseif($user->hasRole('cs'))
-          <li>
-            <a href="{{ route('cs') }}" class="menu-label">
-              <div class="parent-icon"><i class="material-icons-outlined">home</i></div>
-              <div class="menu-title">Dashboard</div>
-            </a>
-          </li>
-        @endif
         <li>
           <a href="javascript:;" class="has-arrow">
             <div class="parent-icon"><i class="material-icons-outlined">devices</i></div>
@@ -67,7 +51,7 @@
           <li class="{{ (request()->routeIs('device.model') || request()->routeIs('device.modelShow'))  ? 'active' : '' }}"><a href="{{ route('device.model') }}"><i class="material-icons-outlined">arrow_right</i>Devices per Model</a></li>
           </ul>
         </li>
-        @if($user->hasRole('owner'))
+        @if($user->access->permissions['view_user'])
           <li>
             <a href="{{ route('users.index') }}" class="menu-label">
               <div class="parent-icon"><i class="lni lni-network"></i></div>
@@ -75,7 +59,7 @@
             </a>
           </li>
           <li>
-            <a href="{{ route('users.index') }}" class="menu-label">
+            <a href="{{ route('files.index') }}" class="menu-label">
               <div class="parent-icon"><i class="lni lni-files"></i></div>
               <div class="menu-title">Files Managment</div>
             </a>

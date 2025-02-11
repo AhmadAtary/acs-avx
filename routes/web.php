@@ -8,6 +8,8 @@ use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\ModelController;
 use App\Http\Controllers\HostController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FileController;
 
 
 
@@ -25,9 +27,8 @@ Route::POST('/login', [LoginController::class, 'login'])->name('login');
 Route::get('/device-stats', [DeviceController::class, 'devices_status']);
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/owner-dashboard', [OwnerController::class, 'index'])->name('owner.dashboard');
-    Route::get('/engineer-dashboard', [EngineerController::class, 'index'])->name('engineer.dashboard');
-    Route::get('/cs-dashboard', [CustomerSupportController::class, 'index'])->name('cs.dashboard');
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 
     Route::get('/all-devices', [DeviceController::class, 'index'])->name('devices.all');
@@ -49,10 +50,17 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/device-per-Model', [DeviceController::class, 'device_model'])->name('device.model');
     Route::get('/device-per-Model/{model}', [DeviceController::class, 'index_Models'])->name('device.modelShow');
 
-    Route::get('/users', [UserController::class, 'index'])->name('users.index');
-    Route::post('/users', [UserController::class, 'store'])->name('users.store');
-    Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
-    Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+    Route::get('/dashboard/users', [UserController::class, 'index'])->name('users.index');
+    Route::post('/dashboard/users', [UserController::class, 'store'])->name('users.store');
+    Route::put('/dashboard/users/{id}', [UserController::class, 'update'])->name('users.update');
+    Route::delete('/dashboard/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+
+
+    Route::get('/dashboard/files', [FileController::class, 'index'])->name('files.index'); // List all files
+    Route::post('/dashboard/files/store', [FileController::class, 'store'])->name('files.store'); // Store a new file
+    Route::put('/dashboard/files/update/{id}', [FileController::class, 'update'])->name('files.update'); // Update an existing file
+    Route::delete('/dashboard/filesdelete/{id}', [FileController::class, 'destroy'])->name('files.destroy'); // Delete a file
+
 
 
     Route::post('/model', [ModelController::class, 'store'])->name('models.store'); 

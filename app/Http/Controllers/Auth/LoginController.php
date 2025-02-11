@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
@@ -38,8 +37,8 @@ class LoginController extends Controller
                 return $this->sendOtp($user);
             }
 
-            // Redirect based on user role
-            return $this->redirectToDashboard($user);
+            // Redirect to the common dashboard
+            return redirect()->intended('/dashboard');
         }
 
         return back()->withErrors(['email' => 'Invalid credentials.']);
@@ -67,19 +66,5 @@ class LoginController extends Controller
         });
 
         return redirect()->route('otp.verify')->with('success', 'OTP has been sent to your email.');
-    }
-
-    private function redirectToDashboard(User $user)
-    {
-        switch ($user->role) {
-            case 'owner':
-                return redirect()->intended('/owner-dashboard');
-            case 'eng':
-                return redirect()->intended('/engineer-dashboard');
-            case 'cs':
-                return redirect()->intended('/cs-dashboard');
-            default:
-                return redirect()->intended('/dashboard');
-        }
     }
 }

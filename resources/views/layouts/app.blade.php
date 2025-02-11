@@ -67,7 +67,7 @@
 
    <!--start footer-->
    <footer class="page-footer">
-    <p class="mb-0">Copyright © 2024. All right reserved.</p>
+    <p class="mb-0">Copyright © 2025. All right reserved.</p>
   </footer>
   <!--end footer-->
 
@@ -92,38 +92,17 @@
 
         <div class="row g-3">
           <div class="col-12 col-xl-6">
-            <input type="radio" class="btn-check" name="theme-options" id="BlueTheme" checked>
+            <input type="radio" class="btn-check" name="theme-options" id="BlueTheme">
             <label class="btn btn-outline-secondary d-flex flex-column gap-1 align-items-center justify-content-center p-4" for="BlueTheme">
               <span class="material-icons-outlined">contactless</span>
               <span>Blue</span>
             </label>
           </div>
           <div class="col-12 col-xl-6">
-            <input type="radio" class="btn-check" name="theme-options" id="LightTheme">
+            <input type="radio" class="btn-check" name="theme-options" id="LightTheme" checked>
             <label class="btn btn-outline-secondary d-flex flex-column gap-1 align-items-center justify-content-center p-4" for="LightTheme">
               <span class="material-icons-outlined">light_mode</span>
               <span>Light</span>
-            </label>
-          </div>
-          <div class="col-12 col-xl-6">
-            <input type="radio" class="btn-check" name="theme-options" id="DarkTheme">
-            <label class="btn btn-outline-secondary d-flex flex-column gap-1 align-items-center justify-content-center p-4" for="DarkTheme">
-              <span class="material-icons-outlined">dark_mode</span>
-              <span>Dark</span>
-            </label>
-          </div>
-          <div class="col-12 col-xl-6">
-            <input type="radio" class="btn-check" name="theme-options" id="SemiDarkTheme">
-            <label class="btn btn-outline-secondary d-flex flex-column gap-1 align-items-center justify-content-center p-4" for="SemiDarkTheme">
-              <span class="material-icons-outlined">contrast</span>
-              <span>Semi Dark</span>
-            </label>
-          </div>
-          <div class="col-12 col-xl-6">
-            <input type="radio" class="btn-check" name="theme-options" id="BoderedTheme">
-            <label class="btn btn-outline-secondary d-flex flex-column gap-1 align-items-center justify-content-center p-4" for="BoderedTheme">
-              <span class="material-icons-outlined">border_style</span>
-              <span>Bordered</span>
             </label>
           </div>
         </div><!--end row-->
@@ -131,6 +110,7 @@
       </div>
     </div>
   </div>
+  
   <!--start switcher-->
 
   <!--bootstrap js-->

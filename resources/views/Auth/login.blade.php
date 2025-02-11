@@ -9,13 +9,13 @@
         <div class="row g-0">
 
             <div class="col-12 col-xl-7 col-xxl-8 auth-cover-left align-items-center justify-content-center d-none d-xl-flex border-end bg-transparent">
+            <div style="color: white; background-color: white;">
                 <div class="">
-                    <div class="">
-                        <video src="{{ asset('assets/Videos/AVX-Video.mp4') }}" class="auth-img-cover-login"  autoplay loop muted playsinline>
-                            Your browser does not support the video tag.
-                        </video>
-                    </div>
+                    <video src="{{ asset('assets/Videos/AVX-Video.mp4') }}" class="auth-img-cover-login" autoplay loop muted playsinline>
+                        Your browser does not support the video tag.
+                    </video>
                 </div>
+            </div>
             </div>
 
             <div class="col-12 col-xl-5 col-xxl-4 auth-cover-right align-items-center justify-content-center border-top border-4 border-primary border-gradient-1">
@@ -37,7 +37,7 @@
                                         <div class="font-35 text-white"><span class="material-icons-outlined fs-2">report_gmailerrorred</span>
                                         </div>
                                         <div class="ms-3">
-                                            <h6 class="mb-0 text-white">Danger Alerts</h6>
+                                            <!-- <h6 class="mb-0 text-white">Danger Alerts</h6> -->
                                             <div class="text-white">
                                                 @foreach ($errors->all() as $error)
                                                     <div>{{ $error }}</div>

@@ -155,6 +155,10 @@
             <input type="text" class="form-control" id="modelName" name="Model" required>
           </div>
           <div class="mb-3">
+            <label for="OUI" class="form-label">OUI</label>
+            <input type="text" class="form-control" id="OUI" name="OUI" required>
+          </div>
+          <div class="mb-3">
             <label for="productClass" class="form-label">Product Class</label>
             <input type="text" class="form-control" id="productClass" name="Product_Class" required>
           </div>

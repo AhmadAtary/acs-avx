@@ -27,7 +27,7 @@
         </div>
         <div class="mb-3">
             <label for="RSSI" class="form-label">RSSI</label>
-            <input type="number" class="form-control" id="RSSI" name="RSSI">
+            <input type="text" class="form-control" id="RSSI" name="RSSI">
         </div>
         <div class="mb-3">
             <label for="hostPath" class="form-label">Host Path</label>
