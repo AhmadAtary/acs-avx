@@ -11,7 +11,15 @@
   <div class="card w-100 rounded-4 centered-card">
   <div class="card-body">
     <h5 class="mb-1">Welcome, <span id="userName">{{ auth()->user()->name }}</span></h5>
-      <p class="mb-0">Role: <span id="userRole">{{ auth()->user()->access->role }}</span></p>
+    @if(auth()->user()->access->role == 'owner')
+    <p class="mb-0">Role: <span id="userRole">Super-admin</span></p>
+    @else
+        <p class="mb-0">Role: <span id="userRole">{{ auth()->user()->access->role ?? 'N/A' }}</span></p>
+    @endif
+
+</span></p>
+
+
     </div>
       </div>
         <div class="card w-100 h-100 rounded-4">
@@ -257,7 +265,7 @@
       var options = {
       series: [{
         name: "New Device",
-        data: [4, 10, 25, 12, 25, 18, 40, 22, 7]
+        data: [1,1,2,0,0,2]
     }],
       chart: {
       foreColor: "#9ba7b2",
@@ -299,7 +307,7 @@
       theme: "dark",
     },
     xaxis: {
-      categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+      categories: ['4', '5', '6', '7', '8', '9', '10', '11', '12'],
     },
     markers: {
       show: !1,

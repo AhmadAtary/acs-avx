@@ -2,7 +2,14 @@
 
 @section('content')
 <div class="container mt-5">
-    <h1>Files Management</h1>
+<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+  <div class="breadcrumb-title pe-3">Files Management</div>
+  <div class="ms-auto">
+      <!-- Add User Button -->
+      <button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#createFileModal"><i class="bi bi-plus-lg me-2"></i>Add File</button>
+
+  </div>
+</div>
 
     <!-- Success and Error Messages -->
     @if (session('success'))
@@ -24,8 +31,7 @@
     @endif
 
     <!-- Add File Button -->
-    <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#createFileModal">Add File</button>
-
+    
     <!-- Files Table -->
     <table class="table table-bordered">
     <thead>

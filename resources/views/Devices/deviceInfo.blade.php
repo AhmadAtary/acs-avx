@@ -15,7 +15,7 @@
                 <ul class="dropdown-menu">
                     <li><a class="reboot-device dropdown-item" href="#" data-serial-number="{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? 'Unknown' }}">Reboot</a></li>
                     <li><a class="reset-device dropdown-item" href="#" data-serial-number="{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? 'Unknown' }}">Factory Reset</a></li>
-                    <li><a class="dropdown-item" href="#">Push Upgrade</a></li>
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#pushSoftware">Push Upgrade</a></li>
                 </ul>
             </div>
         </div>
@@ -49,7 +49,10 @@
                 </tbody>
             </table>
         </div>
- 
+        <div class="col-md-6">
+        <img src="{{ asset('assets/Devices/' . $deviceData['_deviceId']['children']['_ProductClass']['value'] . '.png') }}" 
+                         class="card-img-top">
+        </div>
     </div>
 
     <div class="row HeatmapRow">
@@ -76,18 +79,31 @@
     </div>
 
     <div class="row mt-4">
-        <div class="col-md-12">
-            <h2>Device Data Tree</h2>
-            <!-- <input  type="text" id="search-bar" placeholder="Search by path..." style="margin-bottom: 10px; padding: 5px; width: 100%;"> -->
-            @if ($deviceData)
-                @foreach ($deviceData as $key => $value)
-                    @include('partials.tree-item', ['key' => $key, 'value' => $value])
-                @endforeach
-            @else
-                <p>No device information found.</p>
-            @endif
+    <div class="col-md-12">
+        <h2>Device Data Tree</h2>
+        <!-- Search bar -->
+        <div style="margin-bottom: 10px; display: flex; gap: 10px;">
+            <input 
+                type="text" 
+                id="search-bar" 
+                placeholder="Search by path, name, or value..." 
+                style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+            <button id="clear-search" style="padding: 8px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                Clear
+            </button>
         </div>
+
+        <!-- Device Tree -->
+        @if ($deviceData)
+            @foreach ($deviceData as $key => $value)
+                @include('partials.tree-item', ['key' => $key, 'value' => $value])
+            @endforeach
+        @else
+            <p>No device information found.</p>
+        @endif
     </div>
+</div>
+
 
 
 <!-- Modal for Set Value -->
@@ -119,6 +135,45 @@
         </div>
     </div>
 </div>
+
+<div class="modal fade" id="pushSoftware" tabindex="-1" aria-labelledby="pushSoftwareLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pushSoftwareLabel">Software Update</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ route('device.pushSW') }}">
+                @csrf
+                <div class="modal-body">
+                    <div class="mb-3">
+                        
+                        <!-- Properly handle the value and ensure it is enclosed in quotes -->
+                        <input type="hidden" id="device_id" name="device_id" class="form-control" 
+                               value="{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="swFile" class="form-label">Select Software File</label>
+                        <select id="swFile" name="swFile" class="form-select" required>
+                            <option value="" disabled selected>Select a software file</option>
+                            @foreach ($softwareFiles as $file)
+                                <option value="{{ $file['filename'] }}">
+                                    {{ $file['filename'] }} ({{ $file['metadata']['version'] }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Push Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
 
 <!-- Loading Overlay -->
 <div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9998;">
@@ -211,6 +266,30 @@
         transform: translateY(0);
     }
     
+    .card-img-top {
+        width: 100%; /* Ensures the image fits the card width */
+        height: 200px; /* Set a fixed height for consistency across cards */
+        object-fit: contain; /* Maintains the aspect ratio and prevents distortion */
+        /* background-color: #f8f9fa; Optional: Adds a light background to make smaller images look centered */
+        object-position: top;
+    }
+
+    .highlight {
+        background-color: yellow;
+        padding: 2px 4px;
+        border-radius: 3px;
+    }
+    /* ul.collapsed {
+        display: none;
+    }
+    ul {
+        list-style-type: none;
+        padding-left: 20px;
+    } */
+    .expand-icon {
+        cursor: pointer;
+        margin-right: 5px;
+    }
 </style>
 @endsection
 
@@ -605,10 +684,71 @@
             `;
             tableBody.appendChild(row);
         });
-    }
+        }
 
         // Initialize Heatmap and Table
         initializeHeatmapAndTable();
+
+        const searchBar = document.getElementById("search-bar");
+    const clearButton = document.getElementById("clear-search");
+    const treeItems = document.querySelectorAll(".node-content");
+
+    // Event listener for search
+    searchBar.addEventListener("input", function () {
+        const query = searchBar.value.trim().toLowerCase();
+
+        // Reset highlights and collapse all nodes
+        resetTree();
+
+        if (!query) return;
+
+        let found = false;
+
+        treeItems.forEach(item => {
+            const nodePath = item.querySelector(".node-value")?.id || "";
+            const nodeName = item.querySelector(".node-name")?.textContent.toLowerCase();
+            const nodeValue = item.querySelector(".node-value")?.textContent.toLowerCase();
+
+            if (nodePath.includes(query) || (nodeName && nodeName.includes(query)) || (nodeValue && nodeValue.includes(query))) {
+                found = true;
+
+                // Highlight matching element
+                const valueElement = item.querySelector(".node-value");
+                const nameElement = item.querySelector(".node-name");
+
+                if (nodePath.includes(query)) {
+                    valueElement?.classList.add("highlight");
+                } else if (nodeName.includes(query)) {
+                    nameElement?.classList.add("highlight");
+                } else if (nodeValue.includes(query)) {
+                    valueElement?.classList.add("highlight");
+                }
+
+                // Expand parent nodes
+                let parent = item.closest("ul");
+                while (parent) {
+                    parent.classList.remove("collapsed");
+                    parent = parent.parentElement.closest("ul");
+                }
+            }
+        });
+
+        if (!found) {
+            console.log("No matching nodes found.");
+        }
+    });
+
+    // Reset search and clear highlights
+    clearButton.addEventListener("click", function () {
+        searchBar.value = "";
+        resetTree();
+    });
+
+    // Reset highlights and collapse nodes
+    function resetTree() {
+        document.querySelectorAll(".highlight").forEach(el => el.classList.remove("highlight"));
+        document.querySelectorAll("ul").forEach(ul => ul.classList.add("collapsed"));
+    }
 
         });
 

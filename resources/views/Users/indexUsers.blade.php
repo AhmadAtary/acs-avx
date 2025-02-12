@@ -68,9 +68,16 @@
                 <a href="javascript:;" class="font-text1">{{ $user->email }}</a>
             </td>
             <td>
+            @if(($user->access)->role == 'owner')
+            <span class="badge bg-info">
+                    Super-admin
+                </span>
+            @else
                 <span class="badge bg-info">
                     {{ ucfirst(optional($user->access)->role ?? 'N/A') }}
                 </span>
+            @endif
+                
             </td>
             <td>
                 {{ $user->created_at->format('M d, Y H:i A') }}
@@ -149,7 +156,7 @@
                         <select class="form-select @error('role') is-invalid @enderror" id="role" name="role" required>
                             <option value="cs" {{ old('role', 'cs') == 'cs' ? 'selected' : '' }}>Customer-Support</option>
                             <option value="eng" {{ old('role') == 'eng' ? 'selected' : '' }}>Engineer</option>
-                            <option value="owner" {{ old('role') == 'owner' ? 'selected' : '' }}>Owner</option>
+                            <option value="owner" {{ old('role') == 'owner' ? 'selected' : '' }}>Super-admin</option>
                         </select>
                         @error('role')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -212,7 +219,7 @@
                         <select class="form-select" id="update-role" name="role" required>
                             <option value="cs">Customer-Support</option>
                             <option value="eng">Engineer</option>
-                            <option value="owner">Owner</option>
+                            <option value="owner">Super-admin</option>
                         </select>
                     </div>
                     <!-- Permissions -->

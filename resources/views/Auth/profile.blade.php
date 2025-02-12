@@ -2,12 +2,17 @@
 
 @section('content')
 <div class="container mt-5">
-    <h1>Profile</h1>
+<div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+  <div class="breadcrumb-title pe-3">Profile</div>
+</div>
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
-
-    <form action="{{ route('profile.update') }}" method="POST">
+    <div class="row">
+<div class="col-md-6">
+        <div class="card w-100 h-100 rounded-4">
+            <div class="card-body">
+            <form action="{{ route('profile.update') }}" method="POST">
         @csrf
 
         <div class="mb-3">
@@ -35,5 +40,10 @@
 
         <button type="submit" class="btn btn-primary">Update Profile</button>
     </form>
+            </div>
+        </div>
+    </div>
+</div>
+    
 </div>
 @endsection

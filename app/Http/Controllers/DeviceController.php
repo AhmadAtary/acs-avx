@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Http;
 use App\Models\Device;
 use App\Models\DModel;
 use App\Models\Host;
+use App\Models\File;
+
 
 class DeviceController extends Controller
 {
@@ -20,18 +22,31 @@ class DeviceController extends Controller
             'InternetGatewayDevice.DeviceInfo.SoftwareVersion._value', 
             'InternetGatewayDevice.DeviceInfo.UpTime._value', 
             '_lastInform'
-        )->paginate(4);
+        )
+        ->orderBy('_lastInform', 'desc') // Sort by _lastInform in descending order
+        ->paginate(200);
+
         return view('Devices.allDevices', compact('devices_count','devices'));
     }
 
     public function searchDevices(Request $request)
     {
-        $type = $request->get('type');
         $query = $request->get('query');
 
-        $devices = Device::where($type, 'LIKE', "%{$query}%")->get();
+        // Perform the search with pagination
+        $devices = Device::select(
+            '_deviceId._SerialNumber', 
+            '_deviceId._Manufacturer', 
+            '_deviceId._OUI', 
+            '_deviceId._ProductClass', 
+            'InternetGatewayDevice.DeviceInfo.SoftwareVersion._value', 
+            'InternetGatewayDevice.DeviceInfo.UpTime._value', 
+            '_lastInform'
+            )->where('_deviceId._SerialNumber', 'LIKE', "%{$query}%")->paginate(10000);
 
-        return response()->json($devices);
+        return response()->json([
+            'devices' => $devices,
+        ]);
     }
 
     public function info($serialNumber)
@@ -41,7 +56,7 @@ class DeviceController extends Controller
         $modelName = $device['_deviceId']['_ProductClass'] ?? null;
         $hostNodes = Host::where('Model', $modelName)->first();
 
-
+        $softwareFiles = File::where('metadata->productClass', $modelName)->get();
     
         if ($device) {
             // Convert the device data to an array and process it using traverseJson
@@ -53,7 +68,7 @@ class DeviceController extends Controller
         
         // dd($deviceData['_deviceId']['children']['_SerialNumber']);
         // Pass the processed data to the view
-        return view('Devices.deviceInfo', compact('deviceData'));
+        return view('Devices.deviceInfo', compact('deviceData','softwareFiles'));
     }
     
     Public function device_model()
@@ -77,6 +92,37 @@ class DeviceController extends Controller
         )->where('_deviceId._ProductClass', $model)->paginate(200);
     
         return view('Devices.devicesModelIndex', compact('devices', 'model'));
+    }
+
+    public function searchDevicesByModel(Request $request)
+    {
+        $model = $request->get('model'); // Get the model from the GET parameter
+        $query = $request->get('query'); // Get the search query from the GET parameter
+    
+        if (!$model) {
+            return response()->json(['error' => 'Model parameter is required'], 400);
+        }
+    
+        // Search with pagination
+        $devices = Device::select(
+            '_deviceId._SerialNumber',
+            '_deviceId._Manufacturer',
+            '_deviceId._OUI',
+            '_deviceId._ProductClass',
+            'InternetGatewayDevice.DeviceInfo.SoftwareVersion._value',
+            'InternetGatewayDevice.DeviceInfo.UpTime._value',
+            '_lastInform'
+        )
+        ->where('_deviceId._ProductClass', $model) // Filter by model
+        ->when($query, function ($q) use ($query) {
+            $q->where('_deviceId._SerialNumber', 'LIKE', "%{$query}%");
+        })
+        ->paginate(200); // Adjust pagination as required
+    
+        // Return JSON response
+        return response()->json([
+            'devices' => $devices,
+        ]);
     }
     
     /**
@@ -221,34 +267,6 @@ class DeviceController extends Controller
                 'message' => "An error occurred while setting the value: " . $e->getMessage(),
             ], 500);
         }
-    }
-
-    /**
-     * Search for a value in nested MongoDB data based on the given path.
-     *
-     * @param array $data The MongoDB document or array.
-     * @param string $path The dot-separated path to the desired value.
-     * @return mixed|null The value if found, or null if not found.
-     */
-    private function searchMongoData(array $data, string $path)
-    {
-        $keys = explode('.', $path); // Split the dot-separated path into keys.
-
-        foreach ($keys as $key) {
-            if (!isset($data[$key])) {
-                return null; // If any key is missing, return null.
-            }
-            $data = $data[$key]; // Traverse deeper into the data.
-        }
-
-        // Check if the final node is an object
-        if (is_array($data) && isset($data['_value'])) {
-            return $data['_value']; // Return the _value if present
-        } elseif (is_array($data)) {
-            return ''; // Return empty if it's an object without _value
-        }
-
-        return $data; // Return the final value if it's not an object
     }
 
     public function getNodeValue(Request $request)
@@ -465,4 +483,33 @@ class DeviceController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Search for a value in nested MongoDB data based on the given path.
+     *
+     * @param array $data The MongoDB document or array.
+     * @param string $path The dot-separated path to the desired value.
+     * @return mixed|null The value if found, or null if not found.
+     */
+    private function searchMongoData(array $data, string $path)
+    {
+        $keys = explode('.', $path); // Split the dot-separated path into keys.
+
+        foreach ($keys as $key) {
+            if (!isset($data[$key])) {
+                return null; // If any key is missing, return null.
+            }
+            $data = $data[$key]; // Traverse deeper into the data.
+        }
+
+        // Check if the final node is an object
+        if (is_array($data) && isset($data['_value'])) {
+            return $data['_value']; // Return the _value if present
+        } elseif (is_array($data)) {
+            return ''; // Return empty if it's an object without _value
+        }
+
+        return $data; // Return the final value if it's not an object
+    }
+
 }

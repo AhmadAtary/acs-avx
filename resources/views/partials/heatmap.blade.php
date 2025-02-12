@@ -1,5 +1,8 @@
 <div class="heatmap-container" id="heatmap">
-    <div class="router"><i class="fa-solid fa-wifi"></i></div>
+    <!-- Router icon at the center -->
+    <div class="router">
+        <i class="fa-solid fa-wifi"></i>
+    </div>
     <div class="tooltip" id="tooltip"></div>
 </div>
 
@@ -29,7 +32,6 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    /* background-color: #007bff; Default color */
     transition: transform 0.2s ease;
 }
 
@@ -49,8 +51,24 @@
     transition: opacity 0.2s ease-in-out;
 }
 
-.fa-user {
-    font-size: 18px;
+/* Router styling */
+.router {
+    position: absolute;
+    top: 50%; /* Move to the center */
+    left: 50%; /* Move to the center */
+    transform: translate(-50%, -50%); /* Adjust for the icon's size */
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* background-color: #007bff; */
+    border-radius: 50%;
+    box-shadow: 0px 0px 8px rgba(0, 123, 255, 0.6);
+}
+
+.router i {
+    font-size: 24px;
     color: white;
 }
 
@@ -60,4 +78,3 @@
     margin-top: 20px;
 }
 </style>
-

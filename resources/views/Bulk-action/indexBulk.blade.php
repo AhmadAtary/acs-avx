@@ -1,7 +1,9 @@
 @extends('layouts.app')
 @section('content')
 <div class="container mt-5">
-    <h1>Bulk Actions</h1>
+    <div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
+  <div class="breadcrumb-title pe-3">Bulk Actions</div>
+</div>
     <!-- Success and Error Messages -->
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -88,9 +90,7 @@
                                 <strong>Not Found:</strong> <span class="not-found-count">{{ $progress->not_found_count }}</span>
                             </p>
                             <div class="d-flex gap-2 mt-3">
-                                <button class="btn btn-warning btn-sm pause-btn" data-progress-id="{{ $progress->id }}">Pause</button>
-                                <button class="btn btn-info btn-sm resume-btn" data-progress-id="{{ $progress->id }}">Resume</button>
-                                <button class="btn btn-danger btn-sm stop-btn" data-progress-id="{{ $progress->id }}">Stop</button>
+
                                 <button class="btn btn-danger btn-sm delete-btn" data-progress-id="{{ $progress->id }}">Delete</button>
                                 <a href="{{ route('bulk-actions.export', $progress->id) }}" class="btn btn-success btn-sm">
                                     Export Report

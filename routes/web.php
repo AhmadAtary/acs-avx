@@ -13,28 +13,35 @@ use App\Http\Controllers\FileController;
 use App\Http\Controllers\BulkActionsController;
 use App\Http\Controllers\NodeController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\OtpController;
 
 
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route(Auth::check() ? 'dashboard' : 'auth.login');
+})->name('home');
+
+// Login Routes
+Route::get('/login', [LoginController::class, 'loginView'])->name('auth.login');
+Route::post('/login', [LoginController::class, 'login'])->name('login');
+
+// OTP Routes
+Route::middleware('auth')->group(function () {
+    Route::get('/otp', [OtpController::class, 'prompt'])->name('otp.prompt');
+    Route::post('/otp/resend', [OtpController::class, 'resend'])->name('otp.resend');
+    Route::post('/otp/verify', [OtpController::class, 'verify'])->name('otp.validation');
 });
 
 
 
-Route::get('/login', [LoginController::class, 'loginView'])->name('auth.login');
-Route::POST('/login', [LoginController::class, 'login'])->name('login');
-
-Route::get('/device-stats', [DeviceController::class, 'devices_status']);
-
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'otp.verify'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
+    Route::get('/device-stats', [DeviceController::class, 'devices_status']);
 
     Route::get('/all-devices', [DeviceController::class, 'index'])->name('devices.all');
-    Route::get('/search-devices', [DeviceController::class, 'searchDevices']);
+    Route::get('/devices/search', [DeviceController::class, 'searchDevices'])->name('devices.search');
 
     Route::get('/device-info/{serialNumber}', [DeviceController::class, 'info'])->name('device.info');
 
@@ -42,6 +49,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/device-action/get-Node' , [DeviceController::class, 'getNodevalue'])->name('node.get');
     Route::post('/device-action/reboot' , [DeviceController::class, 'RebootDevice'])->name('device.reboot');
     Route::post('/device-action/reset', [DeviceController::class, 'ResetDevice'])->name('device.reset');
+    Route::post('/device-action/pushSW', [FileController::class, 'pushSW'])->name('device.pushSW');
 
     Route::get('/device/hosts/{serialNumber}' , [HostController::class, 'HostsInfo'])->name('device.host');
     Route::get('/admin/hosts/create', [HostController::class, 'create'])->name('hosts.create');
@@ -51,6 +59,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/device-per-Model', [DeviceController::class, 'device_model'])->name('device.model');
     Route::get('/device-per-Model/{model}', [DeviceController::class, 'index_Models'])->name('device.modelShow');
+    Route::get('/devices/model', [DeviceController::class, 'searchDevicesModels'])->name('devicesModels.search');
 
     Route::get('/dashboard/users', [UserController::class, 'index'])->name('users.index');
     Route::post('/dashboard/users', [UserController::class, 'store'])->name('users.store');
@@ -77,6 +86,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 
     Route::get('/otp', [OtpController::class, 'prompt'])->name('otp.prompt');
+    Route::post('/otp/resend', [OtpController::class, 'resend'])->name('otp.resend');
     Route::post('/otp', [OtpController::class, 'verify'])->name('otp.verify');
 
 

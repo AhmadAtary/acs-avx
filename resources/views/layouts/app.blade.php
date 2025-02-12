@@ -37,7 +37,14 @@
   
 </head>
 @yield('styles')
-
+<style>
+  .page-footer {
+            /* background-color: #f8f9fa;
+            padding: 10px 0;
+            text-align: center; */
+            position: relative;
+        }
+</style>
 
 <body>
 
@@ -72,8 +79,8 @@
   <!--end footer-->
 
   <!--start switcher-->
-  <button class="btn btn-grd btn-grd-primary position-fixed bottom-0 end-0 m-3 d-flex align-items-center gap-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#staticBackdrop">
-    <i class="material-icons-outlined">tune</i>Customize
+  <!-- <button class="btn btn-grd btn-grd-primary position-fixed bottom-0 end-0 m-3 d-flex align-items-center gap-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#staticBackdrop">
+    <i class="material-icons-outlined">tune</i>Theme
   </button>
   
   <div class="offcanvas offcanvas-end" data-bs-scroll="true" tabindex="-1" id="staticBackdrop">
@@ -95,7 +102,7 @@
             <input type="radio" class="btn-check" name="theme-options" id="BlueTheme">
             <label class="btn btn-outline-secondary d-flex flex-column gap-1 align-items-center justify-content-center p-4" for="BlueTheme">
               <span class="material-icons-outlined">contactless</span>
-              <span>Blue</span>
+              <span>Dark</span>
             </label>
           </div>
           <div class="col-12 col-xl-6">
@@ -105,11 +112,11 @@
               <span>Light</span>
             </label>
           </div>
-        </div><!--end row-->
+        </div>
 
       </div>
     </div>
-  </div>
+  </div> -->
   
   <!--start switcher-->
 
@@ -133,14 +140,6 @@
   <script>
      new PerfectScrollbar(".user-list")
   </script>
-  <script>
-    function handleLogout() {
-        if (confirm('Are you sure you want to log out?')) {
-            // Submit the logout form
-            document.getElementById('logout-form').submit();
-        }
-    }
-</script>
 
    @yield('scripts')
 </body>

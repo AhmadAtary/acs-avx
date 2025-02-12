@@ -3844,7 +3844,7 @@ textarea.form-control-lg {
 }
 .navbar-expand .navbar-nav {
 	flex-direction: row;
-	display: none;
+	/* display: none; */
 }
 .navbar-expand .navbar-nav .dropdown-menu {
 	position: absolute
