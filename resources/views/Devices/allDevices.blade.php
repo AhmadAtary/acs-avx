@@ -57,10 +57,16 @@
                   </table>
                 </div>
 
+                <!-- Pagination -->
+                <div class="d-flex mt-3">
+                    {{ $devices->links('vendor.pagination.bootstrap-5') }}
+                </div>
+
             </div>
         </div>
     </div>
 </div>
+
 @endsection
 
 @section('scripts')

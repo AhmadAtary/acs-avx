@@ -10,7 +10,9 @@ use App\Http\Controllers\HostController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FileController;
-
+use App\Http\Controllers\BulkActionsController;
+use App\Http\Controllers\NodeController;
+use App\Http\Controllers\ProfileController;
 
 
 use Illuminate\Support\Facades\Route;
@@ -61,6 +63,24 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/dashboard/files/update/{id}', [FileController::class, 'update'])->name('files.update'); // Update an existing file
     Route::delete('/dashboard/filesdelete/{id}', [FileController::class, 'destroy'])->name('files.destroy'); // Delete a file
 
+    Route::get('/bulk-actions', [BulkActionsController::class, 'index'])->name('bulk-actions.index');
+    Route::post('/bulk-actions/upload', [BulkActionsController::class, 'upload'])->name('bulk-actions.upload');
+    Route::get('/bulk-actions/pause/{progressId}', [BulkActionsController::class, 'pause'])->name('bulk-actions.pause');
+    Route::get('/bulk-actions/resume/{progressId}', [BulkActionsController::class, 'resume'])->name('bulk-actions.resume');
+    Route::get('/bulk-actions/delete/{progressId}', [BulkActionsController::class, 'delete'])->name('bulk-actions.delete');
+    Route::get('/bulk-actions/progress/{progressId}', [BulkActionsController::class, 'progress'])->name('bulk-actions.progress');
+    Route::get('/bulk-actions/export/{id}', [BulkActionsController::class, 'exportReport'])->name('bulk-actions.export');
+
+    Route::get('/bulk-actions/nodes/{modelId}', [NodeController::class, 'getNodes'])->name('bulk-actions.nodes');
+
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+
+    Route::get('/otp', [OtpController::class, 'prompt'])->name('otp.prompt');
+    Route::post('/otp', [OtpController::class, 'verify'])->name('otp.verify');
+
+
+    Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
 
 
     Route::post('/model', [ModelController::class, 'store'])->name('models.store'); 

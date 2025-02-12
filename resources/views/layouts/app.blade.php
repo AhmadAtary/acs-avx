@@ -133,7 +133,15 @@
   <script>
      new PerfectScrollbar(".user-list")
   </script>
-  
+  <script>
+    function handleLogout() {
+        if (confirm('Are you sure you want to log out?')) {
+            // Submit the logout form
+            document.getElementById('logout-form').submit();
+        }
+    }
+</script>
+
    @yield('scripts')
 </body>
 

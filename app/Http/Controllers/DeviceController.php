@@ -20,7 +20,7 @@ class DeviceController extends Controller
             'InternetGatewayDevice.DeviceInfo.SoftwareVersion._value', 
             'InternetGatewayDevice.DeviceInfo.UpTime._value', 
             '_lastInform'
-        )->paginate(200);
+        )->paginate(4);
         return view('Devices.allDevices', compact('devices_count','devices'));
     }
 

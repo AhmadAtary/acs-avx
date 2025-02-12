@@ -11,7 +11,7 @@
   <div class="card w-100 rounded-4 centered-card">
   <div class="card-body">
     <h5 class="mb-1">Welcome, <span id="userName">{{ auth()->user()->name }}</span></h5>
-      <p class="mb-0">Role: <span id="userRole">{{ auth()->user()->role }}</span></p>
+      <p class="mb-0">Role: <span id="userRole">{{ auth()->user()->access->role }}</span></p>
     </div>
       </div>
         <div class="card w-100 h-100 rounded-4">

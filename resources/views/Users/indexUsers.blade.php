@@ -265,7 +265,7 @@
         const userId = this.dataset.id;
         const permissions = JSON.parse(this.dataset.permissions || '{}');
 
-        document.getElementById('update-user-form').action = `/users/${userId}`;
+        document.getElementById('update-user-form').action = `/dashboard/users/${userId}`;
         document.getElementById('update-name').value = this.dataset.name;
         document.getElementById('update-email').value = this.dataset.email;
         document.getElementById('update-role').value = this.dataset.role;

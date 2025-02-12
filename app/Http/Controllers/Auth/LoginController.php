@@ -19,30 +19,25 @@ class LoginController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|string',
         ]);
-
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user) {
-            return back()->withErrors(['email' => 'No account found with this email.']);
-        }
-
-        if (\Hash::check($request->password, $user->password)) {
-            Auth::login($user);
-
-            // Check if OTP verification is needed
-            if (!$user->is_otp_verified) {
-                return $this->sendOtp($user);
+    
+        $remember = $request->has('remember');
+    
+        if (Auth::attempt($request->only('email', 'password'), $remember)) {
+            $user = Auth::user();
+    
+            if ($user->is_otp_verified) {
+                return redirect()->route('otp.prompt');
             }
-
-            // Redirect to the common dashboard
-            return redirect()->intended('/dashboard');
+    
+            return redirect()->route('home');
         }
-
-        return back()->withErrors(['email' => 'Invalid credentials.']);
+    
+        return redirect()->back()->withErrors(['email' => 'Invalid credentials.']);
     }
+    
 
     private function sendOtp(User $user)
     {
@@ -66,5 +61,11 @@ class LoginController extends Controller
         });
 
         return redirect()->route('otp.verify')->with('success', 'OTP has been sent to your email.');
+    }
+
+    public function logout()
+    {
+        Auth::logout(); // Log out the user
+        return redirect('/login'); // Redirect to the login page
     }
 }

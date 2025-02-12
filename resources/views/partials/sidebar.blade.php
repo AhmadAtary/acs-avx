@@ -1,11 +1,11 @@
 
 <aside class="sidebar-wrapper" data-simplebar="true">
     <div class="sidebar-header">
-      <div class="logo-name flex-grow-1">
+      <!-- <div class="logo-name flex-grow-1">
         <img src="{{ asset('assets/AVXAV Logos/logo_black.png') }}" class="logo-img" alt="">
-      </div>
+      </div> -->
       <div class="logo-name flex-grow-1">
-        <h5 class="mb-0">AVXAV</h5>
+        <img style="width:150px;" src="{{ asset('assets/AVXAV Logos/logo_black.png') }}" class="logo-img" alt="">
       </div>
       <!-- <div class="sidebar-close">
         <span class="material-icons-outlined">close</span>
@@ -65,7 +65,7 @@
             </a>
           </li>
           <li>
-            <a href="{{ route('users.index') }}" class="menu-label">
+            <a href="{{ route('bulk-actions.index') }}" class="menu-label">
               <div class="parent-icon"><i class="fa-solid fa-layer-group"></i></div>
               <div class="menu-title">Bulk Actions</div>
             </a>
@@ -73,15 +73,18 @@
         @endif
 
         <li>
-          <a href="javascript:;" class="has-arrow">
-            <div class="parent-icon"><i class="material-icons-outlined">widgets</i></div>
-            <div class="menu-title">Widgets</div>
-          </a>
-          <ul>
-            <li><a href="widgets-data.html"><i class="material-icons-outlined">arrow_right</i>Data</a></li>
-            <li><a href="widgets-static.html"><i class="material-icons-outlined">arrow_right</i>Static</a></li>
-          </ul>
+        <a href="{{ route('logout') }}" class="menu-label" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+            <div class="parent-icon"><i class="material-icons-outlined">logout</i></div>
+            <div class="menu-title">Logout</div>
+        </a>
         </li>
+
+        <!-- Hidden Logout Form -->
+        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+            @csrf
+        </form>
+
+
 
       </ul>
     </div>
