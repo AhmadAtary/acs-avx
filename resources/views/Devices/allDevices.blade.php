@@ -10,37 +10,19 @@
             <div class="card-body">
                 <!-- Search Bar with Dropdown and Clear Button -->
                 <div class="mb-3 d-flex gap-2">
-                    <input type="hidden" id="searchType" value="_deviceId._SerialNumber">
-                    <input type="text" id="searchInput" class="form-control" placeholder="Search By serial Number">
-                    <button id="clearButton" class="btn btn-secondary">Clear</button>
+                    <select id="searchType" class="form-select w-auto">
+                        <option value="_deviceId._SerialNumber">Serial Number</option>
+                        <option value="_deviceId._Manufacturer">Manufacturer</option>
+                        <option value="_deviceId._OUI">OUI</option>
+                        <option value="_deviceId._ProductClass">Product Class</option>
+                    </select>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search...">
                 </div>
                 <!-- Devices Table -->
                 <div class="table-responsive">
                   <table id="devicesTable" class="table table-striped table-hover">
                     <thead class="table">
-                      <tr>
-                        <th>
-                          <input type="text" class="form-control form-control-sm column-search" data-column="0" placeholder="Serial Number">
-                        </th>
-                        <th>
-                          <input type="text" class="form-control form-control-sm column-search" data-column="1" placeholder="Manufacturer">
-                        </th>
-                        <th>
-                          <input type="text" class="form-control form-control-sm column-search" data-column="2" placeholder="OUI">
-                        </th>
-                        <th>
-                          <input type="text" class="form-control form-control-sm column-search" data-column="3" placeholder="Product Class">
-                        </th>
-                        <th>
-                          <input type="text" class="form-control form-control-sm column-search" data-column="4" placeholder="Software Version">
-                        </th>
-                        <th>
-                          <input type="text" class="form-control form-control-sm column-search" data-column="5" placeholder="Up Time">
-                        </th>
-                        <th>
-                          <input type="text" class="form-control form-control-sm column-search" data-column="6" placeholder="Last Inform">
-                        </th>
-                      </tr>
+
                       <tr>
                         <th>Serial Number</th>
                         <th>Manufacturer</th>
@@ -79,96 +61,100 @@
     </div>
 </div>
 @endsection
-@section('scripts')
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    let searchInput = document.getElementById("searchInput");
-    let searchType = document.getElementById("searchType");
-    let clearButton = document.getElementById("clearButton");
-    let tableBody = document.getElementById("devicesTable").getElementsByTagName("tbody")[0];
-    let originalRows = Array.from(tableBody.rows); // Store original rows for clearing
-    let paginationContainer = document.getElementById("paginationContainer");
 
-    // Function to update table rows
+@section('scripts')
+<script>document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("searchInput");
+    const searchType = document.getElementById("searchType");
+    const clearButton = document.getElementById("clearButton");
+    const tableBody = document.getElementById("devicesTable").querySelector("tbody");
+    const originalRows = Array.from(tableBody.rows); // Store original rows for resetting
+    const paginationContainer = document.getElementById("paginationContainer");
+
+    /**
+     * Updates the table with the provided rows.
+     * @param {Array} rows - Array of rows to display in the table.
+     */
     function updateTable(rows) {
-        tableBody.innerHTML = '';
+        tableBody.innerHTML = ""; // Clear table body
         rows.forEach(row => tableBody.appendChild(row));
     }
 
-    // Function to perform frontend search
-    function frontendSearch() {
-        let searchTerms = Array.from(document.querySelectorAll('.column-search')).map(input => input.value.toLowerCase());
-        let filteredRows = originalRows.filter(row => {
-            return searchTerms.every((term, index) => {
-                let cellText = row.cells[index] ? row.cells[index].textContent.toLowerCase() : '';
-                return term === '' || cellText.includes(term);
-            });
-        });
-        updateTable(filteredRows);
+    /**
+     * Clears the search input, resets the table, and shows pagination.
+     */
+    function clearSearch() {
+        searchInput.value = "";
+        searchType.value = "_deviceId._SerialNumber"; // Reset to default search type
+        updateTable(originalRows);
+        paginationContainer.style.display = "block"; // Show pagination
+        searchInput.focus(); // Focus on the search input
     }
 
-    // Event listeners for column search inputs
-    document.querySelectorAll('.column-search').forEach(input => {
-        input.addEventListener("keyup", frontendSearch);
-    });
+    /**
+     * Fetches filtered data from the server based on the search type and query.
+     * @param {string} type - The selected search type.
+     * @param {string} query - The search query.
+     */
+    async function fetchSearchResults(type, query) {
+        try {
+            const response = await fetch(`/devices/search?type=${encodeURIComponent(type)}&query=${encodeURIComponent(query)}`);
+            const data = await response.json();
 
-    searchInput.addEventListener("keyup", function () {
-        let searchTerm = searchInput.value.trim();
-        if (searchTerm.length >= 4) {
-            fetch(`/devices/search?type=${encodeURIComponent(searchType.value)}&query=${encodeURIComponent(searchTerm)}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        alert(data.error);
-                        return;
-                    }
-                    // Ensure the response contains the expected structure
-                    if (data.devices && data.devices.data) {
-                        tableBody.innerHTML = '';
-                        data.devices.data.forEach(device => {
-                            let row = tableBody.insertRow();
-                            row.insertCell(0).innerHTML = `<a href="/device/info/${device._deviceId._SerialNumber}" class="btn btn-link text-decoration-none">${device._deviceId._SerialNumber || 'N/A'}</a>`;
-                            row.insertCell(1).textContent = device._deviceId._Manufacturer || 'N/A';
-                            row.insertCell(2).textContent = device._deviceId._OUI || 'N/A';
-                            row.insertCell(3).textContent = device._deviceId._ProductClass || 'N/A';
-                            row.insertCell(4).textContent = device.InternetGatewayDevice.DeviceInfo.SoftwareVersion._value || 'N/A';
-                            row.insertCell(5).textContent = device.InternetGatewayDevice.DeviceInfo.UpTime._value || 'N/A';
-                            row.insertCell(6).textContent = device._lastInform || 'N/A';
-                        });
-                        // Hide pagination if less than 200 devices
-                        if (data.devices.data.length < 200) {
-                            paginationContainer.style.display = 'none';
-                        } else {
-                            paginationContainer.style.display = 'block';
-                        }
-                    } else {
-                        console.error('Unexpected response structure:', data);
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-        } else {
-            // If search term is less than 4 characters, show original rows and pagination
-            updateTable(originalRows);
-            paginationContainer.style.display = 'block';
+            if (data.error) {
+                alert(data.error);
+                return;
+            }
+
+            if (data.devices && data.devices.data) {
+                tableBody.innerHTML = ""; // Clear table
+                data.devices.data.forEach(device => {
+                    const row = tableBody.insertRow();
+                    row.innerHTML = `
+                        <td><a href="/device/info/${device._deviceId._SerialNumber}" class="btn btn-link text-decoration-none">${device._deviceId._SerialNumber || "N/A"}</a></td>
+                        <td>${device._deviceId._Manufacturer || "N/A"}</td>
+                        <td>${device._deviceId._OUI || "N/A"}</td>
+                        <td>${device._deviceId._ProductClass || "N/A"}</td>
+                        <td>${device.InternetGatewayDevice?.DeviceInfo?.SoftwareVersion?._value || "N/A"}</td>
+                        <td>${device.InternetGatewayDevice?.DeviceInfo?.UpTime?._value || "N/A"}</td>
+                        <td>${device._lastInform || "N/A"}</td>
+                    `;
+                });
+
+                // Toggle pagination visibility
+                paginationContainer.style.display = data.devices.data.length < 200 ? "none" : "block";
+            } else {
+                console.error("Unexpected response structure:", data);
+            }
+        } catch (error) {
+            console.error("Error fetching search results:", error);
         }
-    });
+    }
 
-    clearButton.addEventListener("click", function () {
-        searchInput.value = '';
-        searchType.value = '_deviceId._SerialNumber'; // Reset to default search type
-        document.querySelectorAll('.column-search').forEach(input => input.value = '');
-        updateTable(originalRows);
-        paginationContainer.style.display = 'block';
-        searchInput.focus(); // Focus back to the search input
-    });
+    /**
+     * Handles the search functionality based on the input value and selected type.
+     */
+    function handleSearch() {
+        const searchTerm = searchInput.value.trim();
+        const selectedType = searchType.value;
+
+        if (searchTerm.length >= 4) {
+            fetchSearchResults(selectedType, searchTerm);
+        } else {
+            updateTable(originalRows); // Reset table if search term is too short
+            paginationContainer.style.display = "block"; // Show pagination
+        }
+    }
+
+    // Event listeners
+    searchInput.addEventListener("keyup", handleSearch);
+
+    clearButton.addEventListener("click", clearSearch);
 
     searchType.addEventListener("change", function () {
-        searchInput.value = ''; // Clear the search input when changing search type
-        document.querySelectorAll('.column-search').forEach(input => input.value = '');
-        updateTable(originalRows);
-        paginationContainer.style.display = 'block';
-        searchInput.focus(); // Focus back to the search input
+        clearSearch(); // Reset table and inputs on search type change
     });
 });
+
 </script>
 @endsection

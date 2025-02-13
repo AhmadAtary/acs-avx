@@ -31,8 +31,15 @@ class DeviceController extends Controller
 
     public function searchDevices(Request $request)
     {
-        $query = $request->get('query');
-
+        $type = $request->get('type'); // Search type
+        $query = $request->get('query'); // Search query
+    
+        // Validate the search type
+        $allowedTypes = ['_deviceId._SerialNumber', '_deviceId._Manufacturer', '_deviceId._OUI', '_deviceId._ProductClass'];
+        if (!in_array($type, $allowedTypes)) {
+            return response()->json(['error' => 'Invalid search type.'], 400);
+        }
+    
         // Perform the search with pagination
         $devices = Device::select(
             '_deviceId._SerialNumber', 
@@ -42,12 +49,14 @@ class DeviceController extends Controller
             'InternetGatewayDevice.DeviceInfo.SoftwareVersion._value', 
             'InternetGatewayDevice.DeviceInfo.UpTime._value', 
             '_lastInform'
-            )->where('_deviceId._SerialNumber', 'LIKE', "%{$query}%")->paginate(10000);
-
+        )->where($type, 'LIKE', "%{$query}%")
+          ->paginate(100);
+    
         return response()->json([
             'devices' => $devices,
         ]);
     }
+    
 
     public function info($serialNumber)
     {
@@ -98,32 +107,49 @@ class DeviceController extends Controller
     {
         $model = $request->get('model'); // Get the model from the GET parameter
         $query = $request->get('query'); // Get the search query from the GET parameter
+        $searchType = $request->get('type', '_deviceId._SerialNumber'); // Get the search type with a default value
     
+        // Validate the required model parameter
         if (!$model) {
-            return response()->json(['error' => 'Model parameter is required'], 400);
+            return response()->json(['error' => 'Model parameter is required.'], 400);
         }
     
-        // Search with pagination
+        // Validate the search type to prevent invalid column access
+        $allowedTypes = [
+            '_deviceId._SerialNumber',
+            '_deviceId._Manufacturer',
+            '_deviceId._OUI',
+            '_deviceId._ProductClass',
+        ];
+    
+        if (!in_array($searchType, $allowedTypes)) {
+            return response()->json(['error' => 'Invalid search type provided.'], 400);
+        }
+    
+        // Perform the search with filtering by model and optional query
         $devices = Device::select(
             '_deviceId._SerialNumber',
             '_deviceId._Manufacturer',
             '_deviceId._OUI',
             '_deviceId._ProductClass',
-            'InternetGatewayDevice.DeviceInfo.SoftwareVersion._value',
-            'InternetGatewayDevice.DeviceInfo.UpTime._value',
+            'InternetGatewayDevice.DeviceInfo.SoftwareVersion._value as SoftwareVersion',
+            'InternetGatewayDevice.DeviceInfo.UpTime._value as UpTime',
             '_lastInform'
         )
-        ->where('_deviceId._ProductClass', $model) // Filter by model
-        ->when($query, function ($q) use ($query) {
-            $q->where('_deviceId._SerialNumber', 'LIKE', "%{$query}%");
-        })
-        ->paginate(200); // Adjust pagination as required
+            ->where('_deviceId._ProductClass', $model) // Filter by the provided model
+            ->when($query, function ($q) use ($query, $searchType) {
+                $q->where($searchType, 'LIKE', "%{$query}%");
+            })
+            ->paginate(100); // Adjust the pagination size as needed
     
-        // Return JSON response
+        // Ensure the response is returned as JSON
         return response()->json([
+            'success' => true,
+            'model' => $model,
             'devices' => $devices,
         ]);
     }
+    
     
     /**
      * Recursively traverse and process the JSON structure

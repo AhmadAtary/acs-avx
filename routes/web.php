@@ -16,6 +16,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\OtpController;
 
 
+
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -38,6 +39,19 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'otp.verify'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
+    Route::post('/model', [ModelController::class, 'store'])->name('models.store'); 
+    Route::get('/Customer-serves/device', [CustomerSupportController::class, 'show'])->middleware(['auth', 'verified'])->name('customer.device');
+
+    Route::post('/device-action/reboot' , [DeviceController::class, 'RebootDevice'])->name('device.reboot');
+    Route::post('/device-action/reset', [DeviceController::class, 'ResetDevice'])->name('device.reset');
+    Route::post('/device-action/pushSW', [FileController::class, 'pushSW'])->name('device.pushSW');
+
+    Route::get('/device/hosts/{serialNumber}' , [HostController::class, 'HostsInfo'])->name('device.host');
+
+});
+
+Route::middleware(['auth', 'otp.verify','eng'])->group(function () {
     Route::get('/device-stats', [DeviceController::class, 'devices_status']);
 
     Route::get('/all-devices', [DeviceController::class, 'index'])->name('devices.all');
@@ -47,11 +61,9 @@ Route::middleware(['auth', 'otp.verify'])->group(function () {
 
     Route::post('/device-action/set-Node', [DeviceController::class, 'setNodeValue'])->name('node.set');
     Route::post('/device-action/get-Node' , [DeviceController::class, 'getNodevalue'])->name('node.get');
-    Route::post('/device-action/reboot' , [DeviceController::class, 'RebootDevice'])->name('device.reboot');
-    Route::post('/device-action/reset', [DeviceController::class, 'ResetDevice'])->name('device.reset');
-    Route::post('/device-action/pushSW', [FileController::class, 'pushSW'])->name('device.pushSW');
 
-    Route::get('/device/hosts/{serialNumber}' , [HostController::class, 'HostsInfo'])->name('device.host');
+
+    
     Route::get('/admin/hosts/create', [HostController::class, 'create'])->name('hosts.create');
     Route::post('/admin/hosts/store', [HostController::class, 'store'])->name('hosts.store');
     Route::get('/admin/hosts/{id}/edit', [HostController::class, 'edit'])->name('hosts.edit');
@@ -59,7 +71,7 @@ Route::middleware(['auth', 'otp.verify'])->group(function () {
 
     Route::get('/device-per-Model', [DeviceController::class, 'device_model'])->name('device.model');
     Route::get('/device-per-Model/{model}', [DeviceController::class, 'index_Models'])->name('device.modelShow');
-    Route::get('/devices/model', [DeviceController::class, 'searchDevicesModels'])->name('devicesModels.search');
+    Route::get('/devices/search/model', [DeviceController::class, 'searchDevicesByModel'])->name('devicesModels.search');
 
     Route::get('/dashboard/users', [UserController::class, 'index'])->name('users.index');
     Route::post('/dashboard/users', [UserController::class, 'store'])->name('users.store');
@@ -84,14 +96,10 @@ Route::middleware(['auth', 'otp.verify'])->group(function () {
 
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
-
-    Route::get('/otp', [OtpController::class, 'prompt'])->name('otp.prompt');
-    Route::post('/otp/resend', [OtpController::class, 'resend'])->name('otp.resend');
-    Route::post('/otp', [OtpController::class, 'verify'])->name('otp.verify');
-
-
-    Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
-
-
-    Route::post('/model', [ModelController::class, 'store'])->name('models.store'); 
 });
+
+
+Route::get('/error/403', function () {
+    return response()->view('Errors.page-error-403', [], 403);
+})->name('Errors.page-error-403');
+

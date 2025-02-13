@@ -16,7 +16,7 @@ class DashboardController extends Controller
             case 'owner':
                 return $this->ownerDashboard();
             case 'eng':
-                return $this->engineerDashboard();
+                return $this->ownerDashboard();
             case 'cs':
                 return $this->customerSupportDashboard();
             default:
@@ -62,8 +62,8 @@ class DashboardController extends Controller
     private function customerSupportDashboard()
     {
         // Example data specific to customer support
-        $tickets = Ticket::where('assigned_to', auth()->id())->paginate(10);
+        // $tickets = Ticket::where('assigned_to', auth()->id())->paginate(10);
 
-        return view('cs.dashboard', compact('tickets'));
+        return view('cs.dashboard');
     }
 }
