@@ -18,7 +18,10 @@
             </div>
             </div>
 
-            <div class="col-12 col-xl-5 col-xxl-4 auth-cover-right align-items-center justify-content-center border-top border-4 border-primary border-gradient-1">
+            <div class="col-12 col-xl-5 col-xxl-4 auth-cover-right d-flex align-items-center justify-content-center border-top border-4 border-primary" 
+                style="box-shadow: -5px 0 10px rgba(0, 0, 0, 0.2);">
+            
+
                 <div class="card rounded-0 m-3 mb-0 border-0 shadow-none bg-none">
                     <div class="card-body p-sm-5">
                         <img src="{{ asset('assets/AVXAV Logos/logo_black.png') }}" class="mb-4" width="145" alt="">
