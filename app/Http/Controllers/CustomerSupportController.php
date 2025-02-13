@@ -87,21 +87,8 @@ class CustomerSupportController extends Controller
         $productClass = $device->_deviceId['_ProductClass'];
         $swFiles = File::where('metadata.productClass', $productClass)->get();
 
-        // Pass the node values and unique node types to the view
-        // dd($nodeValues);
-        /*
-        #original: array:6 [▼
-        "Model" => "LB06HUmniah_1G"
-        "Name" => "InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.Enable"
-        "Type" => "WiFi 2.4GHz"
-        "Path" => "InternetGatewayDevice.LANDevice.1.WLANConfiguration.1.Enable"
-        "NodeType" => "xsd:boolean"
-        "id" => MongoDB\BSON\ObjectId {#1301 ▶}
-      ]
-        */
-        return view('CS.device', compact('device', 'nodes', 'nodeValues', 'uniqueNodeTypes', 'url_Id' ,  'swFiles'));
 
-        
+        return view('CS.device', compact('device', 'nodes', 'nodeValues', 'uniqueNodeTypes', 'url_Id' ,  'swFiles'));
         
     }
 
@@ -120,5 +107,99 @@ class CustomerSupportController extends Controller
             // return str_replace('-', '%252', $model);
         }
         return $device->_id;
+    }
+
+    public function manage(Request $request)
+    {
+        // dd($request->all());
+        // Decrypt the inputs
+        $url_id = $request->input('url_Id');
+        $device_id = $request->input('device_id');
+        $action = $request->input('action');
+        $nodes = $request->input('nodes');
+
+        $parameter_name = [];
+        
+
+        if ($action == 'GET') {
+            foreach ($nodes as $node ){
+                $parameter_name[] = $node['key'];
+            }
+        // dd($parameter_name);  
+
+            try {
+                $json_body = [
+                    'device' => $device_id,
+                    'name' => 'getParameterValues',
+                    'parameterNames' => $parameter_name,
+                ];
+
+                $client = new \GuzzleHttp\Client();
+                $response = $client->post("https://10.223.169.1:7557/devices/{$url_id}/tasks?connection_request", [
+                    'json' => $json_body,
+                    'verify' => false,
+                ]);
+
+                $statusCode = $response->getStatusCode();
+                $data = json_decode($response->getBody()->getContents(), true);
+                
+                // Your logic to handle the response data, if needed
+
+                
+
+                if($statusCode == '200'){
+                    return redirect()->back()->with('success', 'Parameter Get successfully.');
+                }elseif($statusCode == '202'){
+                    return redirect()->back()->with('Task', 'Pending As Task, Check Device Connection');
+                }
+            } catch (\Exception $e) {
+                return redirect()->back()->with('error', 'Failed GET Parameter.');
+            }
+        } else if ($action == 'SET') {
+            
+            $new_value = $request->input('new_value');
+        // dd($nodes);
+            foreach ($nodes as $node ){
+                if($node['mode'] == '1'){
+                    $parameter_name[] = [$node['key'],$node['value'],$node['nodeType']];
+                }
+                
+            }
+        // dd($parameter_name); 
+            
+    
+            try {
+                $json_body = [
+                    'device' => $device_id,
+                    'name' => 'setParameterValues',
+                    'parameterValues' => $parameter_name
+                ];
+    
+                $client = new \GuzzleHttp\Client();
+                $response = $client->post("https://10.223.169.1:7557/devices/{$url_id}/tasks?connection_request", [
+                    'json' => $json_body,
+                    'verify' => false,
+                ]);
+    
+                $statusCode = $response->getStatusCode();
+                $data = json_decode($response->getBody()->getContents(), true);
+                
+                // Your logic to handle the response data, if needed
+
+                
+
+                if($statusCode == '200'){
+                    return redirect()->back()->with('success', 'Parameter SET successfully.');
+                }elseif($statusCode == '202'){
+                    return redirect()->back()->with('Task', 'Pending As Task, Check Device Connection');
+                }
+    
+            } catch (\Exception $e) {
+                return redirect()->back()->with('error', 'Failed SET Parameter.');
+            }
+        }
+    
+        return redirect()->back()->with('error', 'Invalid action specified.');
+        
     }
 }

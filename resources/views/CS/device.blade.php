@@ -3,8 +3,7 @@
 
 @section('content')
 <div class="container">
-    <!-- Page Header -->
-    <div class="row mb-3">
+    <div class="row">
         <div class="col-md-6">
             <h1>Device Info</h1>
         </div>
@@ -14,161 +13,233 @@
                     Actions
                 </button>
                 <ul class="dropdown-menu">
-                    <li>
-                        <a class="reboot-device dropdown-item" href="#" data-serial-number="{{ $device['_deviceId']['_SerialNumber']['value'] ?? $device['_deviceId']['_SerialNumber'] ?? 'Unknown' }}">Reboot</a>
-                    </li>
-                    <li>
-                        <a class="reset-device dropdown-item" href="#" data-serial-number="{{ $device['_deviceId']['_SerialNumber']['value'] ?? $device['_deviceId']['_SerialNumber'] ?? 'Unknown' }}">Factory Reset</a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#pushSoftware">Push Upgrade</a>
-                    </li>
+                    <li><a class="reboot-device dropdown-item" href="#" data-serial-number="{{ $device['_deviceId']['_SerialNumber'] ?? 'Unknown' }}">Reboot</a></li>
+                    <li><a class="reset-device dropdown-item" href="#" data-serial-number="{{ $device['_deviceId']['_SerialNumber'] ?? 'Unknown' }}">Factory Reset</a></li>
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#pushSoftware">Push Upgrade</a></li>
                 </ul>
             </div>
         </div>
+        <hr>
     </div>
 
-    <!-- Device Info Section -->
     <div class="row">
         <div class="col-md-6">
-            <table class="table table-bordered">
+            <table class="table table-striped">
                 <tbody>
                     <tr>
-                        <th>Serial Number</th>
-                        <td>{{ $device['_deviceId']['_SerialNumber']['value'] ?? $device['_deviceId']['_SerialNumber'] ?? 'Unknown Serial Number' }}</td>
+                        <th>Serial Number:</th>
+                        <td>{{ $device['_deviceId']['_SerialNumber'] ?? 'Unknown Serial Number' }}</td>
                     </tr>
                     <tr>
-                        <th>Device ID</th>
+                        <th>Device ID:</th>
                         <td>{{ $device['_id'] ?? 'Unknown' }}</td>
                     </tr>
                     <tr>
-                        <th>OUI</th>
-                        <td>{{ $device['_deviceId']['_OUI']['value'] ?? $device['_deviceId']['_OUI'] ?? 'Unknown' }}</td>
+                        <th>OUI:</th>
+                        <td>{{ $device['_deviceId']['_OUI'] ?? 'Unknown' }}</td>
                     </tr>
                     <tr>
-                        <th>Manufacturer</th>
-                        <td>{{ $device['_deviceId']['_Manufacturer']['value'] ?? $device['_deviceId']['_Manufacturer'] ?? 'Unknown' }}</td>
+                        <th>Manufacturer:</th>
+                        <td>{{ $device['_deviceId']['_Manufacturer'] ?? 'Unknown' }}</td>
                     </tr>
                     <tr>
-                        <th>Product Class</th>
-                        <td>{{ $device['_deviceId']['_ProductClass']['value'] ?? $device['_deviceId']['_ProductClass'] ?? 'Unknown' }}</td>
+                        <th>Product Class:</th>
+                        <td>{{ $device['_deviceId']['_ProductClass'] ?? 'Unknown' }}</td>
                     </tr>
                 </tbody>
             </table>
         </div>
         <div class="col-md-6">
-            <img src="{{ asset('assets/Devices/' . ($device['_deviceId']['_ProductClass']['value'] ?? $device['_deviceId']['_ProductClass'] ?? 'default') . '.png') }}" 
-                 class="card-img-top" alt="Device Image">
+        <img src="{{ asset('assets/Devices/' . $device['_deviceId']['_ProductClass'] . '.png') }}" 
+                         class="card-img-top">
         </div>
     </div>
 
-    <!-- Tabs Section -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <ul class="nav nav-tabs" id="nodeTabs" role="tablist">
-                @foreach ($uniqueNodeTypes as $index => $type)
-                    <li class="nav-item" role="presentation">
-                        <a class="nav-link {{ $index == 0 ? 'active' : '' }}" id="{{ Str::slug($type) }}-tab"
-                           data-bs-toggle="tab" href="#{{ Str::slug($type) }}" role="tab"
-                           aria-controls="{{ Str::slug($type) }}" aria-selected="{{ $index == 0 ? 'true' : 'false' }}">
-                            {{ $type }}
-                        </a>
-                    </li>
-                @endforeach
-                
-            </ul>
+    <div class="row HeatmapRow">
+        <div class="col-md-8">
+            <h2>Heatmap</h2>
+            @include('partials.heatmap')
+        </div>
+        <div class="col-md-4">
+            <h2>Connected Devices</h2>
+            <div class="d-flex justify-content-center">
+            <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Device Name</th>
+                <th>RSSI</th>
+            </tr>
+        </thead>
+        <tbody id="deviceTableBody">
+            <!-- Table rows will be populated dynamically -->
+        </tbody>
+    </table>
+            </div>
+        </div>
+    </div>
 
-            <div class="tab-content mt-3" id="nodeTabsContent">
-                @foreach ($uniqueNodeTypes as $index => $type)
-                    <div class="tab-pane fade {{ $index == 0 ? 'show active' : '' }}" id="{{ Str::slug($type) }}" role="tabpanel" aria-labelledby="{{ Str::slug($type) }}-tab">
-                        <div class="card">
-                            <div class="card-body">
-                                <form method="POST" action="">
-                                    @csrf
-                                    <table class="table table-bordered table-striped">
-                                        <thead>
-                                            <tr>
-                                                <th>Node</th>
-                                                <th>Value</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($nodes as $node)
-                                                @if ($node->Type == $type)
+    <div class="row mt-4">
+        <div class="card">
+                    <ul class="nav nav-tabs" id="nodeTabs" role="tablist">
+                        @foreach ($uniqueNodeTypes as $index => $type)
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link {{ $index == 0 ? 'active' : '' }}" id="{{ Str::slug($type) }}-tab"
+                                data-bs-toggle="tab" href="#{{ Str::slug($type) }}" role="tab"
+                                aria-controls="{{ Str::slug($type) }}" aria-selected="{{ $index == 0 ? 'true' : 'false' }}">
+                                    {{ $type }}
+                                </a>
+                            </li>
+                        @endforeach
+                        
+                    </ul>
+                <div class="tab-content mt-3" id="nodeTabsContent">
+                        @foreach ($uniqueNodeTypes as $index => $type)
+                            <div class="tab-pane fade {{ $index == 0 ? 'show active' : '' }}" id="{{ Str::slug($type) }}" role="tabpanel" aria-labelledby="{{ Str::slug($type) }}-tab">
+                                <div class="card">
+                                    <div class="card-body">
+                                    <form method="POST" action="{{route('node.manageCustomer')}}">
+                                            @csrf
+                                            <table class="table table-bordered table-striped">
+                                                <thead>
                                                     <tr>
-                                                        <td>{{ $node->Name }}</td>
-                                                        <td>
-                                                            @if (isset($nodeValues[$node->Name]['value']))
-                                                                @if ($nodeValues[$node->Name]['nodeMode'])
-                                                                    <input type="text" name="nodes[{{ $node->Name }}][value]" 
-                                                                           value="{{ $nodeValues[$node->Name]['value'] }}" class="form-control">
-                                                                @else
-                                                                    <input type="hidden" name="nodes[{{ $node->Name }}][value]" 
-                                                                           value="{{ $nodeValues[$node->Name]['value'] }}">
-                                                                    {{ $nodeValues[$node->Name]['value'] }}
-                                                                @endif
-                                                            @else
-                                                                No value found.
-                                                            @endif
-                                                        </td>
-                                                        <input type="hidden" name="url_Id" value="{{ $url_Id }}">
-                                                        <input type="hidden" name="device_id" value="{{ $device->_id }}">
-                                                        <input type="hidden" name="nodes[{{ $node->Name }}][key]" value="{{ $nodeValues[$node->Name]['path'] }}">
-                                                        <input type="hidden" name="nodes[{{ $node->Name }}][mode]" value="{{ $nodeValues[$node->Name]['nodeMode'] }}">
-                                                        <input type="hidden" name="nodes[{{ $node->Name }}][nodeType]" value="{{ $nodeValues[$node->Name]['nodeValueType'] }}">
+                                                        <th>Node</th>
+                                                        <th>Value</th>
                                                     </tr>
-                                                @endif
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                    <button type="submit" name="action" value="GET" class="btn btn-primary">Get</button>
-                                    @if ($type != 'RF')
-                                        <button type="submit" name="action" value="SET" class="btn btn-success">Set</button>
-                                    @endif
-                                </form>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach ($nodes as $node)
+                                                        @if ($node->Type == $type)
+                                                            <tr>
+                                                                <td>{{ $node->Name }}</td>
+                                                                <td>
+                                                                    @if (isset($nodeValues[$node->Name]['value']))
+                                                                        @if ($nodeValues[$node->Name]['nodeMode'])
+                                                                            <input type="text" name="nodes[{{ $node->Name }}][value]" 
+                                                                                value="{{ $nodeValues[$node->Name]['value'] }}" class="form-control">
+                                                                        @else
+                                                                            <input type="hidden" name="nodes[{{ $node->Name }}][value]" 
+                                                                                value="{{ $nodeValues[$node->Name]['value'] }}">
+                                                                            {{ $nodeValues[$node->Name]['value'] }}
+                                                                        @endif
+                                                                    @else
+                                                                        No value found.
+                                                                    @endif
+                                                                </td>
+                                                                <input type="hidden" name="url_Id" value="{{ $url_Id }}">
+                                                                <input type="hidden" name="device_id" value="{{ $device->_id }}">
+                                                                <input type="hidden" name="nodes[{{ $node->Name }}][key]" value="{{ $nodeValues[$node->Name]['path'] }}">
+                                                                <input type="hidden" name="nodes[{{ $node->Name }}][mode]" value="{{ $nodeValues[$node->Name]['nodeMode'] }}">
+                                                                <input type="hidden" name="nodes[{{ $node->Name }}][nodeType]" value="{{ $nodeValues[$node->Name]['nodeValueType'] }}">
+                                                            </tr>
+                                                        @endif
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                            <button type="submit" name="action" value="GET" class="btn btn-primary">Get</button>
+                                            @if ($type != 'RF')
+                                                <button type="submit" name="action" value="SET" class="btn btn-success">Set</button>
+                                            @endif
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                        <div class="tab-pane fade" id="notes" role="tabpanel" aria-labelledby="notes-tab">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5>Customer Notes</h5>
+                                    <!-- Add your notes UI here -->
+                                </div>
                             </div>
                         </div>
                     </div>
-                @endforeach
-                <div class="tab-pane fade" id="notes" role="tabpanel" aria-labelledby="notes-tab">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5>Customer Notes</h5>
-                            <!-- Add your notes UI here -->
-                        </div>
+            </div>
+        </div>
+</div>
+
+
+
+<!-- Modal for Set Value -->
+<div class="modal fade" id="setValueModal" tabindex="-1" role="dialog" aria-labelledby="setValueModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="setValueModalLabel">Set New Value</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label for="currentValue">Current Value:</label>
+                        <input type="text" class="form-control" id="currentValue" readonly>
                     </div>
-                </div>
+                    <div class="form-group">
+                        <label for="newValue">New Value:</label>
+                        <input type="text" class="form-control" id="newValue" placeholder="Enter new value">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveValueButton">Save</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal Section -->
-<div class="modal fade" id="setValueModal" tabindex="-1" role="dialog" aria-labelledby="setValueModalLabel" aria-hidden="true">
+<div class="modal fade" id="pushSoftware" tabindex="-1" aria-labelledby="pushSoftwareLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="setValueModalLabel">Set Node Value</h5>
+                <h5 class="modal-title" id="pushSoftwareLabel">Software Update</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="setValueForm">
+            <form method="POST" action="{{ route('device.pushSW') }}">
+                @csrf
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="currentNodePath" class="form-label">Node Path</label>
-                        <input type="text" id="currentNodePath" class="form-control" readonly>
+                        
+                        <!-- Properly handle the value and ensure it is enclosed in quotes -->
+                        <input type="hidden" id="device_id" name="device_id" class="form-control" 
+                               value="{{ $device['_deviceId']['_SerialNumber'] }}">
                     </div>
                     <div class="mb-3">
-                        <label for="newNodeValue" class="form-label">New Value</label>
-                        <input type="text" id="newNodeValue" class="form-control" required>
+                        <label for="swFile" class="form-label">Select Software File</label>
+                        <select id="swFile" name="swFile" class="form-select" required>
+                            <option value="" disabled selected>Select a software file</option>
+                            @foreach ($swFiles as $file)
+                                <option value="{{ $file['filename'] }}">
+                                    {{ $file['filename'] }} ({{ $file['metadata']['version'] }})
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Push Update</button>
                 </div>
             </form>
         </div>
     </div>
+</div>
+
+
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9998;">
+    <div id="loadingSpinner" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+</div>
+
+<!-- Simple Popup -->
+<div id="simplePopup" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 300px; background-color: #fff; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); border-radius: 8px; padding: 20px; font-family: Arial, sans-serif;">
+    <div id="popupMessage" style="font-size: 16px; color: #333;"></div>
 </div>
 @endsection
 
@@ -330,7 +401,7 @@
             function handleGetButton(button) {
             const path = button.dataset.path; // The path to the field being fetched
             const type = button.dataset.type; // The type of the field
-            const serialNumber = "{{ $device['_deviceId']['_SerialNumber']['value'] ?? $device['_deviceId']['_SerialNumber'] }}";
+            const serialNumber = "{{ $device['_deviceId']['_SerialNumber'] ?? 'Unknown' }}";
 
             showLoadingOverlay();
 
@@ -407,7 +478,7 @@
             const path = button.dataset.path;
             const type = button.dataset.type;
             const currentValue = button.dataset.value;
-            const serialNumber = "{{ $device['_deviceId']['_SerialNumber']['value'] ?? $device['_deviceId']['_SerialNumber'] }}";
+            const serialNumber = "{{ $device['_deviceId']['_SerialNumber'] ?? 'Unknown' }}";
 
             // Show modal with current and new value inputs
             $('#setValueModal').modal('show');
@@ -547,7 +618,7 @@
         const heatmapContainer = document.getElementById("heatmap");
         const tooltip = document.getElementById("tooltip");
         const tableBody = document.getElementById("deviceTableBody");
-        const serialNumber = "{{ $device['_deviceId']['_SerialNumber']['value'] ?? $device['_deviceId']['_SerialNumber'] }}";
+        const serialNumber = "{{ $device['_deviceId']['_SerialNumber'] }}";
         const heatmapRow = document.querySelector(".HeatmapRow"); // The row containing the heatmap and table
 
         // Fetch connected device data from the Laravel API

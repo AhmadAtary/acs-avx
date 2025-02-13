@@ -49,6 +49,9 @@ Route::middleware(['auth', 'otp.verify'])->group(function () {
 
     Route::get('/device/hosts/{serialNumber}' , [HostController::class, 'HostsInfo'])->name('device.host');
 
+    Route::post('/Customer-serves/device/manage', [CustomerSupportController::class, 'manage'])->name('node.manageCustomer');
+
+
 });
 
 Route::middleware(['auth', 'otp.verify','eng'])->group(function () {
