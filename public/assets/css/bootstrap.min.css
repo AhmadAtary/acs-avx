@@ -3843,7 +3843,8 @@ textarea.form-control-lg {
 	justify-content: flex-start
 }
 .navbar-expand .navbar-nav {
-	flex-direction: row
+	flex-direction: row;
+	/* display: none; */
 }
 .navbar-expand .navbar-nav .dropdown-menu {
 	position: absolute

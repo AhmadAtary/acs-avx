@@ -11,7 +11,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        $middleware->alias([
+            'eng' => \App\Http\Middleware\engineerRole::class,
+            'otp.verify' => \App\Http\Middleware\OtpVerifyMiddleware::class,
+            'access.control' => \App\Http\Middleware\AccessControlMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

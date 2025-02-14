@@ -71,6 +71,7 @@ input::placeholder {
   box-shadow: 0 2px 6px 0 rgba(0, 0, 0, 0.044), 0 2px 6px 0 rgba(0, 0, 0, 0.049);
 }
 .top-header .navbar .search-bar {
+  display:none;
   width: auto;
   cursor: pointer;
 }
@@ -1016,8 +1017,8 @@ form select.error:focus {
 
 /* authentication */
 .border-gradient-1 {
-  -o-border-image: linear-gradient(to right, #7928ca, #ff0080, #04e09a, #e0d504) 1;
-     border-image: linear-gradient(to right, #7928ca, #ff0080, #04e09a, #e0d504) 1;
+  -o-border-image: linear-gradient(to right, #00b5e2, #005eb8, #001a72) 1;
+     border-image: linear-gradient(to right, #00b5e2, #005eb8, #001a72) 1;
 }
 
 .auth-basic-wrapper {
