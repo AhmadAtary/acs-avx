@@ -18,7 +18,7 @@ class UserSeeder extends Seeder
                 'name' => $faker->name,
                 'email' => $faker->unique()->safeEmail,
                 'password' => Hash::make('password123'), // Default password
-                'role' => $faker->randomElement(['owner', 'eng', 'cs']), // Random role
+               
                 'is_otp_verified' => $faker->boolean(80), // 80% chance to be verified
             ]);
         }

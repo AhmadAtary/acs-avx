@@ -9,6 +9,6 @@ use MongoDB\Laravel\Eloquent\Model;
 class Device extends Model
 {
     protected $connection = 'mongodb';
-    protected $collection = 'devices';
+    protected $table = 'devices';
 }
 

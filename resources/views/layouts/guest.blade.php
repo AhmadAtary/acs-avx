@@ -1,13 +1,13 @@
 <!doctype html>
-<html lang="en" data-bs-theme="blue-theme">
+<html lang="en" data-bs-theme="light">
 
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Maxton | Bootstrap 5 Admin Dashboard Template')</title>
+    <title>@yield('title', 'AVXAV ACS | Login')</title>
 
     <!-- Favicon -->
-    <link rel="icon" href="{{ asset('assets/images/favicon-32x32.png') }}" type="image/png">
+    <link rel="icon" href="{{ asset('assets/AVXAV Logos/Mini icon.ico') }}" type="image/png">
 
     <!-- Loader -->
     <link href="{{ asset('assets/css/pace.min.css') }}" rel="stylesheet">

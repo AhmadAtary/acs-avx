@@ -1016,8 +1016,8 @@ form select.error:focus {
 
 /* authentication */
 .border-gradient-1 {
-  -o-border-image: linear-gradient(to right, #7928ca, #ff0080, #04e09a, #e0d504) 1;
-     border-image: linear-gradient(to right, #7928ca, #ff0080, #04e09a, #e0d504) 1;
+  -o-border-image: linear-gradient(to right, #00b5e2, #005eb8, #001a72) 1;
+     border-image: linear-gradient(to right, #00b5e2, #005eb8, #001a72) 1;
 }
 
 .auth-basic-wrapper {

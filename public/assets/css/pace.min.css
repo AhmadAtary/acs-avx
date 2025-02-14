@@ -9,9 +9,9 @@
 	display: none
 }
 .pace .pace-progress {
-	background: linear-gradient(to right, #7928ca, #ff0080, #04e09a, #e0d504);
-    -o-border-image: linear-gradient(to right, #7928ca, #ff0080, #04e09a, #e0d504) 1;
-    border-image: linear-gradient(to right, #7928ca, #ff0080, #04e09a, #e0d504) 1;
+	background: linear-gradient(to right, #00b5e2, #005eb8, #001a72);
+    -o-border-image: linear-gradient(to right, #00b5e2, #005eb8, #001a72) 1;
+    border-image: linear-gradient(to right, #00b5e2, #005eb8, #001a72) 1;
 	position: fixed;
 	z-index: 2000;
 	top: 0;
@@ -34,7 +34,7 @@
 	transform: rotate(3deg) translate(0, -4px)
 }
 .pace .pace-activity {
-	display: block;
+	display: none;
 	position: fixed;
 	z-index: 2000;
 	top: 15px;

@@ -18,11 +18,10 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'is_otp_verified',
+        'name', 'email', 'password', 'is_otp_verified', 'email_verified_at'
     ];
+
+    
 
     /**
      * The attributes that should be hidden for serialization.
@@ -48,8 +47,19 @@ class User extends Authenticatable
         ];
     }
 
-    public function hasRole($role)
+    public function access()
     {
-        return $this->role === $role;
+        return $this->hasOne(Access::class);
     }
+
+    public function getRole()
+    {
+        return $this->access->role ?? 'cs'; // Default to 'guest' if no access record
+    }
+
+    public function hasRole(string $role): bool
+    {
+        return $this->access && $this->access->role === $role;
+    }
+
 }
