@@ -73,7 +73,7 @@
 }
 
 .HeatmapRow {
-    display: none; /* Initially hide the HeatmapRow */
+    display: none; /*Initially hide the HeatmapRow*/
     flex-wrap: wrap; /* Allow elements to wrap in the row */
     margin-top: 20px;
 }

@@ -1,8 +1,6 @@
 <aside class="sidebar-wrapper" data-simplebar="true">
     <div class="sidebar-header">
-        <div class="logo-name flex-grow-1">
-            <img style="width:150px;" src="{{ asset('assets/AVXAV Logos/logo_black.png') }}" class="logo-img" alt="">
-        </div>
+        
     </div>
     <div class="sidebar-nav">
         <ul class="metismenu" id="sidenav">
@@ -16,8 +14,8 @@
                     <div class="menu-title">Dashboard</div>
                 </a>
             </li>
-
-            @if(!$user->access->role == 'cs')
+		
+            @if($user->access->role == 'owner')
                 <li>
                     <a href="javascript:;" class="has-arrow">
                         <div class="parent-icon"><i class="material-icons-outlined">devices</i></div>
@@ -59,7 +57,9 @@
                         <div class="menu-title">Users Management</div>
                     </a>
                 </li>
-                <li>
+                
+            @endif
+            <li>
                     <a href="{{ route('files.index') }}" class="menu-label">
                         <div class="parent-icon"><i class="lni lni-files"></i></div>
                         <div class="menu-title">Files Management</div>
@@ -71,19 +71,12 @@
                         <div class="menu-title">Bulk Actions</div>
                     </a>
                 </li>
-            @endif
-
-            <li>
-                <a href="{{ route('logout') }}" class="menu-label" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                    <div class="parent-icon"><i class="material-icons-outlined">logout</i></div>
-                    <div class="menu-title">Logout</div>
-                </a>
-            </li>
-
-            <!-- Hidden Logout Form -->
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                @csrf
-            </form>
+                <li class="{{ request()->routeIs('bulk-actions.index') ? 'active' : '' }}">
+                    <a href="{{ route('bulk-actions.index') }}" class="menu-label">
+                        <div class="parent-icon"><i class="fa-solid fa-cubes"></i></div> {{-- Changed the icon --}}
+                        <div class="menu-title">Models Management</div>
+                    </a>
+                </li>
         </ul>
     </div>
 </aside>

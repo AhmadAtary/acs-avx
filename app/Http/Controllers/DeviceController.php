@@ -62,23 +62,27 @@ class DeviceController extends Controller
     {
         // Fetch the device data based on the serial number
         $device = Device::where('_deviceId._SerialNumber', $serialNumber)->first();
+    
+        // If device is not found, redirect back with an error message
+        if (!$device) {
+            return redirect()->back()->with('error', 'Device not found.');
+        }
+    
+        // Get the model name
         $modelName = $device['_deviceId']['_ProductClass'] ?? null;
         $hostNodes = Host::where('Model', $modelName)->first();
-
+    
+        // Fetch software files related to this model
         $softwareFiles = File::where('metadata->productClass', $modelName)->get();
     
-        if ($device) {
-            // Convert the device data to an array and process it using traverseJson
-            $rawDeviceData = $device->toArray();
-            $deviceData = $this->traverseJson($rawDeviceData);
-        } else {
-            $deviceData = null; // Handle case where no device is found
-        }
-        
-        // dd($deviceData['_deviceId']['children']['_SerialNumber']);
+        // Convert device data to an array and process it using traverseJson
+        $rawDeviceData = $device->toArray();
+        $deviceData = $this->traverseJson($rawDeviceData);
+    
         // Pass the processed data to the view
-        return view('Devices.deviceInfo', compact('deviceData','softwareFiles'));
+        return view('Devices.deviceInfo', compact('deviceData', 'softwareFiles'));
     }
+    
     
     Public function device_model()
     {
@@ -249,7 +253,7 @@ class DeviceController extends Controller
             $deviceId = $this->url_ID($deviceData);
     
             // Construct the API URL using the generated Device ID
-            $apiUrl = "https://10.223.169.1:7557/devices/$deviceId/tasks?connection_request";
+            $apiUrl = "https://10.106.45.1:7557/devices/$deviceId/tasks?connection_request";
     
             // Construct the request payload
             $payload = [
@@ -323,7 +327,7 @@ class DeviceController extends Controller
             $deviceId = $this->url_ID($deviceData);
 
             // Construct the API URL using the generated Device ID
-            $apiUrl = "https://10.223.169.1:7557/devices/$deviceId/tasks?connection_request";
+            $apiUrl = "https://10.106.45.1:7557/devices/$deviceId/tasks?connection_request";
 
             // Construct the request payload
             $payload = [
@@ -400,7 +404,7 @@ class DeviceController extends Controller
             $deviceId = $this->url_ID($deviceData);
     
             // Construct the API URL using the generated Device ID
-            $apiUrl = "https://10.223.169.1:7557/devices/$deviceId/tasks?connection_request";
+            $apiUrl = "https://10.106.45.1:7557/devices/$deviceId/tasks?connection_request";
     
             // Construct the request payload
             $payload = [
@@ -415,21 +419,28 @@ class DeviceController extends Controller
             // dd($response);
             // Check the HTTP status code
             if ($response->status() === 200) {
-                $responseData = $response->json();
+                
+    
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Device Rebooted successfully',
+                        'status_code' => $response->status(),
 
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Device reset successfully',
-                    'status_code' => $response->status(),
-                ]);
- 
-            } else {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Failed to fetch value for $path ($type): " . $response->body(),
-                    'status_code' => $response->status(),
-                ], $response->status());
-            }
+                    ]);
+                } elseif ($response->status() === 202) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => "Device Reboot Saved as a Task",
+                        'status_code' => $response->status(),
+                        'data' => $response->json(),
+                    ]);
+                } else {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Fail  to Reboot this " . $response->body(),
+                        'status_code' => $response->status(),
+                    ], $response->status());
+                }
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -465,7 +476,7 @@ class DeviceController extends Controller
             $deviceId = $this->url_ID($deviceData);
     
             // Construct the API URL using the generated Device ID
-            $apiUrl = "https://10.223.169.1:7557/devices/$deviceId/tasks?connection_request";
+            $apiUrl = "https://10.106.45.1:7557/devices/$deviceId/tasks?connection_request";
     
             // Construct the request payload
             $payload = [

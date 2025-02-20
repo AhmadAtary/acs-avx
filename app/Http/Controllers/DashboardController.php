@@ -32,7 +32,7 @@ class DashboardController extends Controller
         $models = DModel::get();
         $devices = Device::paginate(5);
 
-        return view('eng.dashboard', compact(
+        return view('Eng.dashboard', compact(
             'devices_count',
             'online_devices_count',
             'offline_devices_count',
@@ -64,6 +64,6 @@ class DashboardController extends Controller
         // Example data specific to customer support
         // $tickets = Ticket::where('assigned_to', auth()->id())->paginate(10);
 
-        return view('cs.dashboard');
+        return view('CS.dashboard');
     }
 }

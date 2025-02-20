@@ -50,9 +50,10 @@
             </table>
         </div>
         <div class="col-md-6">
-        <img src="{{ asset('assets/Devices/' . $deviceData['_deviceId']['children']['_ProductClass']['value'] . '.png') }}" 
-                         class="card-img-top">
-        </div>
+        <img src="{{ isset($deviceData['_deviceId']['children']['_ProductClass']['value']) 
+            ? asset('assets/Devices/' . $deviceData['_deviceId']['children']['_ProductClass']['value'] . '.png') 
+            : asset('assets/AVXAV Logos/default.png') }}" 
+        class="card-img-top">
     </div>
 
     <div class="row HeatmapRow">
@@ -78,8 +79,8 @@
         </div>
     </div>
 
-    <div class="row mt-4">
-    <div class="col-md-12">
+    <div class="card row mt-4">
+    <div class="col-md-12 p-4">
         <h2>Device Data Tree</h2>
         <!-- Search bar -->
         <div style="margin-bottom: 10px; display: flex; gap: 10px;">

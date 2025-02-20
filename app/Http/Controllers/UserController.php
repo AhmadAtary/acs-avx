@@ -25,24 +25,44 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
             'role' => 'required|in:owner,eng,cs',
+            'permissions' => 'array'
         ]);
     
         $authUser = auth()->user();
     
-        // Check if the authenticated user has an access record
         if (!$authUser->access) {
             return redirect()->back()->with('error', 'You do not have the required access.');
         }
     
-        // Check if account_limit is reached
-        $currentUserCount = User::count(); // Get the current total number of users
+        $currentUserCount = User::count();
         $accountLimit = $authUser->access->account_limit;
     
         if ($currentUserCount >= $accountLimit) {
             return redirect()->back()->with('error', 'Account limit reached. Cannot add more users.');
         }
     
-        // Create the user
+        $permissions = $request->input('permissions', []);
+        
+        // Enforce permission dependencies
+        if (empty($permissions['view_files'])) {
+            $permissions['add_files'] = false;
+            $permissions['delete_files'] = false;
+        }
+        if (empty($permissions['view_bulk'])) {
+            $permissions['add_bulk'] = false;
+            $permissions['delete_bulk'] = false;
+        }
+        if (empty($permissions['view_models'])) {
+            $permissions['add_models'] = false;
+            $permissions['delete_models'] = false;
+            $permissions['update_models'] = false;
+        }
+    
+        // Convert all permissions to string "1" or "0" to match your JSON format
+        $permissions = array_map(function ($value) {
+            return $value ? true : false;
+        }, $permissions);
+    
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
@@ -50,17 +70,11 @@ class UserController extends Controller
             'is_otp_verified' => false,
         ]);
     
-        // Create the access record
         Access::create([
             'user_id' => $user->id,
-            'account_number' => 'ACC-' . Str::random(8), // Generate a unique account number
+            'account_number' => 'ACC-' . Str::random(8),
             'role' => $validated['role'],
-            'permissions' => json_encode([
-                'create_user' => $validated['role'] === 'owner',
-                'update_user' => true,
-                'delete_user' => $validated['role'] === 'owner',
-                'view_user' => true,
-            ]),
+            'permissions' => json_encode($permissions),
         ]);
     
         return redirect()->back()->with('success', 'User created successfully!');

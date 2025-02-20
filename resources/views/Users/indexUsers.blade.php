@@ -59,56 +59,55 @@
                         </tr>
                     </thead>
                     <tbody>
-    @foreach ($users as $user)
-        <tr>
-            <td>
-                <p class="mb-0 customer-name fw-bold">{{ $user->name }}</p>
-            </td>
-            <td>
-                <a href="javascript:;" class="font-text1">{{ $user->email }}</a>
-            </td>
-            <td>
-            @if(($user->access)->role == 'owner')
-            <span class="badge bg-info">
-                    Super-admin
-                </span>
-            @else
-                <span class="badge bg-info">
-                    {{ ucfirst(optional($user->access)->role ?? 'N/A') }}
-                </span>
-            @endif
-                
-            </td>
-            <td>
-                {{ $user->created_at->format('M d, Y H:i A') }}
-            </td>
-            <td>
-                @if (auth()->user()->access && auth()->user()->access->permissions['update_user'])
-                    <button class="btn btn-sm btn-warning update-user-btn"
-                            data-id="{{ $user->id }}"
-                            data-name="{{ $user->name }}"
-                            data-email="{{ $user->email }}"
-                            data-role="{{ optional($user->access)->role }}"
-                            data-bs-toggle="modal"
-                            data-bs-target="#updateUserModal">
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                @endif
+                    @foreach ($users as $user)
+                        <tr>
+                            <td>
+                                <p class="mb-0 customer-name fw-bold">{{ $user->name }}</p>
+                            </td>
+                            <td>
+                                <a href="javascript:;" class="font-text1">{{ $user->email }}</a>
+                            </td>
+                            <td>
+                            @if(($user->access)->role == 'owner')
+                            <span class="badge bg-info">
+                                    Super-admin
+                                </span>
+                            @else
+                                <span class="badge bg-info">
+                                    {{ ucfirst(optional($user->access)->role ?? 'N/A') }}
+                                </span>
+                            @endif
+                                
+                            </td>
+                            <td>
+                                {{ $user->created_at->format('M d, Y H:i A') }}
+                            </td>
+                            <td>
+                                @if (auth()->user()->access && auth()->user()->access->permissions['update_user'])
+                                    <button class="btn btn-sm btn-warning update-user-btn"
+                                            data-id="{{ $user->id }}"
+                                            data-name="{{ $user->name }}"
+                                            data-email="{{ $user->email }}"
+                                            data-role="{{ optional($user->access)->role }}"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#updateUserModal">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                @endif
 
-                @if (auth()->user()->access && auth()->user()->access->permissions['delete_user'])
-                    <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="d-inline">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-sm btn-danger">
-                            <i class="bi bi-trash"></i>
-                        </button>
-                    </form>
-                @endif
-            </td>
-        </tr>
-    @endforeach
-</tbody>
-
+                                @if (auth()->user()->access && auth()->user()->access->permissions['delete_user'])
+                                    <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -253,10 +252,6 @@
 
 @endsection
 @section('scripts')
-<script src="{{ asset('assets/plugins/perfect-scrollbar/js/perfect-scrollbar.js') }}"></script>
-<script src="{{ asset('assets/plugins/metismenu/metisMenu.min.js') }}"></script>
-<script src="{{ asset('assets/plugins/simplebar/js/simplebar.min.js')}}"></script>
-<script src="{{ asset('assets/js/main.js')}}"></script>
 <script>
     // Search functionality
     document.getElementById('search-input').addEventListener('input', function () {
