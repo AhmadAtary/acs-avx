@@ -7,7 +7,6 @@
         width: 100%; /* Ensures the image fits the card width */
         height: 300px; /* Set a fixed height for consistency across cards */
         object-fit: contain; /* Maintains the aspect ratio and prevents distortion */
-        /* background-color: #f8f9fa; Optional: Adds a light background to make smaller images look centered */
     }
     .card {
         cursor: pointer; /* Makes the card show a pointer cursor to indicate it's clickable */
@@ -21,19 +20,19 @@
     @foreach($devices_Models as $device)
         <div class="col mb-4">
             <!-- Wrap the entire card with an anchor tag -->
-            <a href="{{ route('device.modelShow', ['model' => $device['Product_Class']]) }}" class="text-decoration-none">
+            <a href="{{ route('device.modelShow', ['model' => $device->product_class]) }}" class="text-decoration-none">
                 <div class="card shadow-sm">
-                    <!-- Dynamically set the image source based on Product_Class -->
-                    <img src="{{ asset('assets/Devices/' . $device['Product_Class'] . '.png') }}" 
+                    <!-- Dynamically set the image source based on stored path -->
+                    <img src="{{ $device->image ? asset('storage/' . $device->image) : asset('assets/default-device.png') }}" 
                          class="card-img-top" 
-                         alt="{{ $device['Model'] }}">
+                         alt="{{ $device->model_name }}">
 
                     <div class="card-body">
-                        <!-- Display the model as the card title -->
-                        <h5 class="card-title">{{ $device['Model'] }}</h5>
+                        <!-- Display the model name as the card title -->
+                        <h5 class="card-title">{{ $device->model_name }}</h5>
                         <!-- Display additional details if needed -->
                         <p class="card-text">
-                            This is the device {{ $device['Model'] }}. It belongs to the product class {{ $device['Product_Class'] }}.
+                            This is the device {{ $device->model_name }}. It belongs to the product class {{ $device->product_class }}.
                         </p>
                     </div>
                 </div>

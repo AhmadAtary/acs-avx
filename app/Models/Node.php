@@ -1,13 +1,23 @@
 <?php
-
 namespace App\Models;
 
-use MongoDB\Laravel\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Node extends Model
 {
-    protected $connection = 'mongodb';
-    protected $table = 'Nodes';
+    use HasFactory;
 
-    // protected $fillable = ['Model', 'Product_Class'];
+    protected $fillable = [
+        'device_model_id',
+        'name',
+        'path',
+        'type',
+        'category',
+    ];
+
+    public function deviceModel()
+    {
+        return $this->belongsTo(DeviceModel::class);
+    }
 }

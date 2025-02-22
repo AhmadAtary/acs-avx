@@ -16,6 +16,13 @@
                     <li><a class="reboot-device dropdown-item" href="#" data-serial-number="{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? 'Unknown' }}">Reboot</a></li>
                     <li><a class="reset-device dropdown-item" href="#" data-serial-number="{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? 'Unknown' }}">Factory Reset</a></li>
                     <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#pushSoftware">Push Upgrade</a></li>
+                    <li>
+                        <form action="{{ route('device.delete', $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? 'Unknown') }}" method="POST" >
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="dropdown-item">Delete</button>
+                        </form>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -558,6 +565,7 @@
                 });
             });
         });
+
 
         // Attach event listeners for "Get" and "Set" buttons
         document.querySelectorAll(".get-button").forEach(button => button.addEventListener('click', () => handleGetButton(button)));

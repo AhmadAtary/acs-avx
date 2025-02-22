@@ -71,8 +71,8 @@
                         <div class="menu-title">Bulk Actions</div>
                     </a>
                 </li>
-                <li class="{{ request()->routeIs('bulk-actions.index') ? 'active' : '' }}">
-                    <a href="{{ route('bulk-actions.index') }}" class="menu-label">
+                <li class="{{ request()->routeIs('device-models.index') ? 'active' : '' }}">
+                    <a href="{{ route('device-models.index') }}" class="menu-label">
                         <div class="parent-icon"><i class="fa-solid fa-cubes"></i></div> {{-- Changed the icon --}}
                         <div class="menu-title">Models Management</div>
                     </a>

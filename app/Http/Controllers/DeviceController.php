@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Models\Device;
-use App\Models\DModel;
+use App\Models\DeviceModel;
 use App\Models\Host;
 use App\Models\File;
 
@@ -87,8 +87,9 @@ class DeviceController extends Controller
     Public function device_model()
     {
 
-        $devices_Models = DModel::get();
+        $devices_Models = DeviceModel::get();
 
+        // dd($devices_Models);
         return view('Devices.devicesModel', compact('devices_Models'));
     }
 
@@ -520,6 +521,25 @@ class DeviceController extends Controller
             ], 500);
         }
     }
+
+    public function destroy($id)
+    {
+        // Attempt to find the device by its serial number
+        $device = Device::where('_deviceId._SerialNumber', $id)->first();
+    
+        if (!$device) {
+            return redirect()->route('dashboard')->with('error', 'Device not found.');
+        }
+    
+        try {
+            $device->delete();
+            return redirect()->route('dashboard')->with('success', 'Device deleted successfully.');
+        } catch (\Exception $e) {
+            return redirect()->route('dashboard')->with('error', 'Failed to delete device.');
+        }
+    }
+    
+
 
     /**
      * Search for a value in nested MongoDB data based on the given path.

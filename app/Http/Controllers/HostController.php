@@ -72,39 +72,45 @@ class HostController extends Controller
             try {
                 // Step 1: Fetch the device by serial number
                 $device = Device::where('_deviceId._SerialNumber', $serialNumber)->first();
-        
+
                 if (!$device) {
                     return response()->json([
                         'success' => false,
                         'message' => "No device found with serial number: $serialNumber",
                     ], 404);
                 }
-        
+
                 // Convert device to an array
                 $deviceArray = $device->toArray();
-        
+
                 // Step 2: Extract the model name
                 $modelName = $deviceArray['_deviceId']['_ProductClass'] ?? null;
-        
+
                 if (!$modelName) {
                     return response()->json([
                         'success' => false,
                         'message' => "No model information found for serial number: $serialNumber",
                     ], 404);
                 }
-        
-                // Step 3: Fetch host node definitions
+
+                // Step 3: Fetch host node definitions for the model
                 $hostNodes = Host::where('Model', $modelName)->first();
-        
+
+                // ✅ If no specific host nodes are found, fetch the default host nodes
+                if (!$hostNodes) {
+                    $hostNodes = Host::where('Model', 'default')->first();
+                }
+
+                // ✅ If no default host nodes exist, return an error
                 if (!$hostNodes) {
                     return response()->json([
                         'success' => false,
-                        'message' => "No host nodes configuration found for model: $modelName",
+                        'message' => "No host nodes configuration found for model: $modelName or default model",
                     ], 404);
                 }
-        
+
                 $hostNodesArray = $hostNodes->toArray();
-        
+
                 // Step 4: Retrieve the count of hosts
                 $countPath = $hostNodesArray['Count'] ?? "InternetGatewayDevice.LANDevice.1.Hosts.HostNumberOfEntries";
                 $hostCountData = $this->getValueFromArrayByPath($deviceArray, $countPath);
@@ -116,37 +122,36 @@ class HostController extends Controller
                         'message' => 'No hosts found on the device',
                     ]);
                 }
-        
+
                 $hostCount = $hostCountData['_value'];
-                
 
                 // Step 5: Collect host information
                 $hosts = [];
                 $fields = ['HostName', 'IPAddress', 'MACAddress', 'RSSI'];
-                $hostPathTemplate = $hostNodesArray['hostPath'];
-        
+                $hostPathTemplate = $hostNodesArray['hostPath'] ?? "InternetGatewayDevice.LANDevice.1.Hosts.Host.{i}";
+
                 for ($i = 1; $i <= $hostCount; $i++) {
                     $hostEntry = [];
-        
+
                     foreach ($fields as $field) {
                         $pathTemplate = $hostNodesArray[$field] ?? null;
-        
+
                         if (!$pathTemplate) {
                             continue; // Skip if field path is not defined
                         }
-        
+
                         $path = str_replace('{i}', $i, $pathTemplate);
-        
+
                         // Fetch the value using the path
                         $hostEntry[$field] = $this->getValueFromArrayByPath($deviceArray, $path)['_value'] ?? null;
                     }
-        
-                    // Only add the host if it has valid IP and MAC Address
+
+                    // Only add the host if it has a valid IP and MAC Address
                     if (!empty($hostEntry['IPAddress']) && !empty($hostEntry['MACAddress'])) {
                         $hosts[] = $hostEntry;
                     }
                 }
-        
+
                 // Step 6: Prepare heatmap data
                 $heatmapData = array_map(function ($host) {
                     return [
@@ -158,7 +163,7 @@ class HostController extends Controller
                         'macAddress' => $host['MACAddress'],
                     ];
                 }, $hosts);
-        
+
                 return response()->json([
                     'success' => true,
                     'data' => $heatmapData,
@@ -171,6 +176,7 @@ class HostController extends Controller
                 ], 500);
             }
         }
+
         
         /**
          * Get a value from a nested array using a dot-notated path.

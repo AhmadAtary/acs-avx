@@ -40,12 +40,12 @@ Route::middleware(['auth', 'otp.verify'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
-    Route::post('/model', [ModelController::class, 'store'])->name('models.store'); 
     Route::get('/Customer-serves/device', [CustomerSupportController::class, 'show'])->middleware(['auth', 'verified'])->name('customer.device');
 
     Route::post('/device-action/reboot' , [DeviceController::class, 'RebootDevice'])->name('device.reboot');
     Route::post('/device-action/reset', [DeviceController::class, 'ResetDevice'])->name('device.reset');
     Route::post('/device-action/pushSW', [FileController::class, 'pushSW'])->name('device.pushSW');
+    Route::delete('/device-action/destroy/{id}', [DeviceController::class, 'destroy'])->name('device.delete');
 
     Route::get('/device/hosts/{serialNumber}' , [HostController::class, 'HostsInfo'])->name('device.host');
 
@@ -87,18 +87,25 @@ Route::middleware(['auth', 'otp.verify','eng'])->group(function () {
     Route::put('/dashboard/files/update/{id}', [FileController::class, 'update'])->name('files.update'); // Update an existing file
     Route::delete('/dashboard/filesdelete/{id}', [FileController::class, 'destroy'])->name('files.destroy'); // Delete a file
 
-    Route::get('/bulk-actions', [BulkActionsController::class, 'index'])->name('bulk-actions.index');
-    Route::post('/bulk-actions/upload', [BulkActionsController::class, 'upload'])->name('bulk-actions.upload');
-    Route::get('/bulk-actions/pause/{progressId}', [BulkActionsController::class, 'pause'])->name('bulk-actions.pause');
-    Route::get('/bulk-actions/resume/{progressId}', [BulkActionsController::class, 'resume'])->name('bulk-actions.resume');
-    Route::get('/bulk-actions/delete/{progressId}', [BulkActionsController::class, 'delete'])->name('bulk-actions.delete');
-    Route::get('/bulk-actions/progress/{progressId}', [BulkActionsController::class, 'progress'])->name('bulk-actions.progress');
-    Route::get('/bulk-actions/export/{id}', [BulkActionsController::class, 'exportReport'])->name('bulk-actions.export');
+    Route::get('/dashboard/bulk-actions', [BulkActionsController::class, 'index'])->name('bulk-actions.index');
+    Route::post('/dashboard/bulk-actions/upload', [BulkActionsController::class, 'upload'])->name('bulk-actions.upload');
+    Route::get('/dashboard/bulk-actions/pause/{progressId}', [BulkActionsController::class, 'pause'])->name('bulk-actions.pause');
+    Route::get('/dashboard/bulk-actions/resume/{progressId}', [BulkActionsController::class, 'resume'])->name('bulk-actions.resume');
+    Route::get('/dashboard/bulk-actions/delete/{progressId}', [BulkActionsController::class, 'delete'])->name('bulk-actions.delete');
+    Route::get('/dashboard/bulk-actions/progress/{progressId}', [BulkActionsController::class, 'progress'])->name('bulk-actions.progress');
+    Route::get('/dashboard/bulk-actions/export/{id}', [BulkActionsController::class, 'exportReport'])->name('bulk-actions.export');
 
-    Route::get('/bulk-actions/nodes/{modelId}', [NodeController::class, 'getNodes'])->name('bulk-actions.nodes');
+    Route::get('/dashboard/bulk-actions/nodes/{modelId}', [NodeController::class, 'getNodes'])->name('bulk-actions.nodes');
 
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+
+    Route::get('/dashboard/models-managment', [ModelController::class, 'index'])->name('device-models.index');
+    Route::post('/dashboard/models-managment', [ModelController::class, 'store'])->name('device-models.store'); 
+    Route::get('/dashboard/models-managment/edit/{id}', [ModelController::class, 'edit'])->name('device-models.edit');
+    Route::put('/dashboard/models-managment/edit/{id}', [ModelController::class, 'update'])->name('device-models.update');
+    Route::delete('/dashboard/models-managment/destroy/{id}', [ModelController::class, 'destroy'])->name('device-models.destroy');
+
 });
 
 

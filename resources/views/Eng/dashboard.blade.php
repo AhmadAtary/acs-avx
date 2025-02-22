@@ -78,12 +78,6 @@
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h5 class="mb-0">Models</h5>
-          @php
-            $user = Auth::user();
-          @endphp
-          @if($user->hasRole('owner'))
-          <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addModelModal">Add Model</button>
-          @endif
         </div>
         <div class="table-responsive" style="max-height: 400px;">
           <table class="table table-bordered mb-0">
@@ -92,6 +86,7 @@
                 <th>#</th>
                 <th>Commercial Name</th>
                 <th>Product Class</th>
+                <th>OUI</th>
               </tr>
             </thead>
             <tbody>
@@ -103,8 +98,9 @@
                 @foreach($models as $index => $model)
                   <tr>
                     <th>{{ $index + 1 }}</th>
-                    <td>{{ $model->Model }}</td>
-                    <td>{{ $model->Product_Class }}</td>
+                    <td>{{ $model->model_name }}</td>
+                    <td>{{ $model->product_class }}</td>
+                    <td>{{ $model->oui }}</td>
                   </tr>
                 @endforeach
               @endif
@@ -156,7 +152,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <form action="{{ route('models.store') }}" method="POST">
+        <form action="{{ route('device-models.store') }}" method="POST">
           @csrf
           <div class="mb-3">
             <label for="modelName" class="form-label">Commercial Name</label>
@@ -262,61 +258,113 @@
         chart.render();
     });
 
-      var options = {
+    var startOfWeekTimestamp = {{ strtotime($startOfWeek) * 1000 }};
+    var currentTimestamp = new Date().getTime();
+
+    var options = {
       series: [{
         name: "New Device",
-        data: [1,1,2,0,0,2]
-    }],
+        data: @json($newDevices)
+      }],
       chart: {
-      foreColor: "#9ba7b2",
-      height: 350,
-      type: 'area',
-      zoom: {
-        enabled: false
+        foreColor: "#9ba7b2",
+        height: 350,
+        type: 'area',
+        zoom: { enabled: true },
+        toolbar: {
+          show: true, 
+          tools: { 
+            pan: true, 
+            zoomin: true, 
+            zoomout: true, 
+            reset: true 
+          }
+        },
+        animations: {
+          enabled: true,
+          easing: 'easeinout',
+          speed: 800
+        },
+        selection: {
+          enabled: true
+        }
       },
-      toolbar: {
-          show: !1,
+      title: {
+
+        align: 'center'
       },
-    },
-    dataLabels: {
-      enabled: false
-    },
-    stroke: {
-      width: 4,
-      curve: 'smooth'
-    },
-    fill: {
-      type: 'gradient',
-      gradient: {
-        shade: 'dark',
-        gradientToColors: ['#ff0080'],
-        shadeIntensity: 1,
-        type: 'vertical',
-        opacityFrom: 0.8,
-        opacityTo: 0.1,
-        stops: [0, 100, 100, 100]
+      subtitle: {
+
+        align: 'center',
+        style: { fontSize: '12px', fontWeight: 'bold', color: '#666' }
       },
-    },
-    colors: ["#ffd200"],
-    grid: {
-      show: true,
-      borderColor: 'rgba(0, 0, 0, 0.15)',
-      strokeDashArray: 4,
-    },
-    tooltip: {
-      theme: "dark",
-    },
-    xaxis: {
-      categories: ['4', '5', '6', '7', '8', '9', '10', '11', '12'],
-    },
-    markers: {
-      show: !1,
-      size: 5,
-    },
+      dataLabels: { enabled: false },
+      stroke: { width: 3, curve: 'smooth' },
+      fill: {
+        type: 'gradient',
+        gradient: {
+          shade: 'dark',
+          gradientToColors: ['#ff0080'],
+          shadeIntensity: 1,
+          type: 'vertical',
+          opacityFrom: 0.8,
+          opacityTo: 0.1,
+          stops: [0, 100, 100, 100]
+        },
+      },
+      colors: ["#ffd200"],
+      grid: {
+        show: true,
+        borderColor: 'rgba(0, 0, 0, 0.15)',
+        strokeDashArray: 4,
+      },
+      tooltip: { theme: "dark" },
+      xaxis: {
+        categories: @json($dates),
+        labels: {
+          format: 'yyyy-MM-dd',
+          rotate: -45,
+          style: { fontSize: '12px' }
+        },
+        tickAmount: 7,
+        type: 'datetime',
+        min: startOfWeekTimestamp - (7 * 24 * 60 * 60 * 1000), // Allow scrolling one extra week back
+        max: currentTimestamp, // Allow scrolling to today
+        range: 7 * 24 * 60 * 60 * 1000 // Show one week initially
+      },
+      yaxis: {
+        min: 0,
+        tickAmount: 4, // Ensures whole numbers 0, 1, 2, 3, etc.
+        forceNiceScale: true,
+        labels: {
+          formatter: function (value) {
+            return Math.round(value); // Ensure whole numbers only
+          }
+        }
+      },
+      markers: { 
+    show: true, 
+    size: 5, 
+    colors: ["#ffd200"], // ✅ Same color as the chart line
+    strokeColors: "#ffd200", // ✅ Ensures the stroke (outline) is also the same
+    strokeWidth: 3 
+},
+      scrollbar: {
+        enabled: true, // Enable horizontal scrolling
+        autoHide: false
+      },
+      responsive: [{
+        breakpoint: 768,
+        options: {
+          chart: { height: 300 },
+          xaxis: { labels: { rotate: -30 } }
+        }
+      }]
     };
 
-  var chart = new ApexCharts(document.querySelector("#chart1"), options);
-  chart.render();
+    var chart = new ApexCharts(document.querySelector("#chart1"), options);
+    chart.render();
+  
 
     let count = 0;
     let target = {{ $devices_count }}; // Laravel variable
