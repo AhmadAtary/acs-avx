@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\DeviceModel; // Import the DeviceModel
+use App\Models\DataModelNode;
 use App\Models\Node; // Import the Node model
 use Illuminate\Support\Facades\Storage;
 
@@ -25,42 +26,73 @@ class ModelController extends Controller
             'product_class' => 'required|string|max:255',
             'oui' => 'required|string',
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
-            'cs_nodes' => 'array',
-            'cs_nodes.*.name' => 'required|string|max:255',
-            'cs_nodes.*.path' => 'required|string|max:255',
-            'cs_nodes.*.type' => 'nullable|string|max:255',
-            'cs_nodes.*.category' => 'required|string|max:255',
+            'cs_nodes_csv' => 'nullable|mimes:csv,txt|max:2048',
+            'data_model_file' => 'nullable|mimes:csv|max:4096',
         ]);
-
+    
         // Handle image upload
         $imagePath = null;
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('device_models', 'public');
         }
-
-        // Save the new model to the database
+    
+        // Save the new device model
         $deviceModel = DeviceModel::create([
             'model_name' => $request->model_name,
             'product_class' => $request->product_class,
             'oui' => $request->oui,
             'image' => $imagePath,
         ]);
-
-        // Save CS Nodes
-        if ($request->has('cs_nodes')) {
-            foreach ($request->cs_nodes as $nodeData) {
-                Node::create([
-                    'device_model_id' => $deviceModel->id,
-                    'name' => $nodeData['name'],
-                    'path' => $nodeData['path'],
-                    'type' => $nodeData['type'] ?? null,
-                    'category' => $nodeData['category'],
-                ]);
+    
+        // Process CS Nodes CSV
+        if ($request->hasFile('cs_nodes_file')) {
+            $csvFile = $request->file('cs_nodes_file');
+            $fileHandle = fopen($csvFile->getRealPath(), 'r');
+        
+            if ($fileHandle !== false) {
+                fgetcsv($fileHandle); // Skip the header row
+                while (($row = fgetcsv($fileHandle, 1000, ',')) !== false) {
+                    if (count($row) < 4) {
+                        continue; // 🚨 Prevent errors if the row doesn't have enough columns
+                    }
+        
+                    Node::create([
+                        'device_model_id' => $deviceModel->id, // Ensure this links to the right model
+                        'name' => trim($row[0]), // ✅ Trim to remove extra spaces
+                        'path' => trim($row[1]),
+                        'type' => trim($row[2]) ?? null,
+                        'category' => trim($row[3]),
+                    ]);
+                }
+                fclose($fileHandle);
             }
         }
-
-        return redirect()->back()->with('success', 'Model added successfully.');
+        
+    
+        // Process DataModel CSV
+        if ($request->hasFile('data_model_file')) {
+            $dataModelFile = $request->file('data_model_file');
+            $fileHandle = fopen($dataModelFile->getRealPath(), 'r');
+    
+            if ($fileHandle !== false) {
+                fgetcsv($fileHandle); // Skip the header row
+                while (($row = fgetcsv($fileHandle, 1000, ',')) !== false) {
+                    if (count($row) >= 3) {
+                        DataModelNode::create([
+                            'device_model_id' => $deviceModel->id,
+                            'name' => $row[0],
+                            'path' => $row[1],
+                            'type' => $row[2] ?? null,
+                        ]);
+                    }
+                }
+                fclose($fileHandle);
+            }
+        }
+    
+        return redirect()->back()->with('success', 'Model and DataModel uploaded successfully.');
     }
+    
 
     public function edit($id)
     {

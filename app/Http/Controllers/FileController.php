@@ -5,7 +5,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use App\Models\File;
-use App\Models\DModel;
+use App\Models\DeviceModel;
 use App\Models\Device;
 use GuzzleHttp\Client;
 
@@ -14,7 +14,7 @@ class FileController extends Controller
     // Display all files
     public function index()
     {
-        $models = DModel::all();
+        $models = DeviceModel::all();
         $files = File::all(); // Fetch all files from the collection
         return view('files.indexFiles', compact('files','models'));
     }
@@ -52,7 +52,7 @@ class FileController extends Controller
                 'productClass' => $request->productClass,
                 'version' => $request->version,
             ])->withoutVerifying()->withBody($fileContent, 'application/octet-stream')
-            ->put("https://10.223.169.1:7557/files/" . $originalFileName);
+            ->put("https://10.106.45.1:7557/files/" . $originalFileName);
 
             // Delete the file after upload attempt
             Storage::delete($path);

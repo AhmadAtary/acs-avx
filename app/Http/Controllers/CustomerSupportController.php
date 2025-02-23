@@ -4,8 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Device;
+use App\Models\DeviceModel;
 use App\Models\Node;
 use App\Models\File;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\Log;
 
 class CustomerSupportController extends Controller
 {
@@ -30,39 +34,53 @@ class CustomerSupportController extends Controller
     public function show(Request $request)
     {
         $serial = $request->query('device_id');
-
-        // dd($serial);
-        // Check if serial is null or empty
+    
         if (is_null($serial) || $serial === '') {
             return redirect()->back()->with('error', 'Device not found');
         }
-
+    
         $device = Device::where('_deviceId._SerialNumber', $serial)->first();
-
+    
         if (!$device) {
             return redirect()->back()->with('error', 'Device not found');
         }
-
-        $url = $this->url_ID($device); // Generate URL ID for the device
-        $url_Id = $url;
-        
-        $model = $device['_deviceId']['_ProductClass'];
-        $nodes = Node::where('Model', $model)->get();
-        $id = $device->id;
-        // $deviceNote = DeviceNote::where('device_id', $id)->get();
-
-        // Retrieve node values and types for each node path
+    
+        $url_Id = $this->url_ID($device); // Generate URL ID for the device
+    
+        // Fetch device model ID
+        $model = DeviceModel::where('product_class', $device['_deviceId']['_ProductClass'])->first();
+    
+        if (!$model) {
+            return redirect()->back()->with('error', 'Device model not found.');
+        }
+    
+        // Fetch CS Nodes using the model_id
+        $csNodes = Node::where('device_model_id', $model->id)->get();
+    
+        if ($csNodes->isEmpty() && auth()->user()->access->role === 'cs') {
+            return redirect()->back()->with('error', 'No Customer Service Nodes available for this device model. Please contact the System Administrator.');
+        }
+    
+        // Group nodes by category for correct tab display
+        $nodeCategories = [];
         $nodeValues = [];
-        $nodeTypes = [];
-        foreach ($nodes as $node) {
-            $path = $node['Path'];
-            $nodeKey = $node['Name'];
-            $nodeType = $node['Type'];
+    
+        foreach ($csNodes as $node) {
+            $category = $node->category ?? 'Unknown';
+            $path = $node->path ?? null;
+            $nodeKey = $node->name ?? null;
+            $nodeType = $node->type ?? 'Unknown';
+    
+            if (!$nodeKey || !$path) {
+                continue; // Skip if missing required fields
+            }
+    
             $nodeValue = $this->getValueFromJson($device->toArray(), $path);
-
+            
             // Ensure nodeValue is correctly formatted
             $nodeValueType = null;
             $nodeMode = null;
+    
             if (is_array($nodeValue) && isset($nodeValue['_value'])) {
                 $nodeValueType = $nodeValue['_type'] ?? null;
                 $nodeMode = $nodeValue['_writable'] ?? null;
@@ -70,27 +88,32 @@ class CustomerSupportController extends Controller
             } elseif (is_array($nodeValue)) {
                 $nodeValue = json_encode($nodeValue);
             }
-
+    
+            // Store formatted node values
             $nodeValues[$nodeKey] = [
-                'value' => $nodeValue,
+                'value' => $nodeValue ?? 'No value found',
                 'type' => $nodeType,
                 'nodeValueType' => $nodeValueType,
                 'nodeMode' => $nodeMode,
                 'path' => $path
             ];
-
-            $nodeTypes[] = $nodeType;
+    
+            // Organize nodes by category for correct display
+            $nodeCategories[$category][] = $nodeKey;
         }
-
-        // Get unique node types
-        $uniqueNodeTypes = array_unique($nodeTypes);
+    
+        $uniqueNodeTypes = array_keys($nodeCategories); // Extract unique categories
+    
+        // Fetch Software Files based on device Product Class
         $productClass = $device->_deviceId['_ProductClass'];
         $swFiles = File::where('metadata.productClass', $productClass)->get();
-
-
-        return view('CS.device', compact('device', 'nodes', 'nodeValues', 'uniqueNodeTypes', 'url_Id' ,  'swFiles'));
-        
+    
+        return view('CS.device', compact('device', 'nodeCategories', 'nodeValues', 'uniqueNodeTypes', 'url_Id', 'swFiles'));
     }
+    
+    
+    
+
 
     private function url_ID($device)
     {
@@ -109,97 +132,83 @@ class CustomerSupportController extends Controller
         return $device->_id;
     }
 
+
+
     public function manage(Request $request)
     {
-        // dd($request->all());
-        // Decrypt the inputs
         $url_id = $request->input('url_Id');
         $device_id = $request->input('device_id');
         $action = $request->input('action');
         $nodes = $request->input('nodes');
 
-        $parameter_name = [];
-        
+        // Validate nodes
+        if (!$nodes || !is_array($nodes)) {
+            return redirect()->back()->with('error', 'No valid nodes found in request.');
+        }
 
-        if ($action == 'GET') {
-            foreach ($nodes as $node ){
-                $parameter_name[] = $node['key'];
-            }
-        // dd($parameter_name);  
+        $client = new Client(['verify' => false]); // Disable SSL verification
+        $api_url = "https://10.106.45.1:7557/devices/{$url_id}/tasks?connection_request";
 
-            try {
+        try {
+            if ($action == 'GET') {
+                $parameter_names = array_keys($nodes);
+
+                if (empty($parameter_names)) {
+                    return redirect()->back()->with('error', 'No parameters selected for GET request.');
+                }
+
                 $json_body = [
                     'device' => $device_id,
                     'name' => 'getParameterValues',
-                    'parameterNames' => $parameter_name,
+                    'parameterNames' => $parameter_names,
                 ];
+            } elseif ($action == 'SET') {
+                $parameter_values = [];
 
-                $client = new \GuzzleHttp\Client();
-                $response = $client->post("https://10.223.169.1:7557/devices/{$url_id}/tasks?connection_request", [
-                    'json' => $json_body,
-                    'verify' => false,
-                ]);
-
-                $statusCode = $response->getStatusCode();
-                $data = json_decode($response->getBody()->getContents(), true);
-                
-                // Your logic to handle the response data, if needed
-
-                
-
-                if($statusCode == '200'){
-                    return redirect()->back()->with('success', 'Parameter Get successfully.');
-                }elseif($statusCode == '202'){
-                    return redirect()->back()->with('Task', 'Pending As Task, Check Device Connection');
+                foreach ($nodes as $nodePath => $nodeData) {
+                    if (isset($nodeData['value'])) {
+                        $parameter_values[] = [$nodePath, $nodeData['value']];
+                    }
                 }
-            } catch (\Exception $e) {
-                return redirect()->back()->with('error', 'Failed GET Parameter.');
-            }
-        } else if ($action == 'SET') {
-            
-            $new_value = $request->input('new_value');
-        // dd($nodes);
-            foreach ($nodes as $node ){
-                if($node['mode'] == '1'){
-                    $parameter_name[] = [$node['key'],$node['value'],$node['nodeType']];
+
+                if (empty($parameter_values)) {
+                    return redirect()->back()->with('error', 'No writable parameters selected for SET request.');
                 }
-                
-            }
-        // dd($parameter_name); 
-            
-    
-            try {
+
                 $json_body = [
                     'device' => $device_id,
                     'name' => 'setParameterValues',
-                    'parameterValues' => $parameter_name
+                    'parameterValues' => $parameter_values,
                 ];
-    
-                $client = new \GuzzleHttp\Client();
-                $response = $client->post("https://10.223.169.1:7557/devices/{$url_id}/tasks?connection_request", [
-                    'json' => $json_body,
-                    'verify' => false,
-                ]);
-    
-                $statusCode = $response->getStatusCode();
-                $data = json_decode($response->getBody()->getContents(), true);
-                
-                // Your logic to handle the response data, if needed
-
-                
-
-                if($statusCode == '200'){
-                    return redirect()->back()->with('success', 'Parameter SET successfully.');
-                }elseif($statusCode == '202'){
-                    return redirect()->back()->with('Task', 'Pending As Task, Check Device Connection');
-                }
-    
-            } catch (\Exception $e) {
-                return redirect()->back()->with('error', 'Failed SET Parameter.');
+            } else {
+                return redirect()->back()->with('error', 'Invalid action specified.');
             }
+
+            // Send request
+            Log::info("Sending API request to: $api_url", ['payload' => $json_body]);
+            $response = $client->post($api_url, ['json' => $json_body]);
+
+            $statusCode = $response->getStatusCode();
+            $responseBody = $response->getBody()->getContents();
+
+            Log::info("API response received", ['status' => $statusCode, 'body' => $responseBody]);
+
+            if ($statusCode == 200) {
+                return redirect()->back()->with('success', 'Operation completed successfully.');
+            } elseif ($statusCode == 202) {
+                return redirect()->back()->with('task', 'Pending as Task, Check Device Connection.');
+            }
+
+            return redirect()->back()->with('error', 'Unexpected API response received.');
+        } catch (RequestException $e) {
+            Log::error("Guzzle RequestException: " . $e->getMessage(), ['response' => $e->getResponse()?->getBody()->getContents()]);
+            return redirect()->back()->with('error', 'API request failed: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            Log::error("General Exception: " . $e->getMessage());
+            return redirect()->back()->with('error', 'An unexpected error occurred: ' . $e->getMessage());
         }
-    
-        return redirect()->back()->with('error', 'Invalid action specified.');
-        
     }
+
+    
+    
 }

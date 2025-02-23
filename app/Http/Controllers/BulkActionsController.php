@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\UploadProgress;
 use App\Models\JobStatus;
-use App\Models\DModel;
+use App\Models\DeviceModel;
 use App\Jobs\ProcessSerialJob;
 use App\Jobs\ProcessSerialJobGet;
 use Illuminate\Http\Request;
@@ -16,7 +16,8 @@ class BulkActionsController extends Controller
     public function index()
     {
         $progresses = UploadProgress::all();
-        $models = DModel::all(); // Assuming you have a way to get models, adjust as needed
+        $models = DeviceModel::all(); // Assuming you have a way to get models, adjust as needed
+        // dd($models);
         return view('Bulk-action.indexBulk', compact('progresses', 'models'));
     }
 

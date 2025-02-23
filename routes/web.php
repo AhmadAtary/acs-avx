@@ -39,7 +39,12 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'otp.verify'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
+
     Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
+    
     Route::get('/Customer-serves/device', [CustomerSupportController::class, 'show'])->middleware(['auth', 'verified'])->name('customer.device');
 
     Route::post('/device-action/reboot' , [DeviceController::class, 'RebootDevice'])->name('device.reboot');
@@ -96,9 +101,6 @@ Route::middleware(['auth', 'otp.verify','eng'])->group(function () {
     Route::get('/dashboard/bulk-actions/export/{id}', [BulkActionsController::class, 'exportReport'])->name('bulk-actions.export');
 
     Route::get('/dashboard/bulk-actions/nodes/{modelId}', [NodeController::class, 'getNodes'])->name('bulk-actions.nodes');
-
-    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
-    Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 
     Route::get('/dashboard/models-managment', [ModelController::class, 'index'])->name('device-models.index');
     Route::post('/dashboard/models-managment', [ModelController::class, 'store'])->name('device-models.store'); 

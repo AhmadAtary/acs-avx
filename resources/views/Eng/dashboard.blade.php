@@ -333,16 +333,17 @@
         range: 7 * 24 * 60 * 60 * 1000 // Show one week initially
       },
       yaxis: {
-        min: 0,
-        tickAmount: 4, // Ensures whole numbers 0, 1, 2, 3, etc.
-        forceNiceScale: true,
+        min: 0, // Ensures Y-axis starts at 0
+        tickAmount: Math.min(5, Math.max(1, Math.ceil(Math.max(...@json($newDevices))))), // Dynamically adjust ticks (max 5)
+        forceNiceScale: true, // Ensures even spacing
         labels: {
-          formatter: function (value) {
-            return Math.round(value); // Ensure whole numbers only
-          }
+            formatter: function (value, index) {
+                return index === 0 || value % 1 === 0 ? value : ''; // Only show whole numbers & avoid duplicates
+            },
+            style: { fontSize: '12px' }
         }
-      },
-      markers: { 
+    },
+    markers: { 
     show: true, 
     size: 5, 
     colors: ["#ffd200"], // ✅ Same color as the chart line

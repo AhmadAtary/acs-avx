@@ -19,4 +19,9 @@ class DeviceModel extends Model
     {
         return $this->hasMany(Node::class);
     }
+
+    public function dataModelNodes()
+    {
+        return $this->hasMany(DataModelNode::class, 'device_model_id');
+    }
 }

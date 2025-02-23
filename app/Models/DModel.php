@@ -7,7 +7,6 @@ use MongoDB\Laravel\Eloquent\Model;
 class DModel extends Model
 {
     protected $connection = 'mongodb';
-    protected $collection = 'Models';
+    protected $table = 'DataModel';
 
-    protected $fillable = ['Model', 'Product_Class'];
 }

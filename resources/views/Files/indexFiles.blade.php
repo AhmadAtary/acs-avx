@@ -110,8 +110,8 @@
                         <select class="form-select" id="productClass" name="productClass" required>
                                 <option value="" selectedOption>Select Device Model</option>
                             @foreach ($models as $model)
-                                <option value="{{ $model->Product_Class }}" data-oui="{{ $model->OUI }}">
-                                    {{ $model->Model }}
+                                <option value="{{ $model->product_class }}" data-oui="{{ $model->oui }}">
+                                    {{ $model->model_name }}
                                 </option>
                             @endforeach
                         </select>
