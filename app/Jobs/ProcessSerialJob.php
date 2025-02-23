@@ -63,7 +63,7 @@ class ProcessSerialJob implements ShouldQueue
         ];
 
         $client = new Client();
-        $apiUrl = "https://172.17.0.1:7557/devices/{$urlId}/tasks?connection_request";
+        $apiUrl = "https://172.19.0.1:7557/devices/{$urlId}/tasks?connection_request";
         Log::info("API URL: {$apiUrl}");
         Log::info("API Request Body: ", $json_body);
 

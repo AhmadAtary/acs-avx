@@ -679,7 +679,7 @@
                         <strong>${device.hostName || "Unknown"}</strong><br>
                         IP: ${device.ipAddress || "N/A"}<br>
                         MAC: ${device.macAddress || "N/A"}<br>
-                        ${isWired ? "Connection: <strong>Cable</strong>" : `RSSI: -${rssi} dBm`}
+                        ${isWired ? "N/A" : `RSSI: -${rssi} dBm`}
                     `;
                 });
 
@@ -693,7 +693,7 @@
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td>${device.hostName || "Unknown"}</td>
-                    <td>${isWired ? "Cable Connection" : `${rssi} dBm`}</td>
+                    <td>${isWired ? "N/A" : `${rssi} dBm`}</td>
                 `;
                 tableBody.appendChild(row);
             });
