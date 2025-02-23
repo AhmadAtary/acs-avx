@@ -147,7 +147,7 @@ class CustomerSupportController extends Controller
         }
 
         $client = new Client(['verify' => false]); // Disable SSL verification
-        $api_url = "https://172.19.0.1:7557/devices/{$url_id}/tasks?connection_request";
+        $api_url = "https://172.18.0.1:7557/devices/{$url_id}/tasks?connection_request";
 
         try {
             if ($action == 'GET') {

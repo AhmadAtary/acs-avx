@@ -52,7 +52,7 @@ class FileController extends Controller
                 'productClass' => $request->productClass,
                 'version' => $request->version,
             ])->withoutVerifying()->withBody($fileContent, 'application/octet-stream')
-            ->put("https://172.19.0.1:7557/files/" . $originalFileName);
+            ->put("https://172.18.0.1:7557/files/" . $originalFileName);
 
             // Delete the file after upload attempt
             Storage::delete($path);
@@ -131,7 +131,7 @@ class FileController extends Controller
     
         try {
             // Send the request to the specified URL
-            $response = $client->post("https://172.19.0.1:7557/devices/{$url_id}/tasks?connection_request", [
+            $response = $client->post("https://172.18.0.1:7557/devices/{$url_id}/tasks?connection_request", [
                 'json' => $json_body,
                 'verify' => false, // Disable SSL verification for self-signed certificates
             ]);
