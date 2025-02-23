@@ -1,11 +1,17 @@
 <div class="heatmap-container" id="heatmap">
+    <!-- Range Circles -->
+    <div class="range-circle" style="width: 100px; height: 100px;"></div>
+    <div class="range-circle" style="width: 200px; height: 200px;"></div>
+    <div class="range-circle" style="width: 300px; height: 300px;"></div>
+    <div class="range-circle" style="width: 400px; height: 400px;"></div>
+
     <!-- Router icon at the center -->
     <div class="router">
         <i class="fa-solid fa-wifi"></i>
     </div>
+
     <div class="tooltip" id="tooltip"></div>
 </div>
-
 
 <style>
 /* Heatmap Container with Darker Signal Strength Gradient */
@@ -17,7 +23,26 @@
     border-radius: 50%;
     overflow: hidden;
     box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
+
+/* Range Circles Inside the Heatmap */
+.range-circle {
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 0, 0, 0.8); /* Black Range Circles */
+    background: transparent;
+    box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.5);
+    transform: translate(-50%, -50%);
+}
+
+/* Position each circle correctly */
+.range-circle:nth-child(1) { top: 50%; left: 50%; }
+.range-circle:nth-child(2) { top: 50%; left: 50%; }
+.range-circle:nth-child(3) { top: 50%; left: 50%; }
+.range-circle:nth-child(4) { top: 50%; left: 50%; }
 
 /* Device Nodes - Positioned Dynamically */
 .device-node {
@@ -34,15 +59,15 @@
 
 /* Darker Colors for Signal Strength */
 .device-node[data-signal="strong"] {
-    background-color: rgba(251, 253, 251, 0.9); /* Dark Green - Strong Signal */
+    background-color: rgba(0, 255, 0, 0.9); /* Strong Signal - Green */
 }
 
 .device-node[data-signal="medium"] {
-    background-color: rgba(251, 253, 251, 0.9); /* Dark Yellow - Medium Signal */
+    background-color: rgba(255, 255, 0, 0.9); /* Medium Signal - Yellow */
 }
 
 .device-node[data-signal="weak"] {
-    background-color: rgba(251, 253, 251, 0.9); /* Dark Red - Weak Signal */
+    background-color: rgba(255, 0, 0, 0.9); /* Weak Signal - Red */
 }
 
 /* Hover Effect */
@@ -75,6 +100,7 @@
     align-items: center;
     justify-content: center;
     border-radius: 50%;
+    background: black;
     box-shadow: 0px 0px 8px rgba(0, 50, 150, 0.9);
 }
 
@@ -84,7 +110,7 @@
 }
 
 .HeatmapRow {
-    display: none; /*Initially hide the HeatmapRow*/
+    display: none; /* Initially hide the HeatmapRow */
     flex-wrap: wrap; /* Allow elements to wrap in the row */
     margin-top: 20px;
 }

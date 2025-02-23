@@ -45,7 +45,7 @@
                             <label for="csvFile" class="form-label">Upload CSV File:</label>
                             <input type="file" name="csvFile" id="csvFile" accept=".csv" required>
                             <small class="text-muted">
-                                <a href="{{ asset('storage/cs_nodes_template.csv') }}" download class="text-gray-600">
+                                <a href="{{ asset('storage/bulk_actions_template.csv') }}" download class="text-gray-600">
                                     Download Template
                                 </a>
                             </small>

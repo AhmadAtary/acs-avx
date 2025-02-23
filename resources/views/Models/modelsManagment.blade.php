@@ -37,7 +37,7 @@
 
             <!-- CS Nodes CSV Upload -->
             <div class="col-12">
-                <label class="form-label">Upload CS Nodes (CSV)</label>
+                <label class="form-label">Upload Customer Service Nodes (CSV)</label>
                 <input type="file" name="cs_nodes_file" accept=".csv" class="form-control">
                 <small class="text-muted">
                     <a href="{{ asset('storage/cs_nodes_template.csv') }}" download class="text-gray-600">

@@ -81,32 +81,96 @@ Route::middleware(['auth', 'otp.verify','eng'])->group(function () {
     Route::get('/device-per-Model/{model}', [DeviceController::class, 'index_Models'])->name('device.modelShow');
     Route::get('/devices/search/model', [DeviceController::class, 'searchDevicesByModel'])->name('devicesModels.search');
 
-    Route::get('/dashboard/users', [UserController::class, 'index'])->name('users.index');
-    Route::post('/dashboard/users', [UserController::class, 'store'])->name('users.store');
-    Route::put('/dashboard/users/{id}', [UserController::class, 'update'])->name('users.update');
-    Route::delete('/dashboard/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+    // User Management Routes with Permission Middleware
+    Route::get('/dashboard/users', [UserController::class, 'index'])
+        ->middleware(['check.permission:user_management,view'])
+        ->name('users.index');
+
+    Route::post('/dashboard/users', [UserController::class, 'store'])
+        ->middleware(['check.permission:user_management,create'])
+        ->name('users.store');
+
+    Route::put('/dashboard/users/{id}', [UserController::class, 'update'])
+        ->middleware(['check.permission:user_management,edit'])
+        ->name('users.update');
+
+    Route::delete('/dashboard/users/{id}', [UserController::class, 'destroy'])
+        ->middleware(['check.permission:user_management,delete'])
+        ->name('users.destroy');
 
 
-    Route::get('/dashboard/files', [FileController::class, 'index'])->name('files.index'); // List all files
-    Route::post('/dashboard/files/store', [FileController::class, 'store'])->name('files.store'); // Store a new file
-    Route::put('/dashboard/files/update/{id}', [FileController::class, 'update'])->name('files.update'); // Update an existing file
-    Route::delete('/dashboard/filesdelete/{id}', [FileController::class, 'destroy'])->name('files.destroy'); // Delete a file
 
-    Route::get('/dashboard/bulk-actions', [BulkActionsController::class, 'index'])->name('bulk-actions.index');
-    Route::post('/dashboard/bulk-actions/upload', [BulkActionsController::class, 'upload'])->name('bulk-actions.upload');
-    Route::get('/dashboard/bulk-actions/pause/{progressId}', [BulkActionsController::class, 'pause'])->name('bulk-actions.pause');
-    Route::get('/dashboard/bulk-actions/resume/{progressId}', [BulkActionsController::class, 'resume'])->name('bulk-actions.resume');
-    Route::get('/dashboard/bulk-actions/delete/{progressId}', [BulkActionsController::class, 'delete'])->name('bulk-actions.delete');
-    Route::get('/dashboard/bulk-actions/progress/{progressId}', [BulkActionsController::class, 'progress'])->name('bulk-actions.progress');
-    Route::get('/dashboard/bulk-actions/export/{id}', [BulkActionsController::class, 'exportReport'])->name('bulk-actions.export');
+    Route::get('/dashboard/files', [FileController::class, 'index'])
+        ->middleware(['check.permission:files_management,view'])
+        ->name('files.index'); // List all files
+    
+    Route::post('/dashboard/files/store', [FileController::class, 'store'])
+        ->middleware(['check.permission:files_management,create'])
+        ->name('files.store'); // Store a new file
+    
+    Route::put('/dashboard/files/update/{id}', [FileController::class, 'update'])
+        ->middleware(['check.permission:files_management,edit'])
+        ->name('files.update'); // Update an existing file
+    
+    Route::delete('/dashboard/filesdelete/{id}', [FileController::class, 'destroy'])
+        ->middleware(['check.permission:files_management,delete'])
+        ->name('files.destroy'); // Delete a file
+    
 
-    Route::get('/dashboard/bulk-actions/nodes/{modelId}', [NodeController::class, 'getNodes'])->name('bulk-actions.nodes');
+        Route::get('/dashboard/bulk-actions', [BulkActionsController::class, 'index'])
+        ->middleware(['check.permission:bulk_actions,view'])
+        ->name('bulk-actions.index'); // View bulk actions
+    
+    Route::post('/dashboard/bulk-actions/upload', [BulkActionsController::class, 'upload'])
+        ->middleware(['check.permission:bulk_actions,create'])
+        ->name('bulk-actions.upload'); // Upload bulk actions
+    
+    Route::get('/dashboard/bulk-actions/pause/{progressId}', [BulkActionsController::class, 'pause'])
+        ->middleware(['check.permission:bulk_actions,edit'])
+        ->name('bulk-actions.pause'); // Pause bulk actions
+    
+    Route::get('/dashboard/bulk-actions/resume/{progressId}', [BulkActionsController::class, 'resume'])
+        ->middleware(['check.permission:bulk_actions,edit'])
+        ->name('bulk-actions.resume'); // Resume bulk actions
+    
+    Route::get('/dashboard/bulk-actions/delete/{progressId}', [BulkActionsController::class, 'delete'])
+        ->middleware(['check.permission:bulk_actions,delete'])
+        ->name('bulk-actions.delete'); // Delete bulk actions
+    
+    Route::get('/dashboard/bulk-actions/progress/{progressId}', [BulkActionsController::class, 'progress'])
+        ->middleware(['check.permission:bulk_actions,view'])
+        ->name('bulk-actions.progress'); // View bulk action progress
+    
+    Route::get('/dashboard/bulk-actions/export/{id}', [BulkActionsController::class, 'exportReport'])
+        ->middleware(['check.permission:bulk_actions,view'])
+        ->name('bulk-actions.export'); // Export bulk action reports
+    
+    Route::get('/dashboard/bulk-actions/nodes/{modelId}', [NodeController::class, 'getNodes'])
+        ->middleware(['check.permission:bulk_actions,view'])
+        ->name('bulk-actions.nodes'); // View nodes for bulk actions
+    
 
-    Route::get('/dashboard/models-managment', [ModelController::class, 'index'])->name('device-models.index');
-    Route::post('/dashboard/models-managment', [ModelController::class, 'store'])->name('device-models.store'); 
-    Route::get('/dashboard/models-managment/edit/{id}', [ModelController::class, 'edit'])->name('device-models.edit');
-    Route::put('/dashboard/models-managment/edit/{id}', [ModelController::class, 'update'])->name('device-models.update');
-    Route::delete('/dashboard/models-managment/destroy/{id}', [ModelController::class, 'destroy'])->name('device-models.destroy');
+
+    Route::get('/dashboard/models-managment', [ModelController::class, 'index'])
+        ->middleware(['check.permission:models_management,view'])
+        ->name('device-models.index'); // View all models
+
+    Route::post('/dashboard/models-managment', [ModelController::class, 'store'])
+        ->middleware(['check.permission:models_management,create'])
+        ->name('device-models.store'); // Create a new model
+
+    Route::get('/dashboard/models-managment/edit/{id}', [ModelController::class, 'edit'])
+        ->middleware(['check.permission:models_management,edit'])
+        ->name('device-models.edit'); // Edit model page
+
+    Route::put('/dashboard/models-managment/edit/{id}', [ModelController::class, 'update'])
+        ->middleware(['check.permission:models_management,edit'])
+        ->name('device-models.update'); // Update model details
+
+    Route::delete('/dashboard/models-managment/destroy/{id}', [ModelController::class, 'destroy'])
+        ->middleware(['check.permission:models_management,delete'])
+        ->name('device-models.destroy'); // Delete a model
+
 
 });
 

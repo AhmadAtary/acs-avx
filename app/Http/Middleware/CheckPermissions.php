@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class CheckPermissions
 {
@@ -13,21 +14,31 @@ class CheckPermissions
      */
     public function handle(Request $request, Closure $next, $module, $action)
     {
-        // Check if the user is authenticated
+        // Check if user is authenticated
         if (!Auth::check()) {
-            return redirect()->route('login')->with('error', 'You must be logged in.');
+            return redirect()->route('auth.login')->with('error', 'You must be logged in.');
         }
 
-        // Retrieve user permissions (Assuming it's stored as JSON in the database)
+        // Get authenticated user
         $user = Auth::user();
-        $permissions = json_decode($user->permissions, true); // Assuming 'permissions' is a column in the users table
+        
+        // Fetch permissions from `access` table based on user ID
+        $permissions = DB::table('accesses')
+            ->where('user_id', $user->id)
+            ->value('permissions'); // Assuming 'permissions' is stored as JSON
+
+        // Convert permissions JSON to an array
+        $permissions = json_decode($permissions, true);
+
+        // Debugging (Remove `dd()` after testing)
+        // dd($permissions, $module, $action);
 
         // Check if the module and action exist in permissions
         if (isset($permissions[$module][$action]) && $permissions[$module][$action] === true) {
-            return $next($request);
+            return $next($request); // Allow access when permission is `true`
         }
 
-        // If permission is not granted, redirect to the 403 error page
+        // If permission is not granted, redirect to 403 error page
         return redirect()->route('Errors.page-error-403');
     }
 }
