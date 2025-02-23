@@ -1,5 +1,7 @@
 @extends('layouts.guest')
+
 @section('title', 'AVXAV | CS Dashboard')
+
 @section('content')
 
 <!-- Navbar -->

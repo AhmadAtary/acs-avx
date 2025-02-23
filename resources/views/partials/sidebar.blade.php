@@ -17,7 +17,7 @@
             </li>
 
             <!-- Devices (Only for Super Admins) -->
-            @if($user->access->role == 'owner')
+            @if($user->access->role == 'owner' || $user->access->role == 'eng')
                 <li class="{{ request()->routeIs('devices.*') ? 'active' : '' }}">
                     <a href="javascript:;" class="has-arrow">
                         <div class="parent-icon"><i class="material-icons-outlined">devices</i></div>

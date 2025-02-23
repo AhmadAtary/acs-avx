@@ -6,8 +6,10 @@
   <div class="breadcrumb-title pe-3">Files Management</div>
   <div class="ms-auto">
       <!-- Add User Button -->
+      @if (auth()->user()->access && auth()->user()->access->permissions['files_management']['create'])
       <button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#createFileModal"><i class="bi bi-plus-lg me-2"></i>Add File</button>
-
+      @endif
+      
   </div>
 </div>
 
@@ -70,11 +72,13 @@
                                 data-bs-target="#editFileModal">
                             Edit
                         </button> --}}
+                        @if (auth()->user()->access && auth()->user()->access->permissions['files_management']['delete'])
                         <form action="{{ route('files.destroy', $file->_id) }}" method="POST" style="display:inline;">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</button>
                         </form>
+                        @endif
                     </td>
                 </tr>
             @endforeach

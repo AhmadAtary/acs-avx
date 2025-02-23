@@ -26,6 +26,7 @@
 
     <div class="row">
         <!-- Bulk Actions Form -->
+        @if (auth()->user()->access && auth()->user()->access->permissions['bulk_actions']['create'])
         <div class="col-md-6">
             <div class="card w-100 h-100 rounded-4 shadow-sm">
                 <div class="card-body">
@@ -76,6 +77,7 @@
                 </div>
             </div>
         </div>
+        @endif
 
         <!-- Progress List -->
         <div class="col-md-6">
@@ -97,7 +99,9 @@
                                         <strong>Not Found:</strong> <span class="not-found-count">{{ $progress->not_found_count }}</span>
                                     </p>
                                     <div class="d-flex gap-2 mt-3">
+                                    @if (auth()->user()->access && auth()->user()->access->permissions['bulk_actions']['delete'])
                                         <button class="btn btn-danger btn-sm delete-btn" data-progress-id="{{ $progress->id }}">Delete</button>
+                                    @endif
                                         <a href="{{ route('bulk-actions.export', $progress->id) }}" class="btn btn-success btn-sm">
                                             Export Report
                                         </a>

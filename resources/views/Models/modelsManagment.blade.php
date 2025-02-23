@@ -7,6 +7,7 @@
 
 <div class="row">
     <div class="col-12 col-lg-8">
+    @if (auth()->user()->access && auth()->user()->access->permissions['models_management']['create'])
     <form method="POST" action="{{ route('device-models.store') }}" enctype="multipart/form-data">
     @csrf
     <div class="card">
@@ -60,16 +61,18 @@
                 <button type="button" class="btn btn-outline-danger flex-fill" onclick="window.history.back()">
                     <i class="bi bi-x-circle me-2"></i>Cancel
                 </button>
+                
                 <button type="submit" class="btn btn-outline-primary flex-fill">
                     <i class="bi bi-send me-2"></i>Save Model
                 </button>
             </div>
         </div>
     </div>
+    
 </form>
 
     </div>
-
+    @endif
     <div class="col-12 col-lg-4">
         <div class="card">
             <div class="card-body">
@@ -95,6 +98,7 @@
                                             <i class="bi bi-pencil"></i> 
                                         </a> -->
 
+                                        @if (auth()->user()->access && auth()->user()->access->permissions['models_management']['delete'])
                                         <form action="{{ route('device-models.destroy', $model->id) }}" method="POST">
                                             @csrf
                                             @method('DELETE')
@@ -102,6 +106,7 @@
                                                 <i class="bi bi-trash"></i> <!-- Delete Icon -->
                                             </button>
                                         </form>
+                                        @endif
                                     </div>
                                 </td>                            
                             </tr>

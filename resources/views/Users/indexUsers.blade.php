@@ -1,6 +1,6 @@
 @extends('layouts.app')
-@section('content')
 
+@section('content')
 <div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
     <div class="breadcrumb-title pe-3">Users Management</div>
     <div class="ms-auto">
@@ -12,13 +12,13 @@
     </div>
 </div>
 
+<!-- Alerts -->
 @if (session('success'))
     <div class="alert alert-success alert-dismissible fade show" role="alert">
         {{ session('success') }}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 @endif
-
 @if ($errors->any())
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
         <ul class="mb-0">
@@ -47,9 +47,7 @@
                 <tr>
                     <td><strong>{{ $user->name }}</strong></td>
                     <td>{{ $user->email }}</td>
-                    <td>
-                        <span class="badge bg-info">{{ ucfirst(optional($user->access)->role ?? 'N/A') }}</span>
-                    </td>
+                    <td><span class="badge bg-info">{{ ucfirst(optional($user->access)->role ?? 'N/A') }}</span></td>
                     <td>{{ $user->created_at->format('M d, Y H:i A') }}</td>
                     <td>
                         @if (auth()->user()->access && auth()->user()->access->permissions['user_management']['edit'])
@@ -58,7 +56,7 @@
                                     data-name="{{ $user->name }}"
                                     data-email="{{ $user->email }}"
                                     data-role="{{ optional($user->access)->role }}"
-                                    data-permissions='@json($user->access->permissions)'
+                                    data-permissions='@json($user->access->permissions ?? [])'
                                     data-bs-toggle="modal"
                                     data-bs-target="#editUserModal">
                                 <i class="bi bi-pencil"></i>
@@ -80,6 +78,7 @@
         </table>
     </div>
 </div>
+
 <!-- Create User Modal -->
 <div class="modal fade" id="createUserModal" tabindex="-1">
     <div class="modal-dialog">
@@ -91,24 +90,28 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <label class="form-label">Name</label>
-                    <input type="text" class="form-control" name="name" required>
-
-                    <label class="form-label">Email</label>
-                    <input type="email" class="form-control" name="email" required>
-
-                    <label class="form-label">Password</label>
-                    <input type="password" class="form-control" name="password" required>
-
-                    <label class="form-label">Role</label>
-                    <select class="form-select user-role" id="create-role" name="role" required>
-                        <option value="cs">Customer Support</option>
-                        @if(auth()->user()->access->role == 'owner')
-                            <option value="eng">Engineer</option>
-                            <option value="owner">Super Admin</option>
-                        @endif
-                    </select>
-
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" name="password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Role</label>
+                        <select class="form-select user-role" id="create-role" name="role" required>
+                            <option value="cs">Customer Support</option>
+                            @if(auth()->user()->access->role == 'owner')
+                                <option value="eng">Engineer</option>
+                                <option value="owner">Super Admin</option>
+                            @endif
+                        </select>
+                    </div>
                     <div id="create-permissions-container" class="mt-3 d-none">
                         <label>Permissions</label>
                         <table class="table table-bordered">
@@ -127,7 +130,10 @@
                                         <td>{{ ucwords(str_replace('_', ' ', $section)) }}</td>
                                         @foreach(['view', 'create', 'delete', 'edit'] as $action)
                                             <td>
-                                                <input type="checkbox" name="permissions[{{ $section }}][{{ $action }}]" value="1" class="create-permission-checkbox">
+                                                <input type="checkbox" 
+                                                       name="permissions[{{ $section }}][{{ $action }}]"
+                                                       value="1"
+                                                       class="create-permission-checkbox">
                                             </td>
                                         @endforeach
                                     </tr>
@@ -143,6 +149,7 @@
         </div>
     </div>
 </div>
+
 <!-- Edit User Modal -->
 <div class="modal fade" id="editUserModal" tabindex="-1">
     <div class="modal-dialog">
@@ -156,21 +163,23 @@
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="edit-user-id" name="user_id">
-                    
-                    <label class="form-label">Name</label>
-                    <input type="text" class="form-control" id="edit-name" name="name" required>
-
-                    <label class="form-label">Email</label>
-                    <input type="email" class="form-control" id="edit-email" name="email" required>
-
-                    <label class="form-label">Role</label>
-                    <select class="form-select user-role" id="edit-role" name="role" required>
-                        <option value="cs">Customer Support</option>
-                        <option value="eng">Engineer</option>
-                        <option value="owner">Super Admin</option>
-                    </select>
-
-                    <div id="edit-permissions-container" class="mt-3">
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" id="edit-name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="edit-email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Role</label>
+                        <select class="form-select user-role" id="edit-role" name="role" required>
+                            <option value="cs">Customer Support</option>
+                            <option value="eng">Engineer</option>
+                            <option value="owner">Super Admin</option>
+                        </select>
+                    </div>
+                    <div id="edit-permissions-container" class="mt-3 d-none">
                         <label>Permissions</label>
                         <table class="table table-bordered">
                             <thead>
@@ -209,37 +218,56 @@
         </div>
     </div>
 </div>
-
 @endsection
-
 
 @section('scripts')
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+    // Function to toggle permissions visibility
+    function togglePermissionsVisibility(selectElement, permissionsContainer) {
+        if (selectElement.value === 'cs') {
+            permissionsContainer.classList.add('d-none');
+            permissionsContainer.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = false);
+        } else {
+            permissionsContainer.classList.remove('d-none');
+        }
+    }
+
+    // Create Modal Role Change Handler
+    const createRoleSelect = document.getElementById('create-role');
+    const createPermissionsContainer = document.getElementById('create-permissions-container');
+    createRoleSelect.addEventListener('change', () => {
+        togglePermissionsVisibility(createRoleSelect, createPermissionsContainer);
+    });
+    // Initial check for create modal
+    togglePermissionsVisibility(createRoleSelect, createPermissionsContainer);
+
+    // Edit Modal Role Change Handler
+    const editRoleSelect = document.getElementById('edit-role');
+    const editPermissionsContainer = document.getElementById('edit-permissions-container');
+    editRoleSelect.addEventListener('change', () => {
+        togglePermissionsVisibility(editRoleSelect, editPermissionsContainer);
+    });
+
+    // Edit Button Handler
     document.querySelectorAll(".edit-user-btn").forEach(button => {
         button.addEventListener("click", function () {
-            document.getElementById("edit-user-form").action = `/dashboard/users/${this.dataset.id}`;
-            document.getElementById("edit-user-id").value = this.dataset.id;
+            const userId = this.dataset.id;
+            document.getElementById("edit-user-form").action = `/dashboard/users/${userId}`;
+            document.getElementById("edit-user-id").value = userId;
             document.getElementById("edit-name").value = this.dataset.name;
             document.getElementById("edit-email").value = this.dataset.email;
             document.getElementById("edit-role").value = this.dataset.role;
 
-            let permissions = JSON.parse(this.dataset.permissions || "{}");
-
+            const permissions = JSON.parse(this.dataset.permissions || '{}');
             document.querySelectorAll(".edit-permission-checkbox").forEach(cb => {
                 const section = cb.dataset.section;
                 const action = cb.dataset.action;
-                cb.checked = permissions[section] && permissions[section][action] ? true : false;
+                cb.checked = permissions[section]?.[action] === true;
             });
 
-            // Hide permissions table for CS users
-            const permissionsContainer = document.getElementById("edit-permissions-container");
-            if (this.dataset.role === "cs") {
-                permissionsContainer.classList.add("d-none");
-                document.querySelectorAll(".edit-permission-checkbox").forEach(cb => cb.checked = false);
-            } else {
-                permissionsContainer.classList.remove("d-none");
-            }
+            // Initial toggle for edit modal
+            togglePermissionsVisibility(editRoleSelect, editPermissionsContainer);
         });
     });
 });

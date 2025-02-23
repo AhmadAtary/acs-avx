@@ -572,135 +572,135 @@
         document.querySelectorAll(".set-button").forEach(button => button.addEventListener('click', () => handleSetValue(button)));
         
         const heatmapContainer = document.getElementById("heatmap");
-const tooltip = document.getElementById("tooltip");
-const tableBody = document.getElementById("deviceTableBody");
-const serialNumber = "{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] }}";
-const heatmapRow = document.querySelector(".HeatmapRow"); // The row containing the heatmap and table
+        const tooltip = document.getElementById("tooltip");
+        const tableBody = document.getElementById("deviceTableBody");
+        const serialNumber = "{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] }}";
+        const heatmapRow = document.querySelector(".HeatmapRow"); // The row containing the heatmap and table
 
-// Fetch connected device data from the Laravel API
-async function fetchConnectedDevices(serialNumber) {
-    try {
-        const response = await fetch(`/device/hosts/${serialNumber}`);
-        if (!response.ok) {
-            console.error("Failed to fetch connected device data");
-            return { success: false, message: "Failed to fetch data" };
+        // Fetch connected device data from the Laravel API
+        async function fetchConnectedDevices(serialNumber) {
+            try {
+                const response = await fetch(`/device/hosts/${serialNumber}`);
+                if (!response.ok) {
+                    console.error("Failed to fetch connected device data");
+                    return { success: false, message: "Failed to fetch data" };
+                }
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error("Error fetching connected devices:", error);
+                return { success: false, message: "Error occurred while fetching data" };
+            }
         }
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error("Error fetching connected devices:", error);
-        return { success: false, message: "Error occurred while fetching data" };
-    }
-}
 
-// Map RSSI to Distance (Smaller distances for stronger signals)
-function mapRssiToDistance(rssi) {
-    const minRssi = 30;
-    const maxRssi = 100;
-    const minDistance = 20;
-    const maxDistance = 200;
+        // Map RSSI to Distance (Smaller distances for stronger signals)
+        function mapRssiToDistance(rssi) {
+            const minRssi = 30;
+            const maxRssi = 100;
+            const minDistance = 20;
+            const maxDistance = 200;
 
-    if (rssi === 0) {
-        return 40; // Cable connection (not based on RSSI)
-    }
+            if (rssi === 0) {
+                return 40; // Cable connection (not based on RSSI)
+            }
 
-    return maxDistance - ((rssi - minRssi) / (maxRssi - minRssi)) * (maxDistance - minDistance);
-}
+            return maxDistance - ((rssi - minRssi) / (maxRssi - minRssi)) * (maxDistance - minDistance);
+        }
 
-// Initialize Heatmap and Table
-async function initializeHeatmapAndTable() {
-    const result = await fetchConnectedDevices(serialNumber);
+        // Initialize Heatmap and Table
+        async function initializeHeatmapAndTable() {
+            const result = await fetchConnectedDevices(serialNumber);
 
-    // Hide the HeatmapRow if there's an error or no devices are found
-    if (!result.success || result.message.includes("No host nodes configuration found")) {
-        console.error(result.message || "No devices found.");
-        heatmapRow.style.display = "none"; // Hide the entire row
-        return;
-    }
+            // Hide the HeatmapRow if there's an error or no devices are found
+            if (!result.success || result.message.includes("No host nodes configuration found")) {
+                console.error(result.message || "No devices found.");
+                heatmapRow.style.display = "none"; // Hide the entire row
+                return;
+            }
 
-    const devices = result.data || [];
+            const devices = result.data || [];
 
-    if (!devices.length) {
-        console.error("No devices found for the provided serial number.");
-        heatmapRow.style.display = "none"; // Hide the entire row
-        return;
-    }
+            if (!devices.length) {
+                console.error("No devices found for the provided serial number.");
+                heatmapRow.style.display = "none"; // Hide the entire row
+                return;
+            }
 
-    // Show the HeatmapRow if data is successfully fetched
-    heatmapRow.style.display = "flex"; // Ensure the row is displayed as a flex container
+            // Show the HeatmapRow if data is successfully fetched
+            heatmapRow.style.display = "flex"; // Ensure the row is displayed as a flex container
 
-    // Set heatmap container to fixed dimensions
-    heatmapContainer.style.width = "500px";
-    heatmapContainer.style.height = "500px";
+            // Set heatmap container to fixed dimensions
+            heatmapContainer.style.width = "500px";
+            heatmapContainer.style.height = "500px";
 
-    const containerWidth = heatmapContainer.offsetWidth;
-    const containerHeight = heatmapContainer.offsetHeight;
+            const containerWidth = heatmapContainer.offsetWidth;
+            const containerHeight = heatmapContainer.offsetHeight;
 
-    // Create Circular Range Indicators
-    const radarRanges = [30, 60, 90, 120, 150, 200];
-    radarRanges.forEach((radius) => {
-        const circle = document.createElement("div");
-        circle.className = "radar-circle";
-        circle.style.width = `${radius * 2}px`;
-        circle.style.height = `${radius * 2}px`;
-        circle.style.left = `${containerWidth / 2 - radius}px`;
-        circle.style.top = `${containerHeight / 2 - radius}px`;
-        heatmapContainer.appendChild(circle);
-    });
+            // Create Circular Range Indicators
+            const radarRanges = [30, 60, 90, 120, 150, 200];
+            radarRanges.forEach((radius) => {
+                const circle = document.createElement("div");
+                circle.className = "radar-circle";
+                circle.style.width = `${radius * 2}px`;
+                circle.style.height = `${radius * 2}px`;
+                circle.style.left = `${containerWidth / 2 - radius}px`;
+                circle.style.top = `${containerHeight / 2 - radius}px`;
+                heatmapContainer.appendChild(circle);
+            });
 
-    // Place Devices and Populate Table
-    devices.forEach((device, index) => {
-        const rssi = device.signalStrength || 0;
-        const isWired = rssi === 0; // Check if it's a wired connection
+            // Place Devices and Populate Table
+            devices.forEach((device, index) => {
+                const rssi = device.signalStrength || 0;
+                const isWired = rssi === 0; // Check if it's a wired connection
 
-        const angle = (index / devices.length) * 2 * Math.PI; // Distribute evenly
-        const distance = mapRssiToDistance(rssi);
-        const x = containerWidth / 2 + Math.cos(angle) * distance;
-        const y = containerHeight / 2 + Math.sin(angle) * distance;
+                const angle = (index / devices.length) * 2 * Math.PI; // Distribute evenly
+                const distance = mapRssiToDistance(rssi);
+                const x = containerWidth / 2 + Math.cos(angle) * distance;
+                const y = containerHeight / 2 + Math.sin(angle) * distance;
 
-        const deviceNode = document.createElement("div");
-        deviceNode.className = "device-node";
-        deviceNode.style.left = `${x - 15}px`;
-        deviceNode.style.top = `${y - 15}px`;
+                const deviceNode = document.createElement("div");
+                deviceNode.className = "device-node";
+                deviceNode.style.left = `${x - 15}px`;
+                deviceNode.style.top = `${y - 15}px`;
 
-        // Set color based on connection type
+                // Set color based on connection type
 
 
-        const icon = document.createElement("i");
-        icon.className = "fa-solid fa-user";
-        icon.style.color = isWired ? "lightblue" : "white"; // Light blue for wired connections
-        deviceNode.appendChild(icon);
+                const icon = document.createElement("i");
+                icon.className = "fa-solid fa-user";
+                icon.style.color = isWired ? "lightblue" : "white"; // Light blue for wired connections
+                deviceNode.appendChild(icon);
 
-        deviceNode.addEventListener("mouseenter", () => {
-            tooltip.style.opacity = 1;
-            tooltip.style.left = `${x + 20}px`;
-            tooltip.style.top = `${y}px`;
-            tooltip.innerHTML = `
-                <strong>${device.hostName || "Unknown"}</strong><br>
-                IP: ${device.ipAddress || "N/A"}<br>
-                MAC: ${device.macAddress || "N/A"}<br>
-                ${isWired ? "Connection: <strong>Cable</strong>" : `RSSI: -${rssi} dBm`}
-            `;
-        });
+                deviceNode.addEventListener("mouseenter", () => {
+                    tooltip.style.opacity = 1;
+                    tooltip.style.left = `${x + 20}px`;
+                    tooltip.style.top = `${y}px`;
+                    tooltip.innerHTML = `
+                        <strong>${device.hostName || "Unknown"}</strong><br>
+                        IP: ${device.ipAddress || "N/A"}<br>
+                        MAC: ${device.macAddress || "N/A"}<br>
+                        ${isWired ? "Connection: <strong>Cable</strong>" : `RSSI: -${rssi} dBm`}
+                    `;
+                });
 
-        deviceNode.addEventListener("mouseleave", () => {
-            tooltip.style.opacity = 0;
-        });
+                deviceNode.addEventListener("mouseleave", () => {
+                    tooltip.style.opacity = 0;
+                });
 
-        heatmapContainer.appendChild(deviceNode);
+                heatmapContainer.appendChild(deviceNode);
 
-        // Add Row to Table
-        const row = document.createElement("tr");
-        row.innerHTML = `
-            <td>${device.hostName || "Unknown"}</td>
-            <td>${isWired ? "Cable Connection" : `${rssi} dBm`}</td>
-        `;
-        tableBody.appendChild(row);
-    });
-}
+                // Add Row to Table
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${device.hostName || "Unknown"}</td>
+                    <td>${isWired ? "Cable Connection" : `${rssi} dBm`}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
 
-// Initialize Heatmap and Table
-initializeHeatmapAndTable();
+        // Initialize Heatmap and Table
+        initializeHeatmapAndTable();
 
 
     const searchBar = document.getElementById("search-bar");
