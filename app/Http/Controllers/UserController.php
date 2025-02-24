@@ -20,6 +20,8 @@ class UserController extends Controller
     // Store a new user
     public function store(Request $request)
     {
+
+        // dd($request);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -27,25 +29,25 @@ class UserController extends Controller
             'role' => 'required|in:owner,eng,cs',
             'permissions' => 'nullable|array'
         ]);
-
+    
         $authUser = auth()->user();
-
+    
         if (!$authUser->access) {
             return redirect()->back()->with('error', 'You do not have the required access.');
         }
-
+    
         // Ensure an Engineer can only create CS users
         if ($authUser->access->role === 'eng' && $validated['role'] !== 'cs') {
             return redirect()->back()->with('error', 'Engineers can only create Customer Support users.');
         }
-
+    
         $currentUserCount = User::count();
         $accountLimit = $authUser->access->account_limit;
-
+    
         if ($currentUserCount >= $accountLimit) {
             return redirect()->back()->with('error', 'Account limit reached. Cannot add more users.');
         }
-
+    
         // Default permissions structure
         $permissions = [
             'bulk_actions' => ['view' => false, 'create' => false, 'delete' => false, 'edit' => false],
@@ -53,7 +55,7 @@ class UserController extends Controller
             'models_management' => ['view' => false, 'create' => false, 'delete' => false, 'edit' => false],
             'user_management' => ['view' => false, 'create' => false, 'delete' => false, 'edit' => false],
         ];
-
+    
         // If Owner or Engineer, apply selected permissions
         if ($validated['role'] !== 'cs') {
             foreach ($request->input('permissions', []) as $section => $actions) {
@@ -62,28 +64,31 @@ class UserController extends Controller
                 }
             }
         }
-
+    
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'is_otp_verified' => false,
         ]);
-
+        
+        // dd(json_encode($permissions));
         Access::create([
             'user_id' => $user->id,
             'account_number' => 'ACC-' . Str::random(8),
             'role' => $validated['role'],
-            'permissions' => json_encode($permissions),
+            'permissions' => $permissions
         ]);
-
+    
         return redirect()->back()->with('success', 'User created successfully!');
     }
+    
 
     
     // Update an existing user
     public function update(Request $request, $id)
     {
+        // dd($request);
         $user = User::findOrFail($id);
 
         $validated = $request->validate([

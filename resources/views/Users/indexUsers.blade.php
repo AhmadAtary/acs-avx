@@ -125,15 +125,17 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach(['bulk_actions', 'files_management', 'models_management', 'user_management'] as $section)
+                            @foreach(['bulk_actions', 'files_management', 'models_management', 'user_management'] as $section)
                                     <tr>
                                         <td>{{ ucwords(str_replace('_', ' ', $section)) }}</td>
                                         @foreach(['view', 'create', 'delete', 'edit'] as $action)
                                             <td>
-                                                <input type="checkbox" 
+                                                <input type="checkbox"
                                                        name="permissions[{{ $section }}][{{ $action }}]"
                                                        value="1"
-                                                       class="create-permission-checkbox">
+                                                       class="edit-permission-checkbox"
+                                                       data-section="{{ $section }}"
+                                                       data-action="{{ $action }}">
                                             </td>
                                         @endforeach
                                     </tr>
