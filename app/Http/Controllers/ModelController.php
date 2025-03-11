@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use App\Models\DeviceModel; // Import the DeviceModel
 use App\Models\DataModelNode;
 use App\Models\Node; // Import the Node model
+use App\Http\Controllers\LogController;
 use Illuminate\Support\Facades\Storage;
 
 class ModelController extends Controller
@@ -13,14 +14,14 @@ class ModelController extends Controller
 
     public function index()
     {
+        LogController::saveLog("models_managment", "User opened models managmanet page ");
+
         $deviceModels = DeviceModel::all();
         return view('Models.modelsManagment', compact('deviceModels'));
     }
 
     public function store(Request $request)
     {
-        // dd($request);
-        // Validate the request
         $request->validate([
             'model_name' => 'required|string|max:255',
             'product_class' => 'required|string|max:255',
@@ -90,6 +91,8 @@ class ModelController extends Controller
             }
         }
     
+        LogController::saveLog("model_upload", "User uploaded new model {$request->$model_name}");
+
         return redirect()->back()->with('success', 'Model and DataModel uploaded successfully.');
     }
     
@@ -158,6 +161,7 @@ class ModelController extends Controller
         // Delete the model
         $deviceModel->delete();
 
+        LogController::saveLog("model_upload", "User delete mdoel {$id}");
         return redirect()->back()->with('success', 'Device model deleted successfully.');
     }
     

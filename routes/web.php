@@ -14,6 +14,7 @@ use App\Http\Controllers\BulkActionsController;
 use App\Http\Controllers\NodeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\OtpController;
+use App\Http\Controllers\LogController;
 
 
 
@@ -171,6 +172,8 @@ Route::middleware(['auth', 'otp.verify','eng'])->group(function () {
         ->middleware(['check.permission:models_management,delete'])
         ->name('device-models.destroy'); // Delete a model
 
+
+    Route::get('users/{user}/logs', [LogController::class, 'getLogs'])->name('users.logs');
 
 });
 

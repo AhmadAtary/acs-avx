@@ -8,6 +8,7 @@ use App\Models\Device;
 use App\Models\DeviceModel;
 use App\Models\Host;
 use App\Models\File;
+use App\Http\Controllers\LogController; 
 
 
 class DeviceController extends Controller
@@ -26,6 +27,8 @@ class DeviceController extends Controller
         ->orderBy('_lastInform', 'desc') // Sort by _lastInform in descending order
         ->paginate(200);
 
+        LogController::saveLog('devices_page_access', "User  opened devices page");
+    
         return view('Devices.allDevices', compact('devices_count','devices'));
     }
 
@@ -58,6 +61,125 @@ class DeviceController extends Controller
     }
     
 
+    public function getRfValues($deviceData)
+    {
+        // dd($deviceData);
+        $rfValues = [];
+        $signalStatus = "Unknown";
+
+        // Traverse the device data to find 5G or 4G related nodes
+        $is5G = $this->checkFor5GNodes($deviceData);
+        $is4G = $this->checkFor4GNodes($deviceData);
+
+        // If 5G nodes are present, retrieve 5G RF values
+        if ($is5G) {
+            $rfValues = [
+                '5G RSRP' => $deviceData['InternetGatewayDevice']['children']['X_Web']['children']['MobileNetwork']['children']['SignalStatus']['children']['ENDC_RSRP']['value'] ?? null,
+                '5G RSRQ' => $deviceData['InternetGatewayDevice']['children']['X_Web']['children']['MobileNetwork']['children']['SignalStatus']['children']['ENDC_RSRQ']['value'] ?? null,
+                '5G SNR'  => $deviceData['InternetGatewayDevice']['children']['X_Web']['children']['MobileNetwork']['children']['SignalStatus']['children']['ENDC_SNR']['value'] ?? null,
+                'RSRP' => $deviceData['InternetGatewayDevice']['children']['X_Web']['children']['MobileNetwork']['children']['SignalStatus']['children']['RSRP']['value'] ?? null,
+                'RSRQ' => $deviceData['InternetGatewayDevice']['children']['X_Web']['children']['MobileNetwork']['children']['SignalStatus']['children']['RSRQ']['value'] ?? null,
+                'SINR' => $deviceData['InternetGatewayDevice']['children']['X_Web']['children']['MobileNetwork']['children']['SignalStatus']['children']['SINR']['value'] ?? null
+            ];
+            $signalStatus = $this->getSignalStrength($rfValues, true);
+        }
+        // If 4G nodes are present, retrieve 4G RF values
+        elseif ($is4G) {
+            $rfValues = [
+                'RSCP' => $deviceData['InternetGatewayDevice']['children']['WANDevice']['children']['1']['children']['X_WANNetConfigInfo']['children']['RSCP']['value'] ?? null,
+                'RSRP' => $deviceData['InternetGatewayDevice']['children']['WANDevice']['children']['1']['children']['X_WANNetConfigInfo']['children']['RSRP']['value'] ?? null,
+                'RSRQ' => $deviceData['InternetGatewayDevice']['children']['WANDevice']['children']['1']['children']['X_WANNetConfigInfo']['children']['RSRQ']['value'] ?? null
+            ];
+            $signalStatus = $this->getSignalStrength($rfValues);
+        }
+        
+
+        return ['rfValues' => $rfValues, 'signalStatus' => $signalStatus];
+    }
+
+    // Function to check if the device supports 5G based on available node
+    public function checkFor5GNodes($deviceData)
+    {
+        // Search for 5G-related nodes in the device data
+        return isset($deviceData['InternetGatewayDevice']['children']['X_Web']['children']['MobileNetwork']['children']['SignalStatus']);
+    }
+
+    // Function to check if the device supports 4G based on available node
+    public function checkFor4GNodes($deviceData)
+    {
+        // Search for 4G-related nodes in the device data
+        return isset($deviceData['InternetGatewayDevice']['children']['WANDevice']['children']['1']['children']['X_WANNetConfigInfo']);
+    }
+
+    public function getSignalStrength($rfValues, $is5G = false)
+    {
+        // Helper function to convert dBm string to numeric value
+        $parseDbm = function($value) {
+            if (is_string($value) && preg_match('/(-?\d+) dBm/', $value, $matches)) {
+                return (int) $matches[1]; // Return numeric value from the dBm string
+            }
+            return $value; // Return the value if it's already numeric
+        };
+    
+        // dd($rfValues['RSRP']);
+        // Parse the RSRP values
+        $rsrp = isset($rfValues['RSRP']) ? $parseDbm($rfValues['RSRP']) : null;
+        $rsrq = isset($rfValues['RSRQ']) ? $parseDbm($rfValues['RSRQ']) : null;
+        $sinr = isset($rfValues['SINR']) ? $parseDbm($rfValues['SINR']) : null;
+        $rsrp5G = isset($rfValues['5G RSRP']) ? $parseDbm($rfValues['5G RSRP']) : null;
+        $rsrq5G = isset($rfValues['5G RSRQ']) ? $parseDbm($rfValues['5G RSRQ']) : null;
+        $sinr5G = isset($rfValues['5G SNR']) ? $parseDbm($rfValues['5G SNR']) : null;
+    
+        $signalStatus = [];
+    
+        // If it's a 5G device, use 5G values and also return 4G signal status if available
+        if ($is5G) {
+            // 5G Signal strength classification
+            if ($rsrp5G !== null) {
+                if ($rsrp5G >= -65) {
+                    $signalStatus['5G'] = 'Strong';
+                } elseif ($rsrp5G >= -90) {
+                    $signalStatus['5G'] = 'Medium';
+                } else {
+                    $signalStatus['5G'] = 'Weak';
+                }
+            } else {
+                $signalStatus['5G'] = 'Unknown';
+            }
+    
+            // 4G Signal strength classification (If 4G data is available)
+            if ($rsrp !== null) {
+                if ($rsrp >= -65) {
+                    $signalStatus['4G'] = 'Strong';
+                } elseif ($rsrp >= -90) {
+                    $signalStatus['4G'] = 'Medium';
+                } else {
+                    $signalStatus['4G'] = 'Weak';
+                }
+            } else {
+                $signalStatus['4G'] = 'Unknown';
+            }
+    
+        } else {
+            // If it's a 4G device, use 4G signal strength
+            if ($rsrp !== null) {
+                if ($rsrp >= -65) {
+                    $signalStatus['4G'] = 'Strong';
+                } elseif ($rsrp >= -90) {
+                    $signalStatus['4G'] = 'Medium';
+                } else {
+                    $signalStatus['4G'] = 'Weak';
+                }
+            } else {
+                $signalStatus['4G'] = 'Unknown';
+            }
+        }
+    
+        return $signalStatus;
+    }
+    
+
+
     public function info($serialNumber)
     {
         // Fetch the device data based on the serial number
@@ -67,6 +189,9 @@ class DeviceController extends Controller
         if (!$device) {
             return redirect()->back()->with('error', 'Device not found.');
         }
+    
+        // Log the action
+        LogController::saveLog('device_index', "User opened the Device Info Page for: {$serialNumber}");
     
         // Get the model name
         $modelName = $device['_deviceId']['_ProductClass'] ?? null;
@@ -79,22 +204,39 @@ class DeviceController extends Controller
         $rawDeviceData = $device->toArray();
         $deviceData = $this->traverseJson($rawDeviceData);
     
+        // Get RF values and signal status
+        $rfData = $this->getRfValues($deviceData);
+    
+        // dd($rfData['signalStatus']);
         // Pass the processed data to the view
-        return view('Devices.deviceInfo', compact('deviceData', 'softwareFiles'));
+        return view('Devices.deviceInfo', [
+            'deviceData' => $deviceData,
+            'softwareFiles' => $softwareFiles,
+            'rfValues' => $rfData['rfValues'],
+            'signalStatus' => $rfData['signalStatus'],
+        ]);
     }
+    
     
     
     Public function device_model()
     {
 
         $devices_Models = DeviceModel::get();
-
+        LogController::saveLog('device_models_index', "User opened the Device Models Page");
+    
         // dd($devices_Models);
         return view('Devices.devicesModel', compact('devices_Models'));
     }
 
     public function index_Models($model)
     {
+        $timestamp = now(); // Current timestamp
+    
+        // Log: User accessed the Models page
+        LogController::saveLog('model_page_access', "User opened the Models Page for Model: {$model}");
+    
+        // Fetch devices based on the model
         $devices = Device::select(
             '_deviceId._SerialNumber', 
             '_deviceId._Manufacturer', 
@@ -105,8 +247,10 @@ class DeviceController extends Controller
             '_lastInform'
         )->where('_deviceId._ProductClass', $model)->paginate(200);
     
+        
         return view('Devices.devicesModelIndex', compact('devices', 'model'));
     }
+    
 
     public function searchDevicesByModel(Request $request)
     {
@@ -239,11 +383,16 @@ class DeviceController extends Controller
         $type = $validated['type'];
         $newValue = $validated['value'];
     
+        // Log the user initiating the set value action
+        LogController::saveLog('device_set_action', "User initiated setting value for device {$serialNumber} on Node {$path}, New Value: {$newValue}");
+    
         try {
             // Fetch only the necessary fields (_OUI, _ProductClass, _SerialNumber) for the given serial number
             $deviceData = Device::where('_deviceId._SerialNumber', $serialNumber)->first();
-            
+    
             if (!$deviceData || empty($deviceData['_deviceId']['_OUI']) || empty($deviceData['_deviceId']['_ProductClass']) || empty($deviceData['_deviceId']['_SerialNumber'])) {
+                // Log failure if device is not found or incomplete information
+                LogController::saveLog('device_set_action_failed', "Device with serial number {$serialNumber} not found or has incomplete device ID information.");
                 return response()->json([
                     'success' => false,
                     'message' => "Device with serial number $serialNumber not found or incomplete device ID information.",
@@ -254,7 +403,7 @@ class DeviceController extends Controller
             $deviceId = $this->url_ID($deviceData);
     
             // Construct the API URL using the generated Device ID
-            $apiUrl = "https://172.18.0.1:7557/devices/$deviceId/tasks?connection_request";
+            $apiUrl = "https://10.99.31.1:7557/devices/$deviceId/tasks?connection_request";
     
             // Construct the request payload
             $payload = [
@@ -268,9 +417,11 @@ class DeviceController extends Controller
             $response = Http::withOptions(['verify' => false]) // Disable SSL verification if needed
                             ->post($apiUrl, $payload);
     
-            // Check the HTTP status code
+            // Check the HTTP status code and log accordingly
             if ($response->status() === 200) {
                 $responseData = $response->json();
+                // Log success action
+                LogController::saveLog('device_set_action_success', "Successfully set value for device {$serialNumber} on Node {$path}, New Value: {$newValue}");
                 return response()->json([
                     'status_code' => $response->status(),
                     'success' => true,
@@ -279,6 +430,8 @@ class DeviceController extends Controller
                 ]);
             } elseif ($response->status() === 202) {
                 $responseData = $response->json();
+                // Log task acceptance as pending
+                LogController::saveLog('device_set_action_task', "Set value request for device {$serialNumber} on Node {$path} accepted as task: $newValue");
                 return response()->json([
                     'status_code' => $response->status(),
                     'success' => true,
@@ -286,6 +439,8 @@ class DeviceController extends Controller
                     'data' => $responseData,
                 ]);
             } else {
+                // Log failure response
+                LogController::saveLog('device_set_action_failed', "Failed to set value for device {$serialNumber} on Node {$path}");
                 return response()->json([
                     'success' => false,
                     'message' => "Failed to set value for $path ($type): " . $response->body(),
@@ -293,12 +448,15 @@ class DeviceController extends Controller
                 ], $response->status());
             }
         } catch (\Exception $e) {
+            // Log exception error
+            LogController::saveLog('device_set_action_failed', "Error occurred while setting value for device {$serialNumber}: " . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => "An error occurred while setting the value: " . $e->getMessage(),
             ], 500);
         }
     }
+    
 
     public function getNodeValue(Request $request)
     {
@@ -324,11 +482,13 @@ class DeviceController extends Controller
                 ], 404);
             }
 
+            LogController::saveLog('device_get_action', "User initiated getting value for device {$serialNumber} on Node {$path}");
+    
             // Generate the Device ID using the url_ID function
             $deviceId = $this->url_ID($deviceData);
 
             // Construct the API URL using the generated Device ID
-            $apiUrl = "https://172.18.0.1:7557/devices/$deviceId/tasks?connection_request";
+            $apiUrl = "https://10.99.31.1:7557/devices/$deviceId/tasks?connection_request";
 
             // Construct the request payload
             $payload = [
@@ -349,6 +509,7 @@ class DeviceController extends Controller
                 $value = $this->searchMongoData($latestDeviceData->toArray(), $path); // Use the helper function
                 
 
+                LogController::saveLog('device_get_action_success', "Successfully get value for device {$serialNumber} on Node {$path}, New Value: {$value}");
                 return response()->json([
                     'success' => true,
                     'message' => 'Value fetched successfully',
@@ -357,6 +518,7 @@ class DeviceController extends Controller
                     'response_data' => $response->json(), // Optional: Include external API response
                 ]);
             } elseif ($response->status() === 202) {
+                LogController::saveLog('device_get_action_task', "get value request for device {$serialNumber} on Node {$path} accepted as task");
                 return response()->json([
                     'success' => true,
                     'message' => "Value fetch request accepted as a task for $path ($type)",
@@ -364,6 +526,7 @@ class DeviceController extends Controller
                     'data' => $response->json(),
                 ]);
             } else {
+                LogController::saveLog('device_get_action_failed', "Failed to get value for device {$serialNumber} on Node {$path}");
                 return response()->json([
                     'success' => false,
                     'message' => "Failed to fetch value for $path ($type): " . $response->body(),
@@ -371,6 +534,7 @@ class DeviceController extends Controller
                 ], $response->status());
             }
         } catch (\Exception $e) {
+            LogController::saveLog('device_set_action_failed', "Error occurred while setting value for device {$serialNumber}");
             return response()->json([
                 'success' => false,
                 'message' => "An error occurred while fetching the value: " . $e->getMessage(),
@@ -380,147 +544,159 @@ class DeviceController extends Controller
 
     public function RebootDevice(Request $request)
     {
-
         // Validate incoming data
         $validated = $request->validate([
             'serialNumber' => 'required|string',
         ]);
     
         $serialNumber = $validated['serialNumber'];
-
     
         try {
             // Fetch only the necessary fields (_OUI, _ProductClass, _SerialNumber) for the given serial number
             $deviceData = Device::where('_deviceId._SerialNumber', $serialNumber)->first();
-            
-            
+    
             if (!$deviceData || empty($deviceData['_deviceId']['_OUI']) || empty($deviceData['_deviceId']['_ProductClass']) || empty($deviceData['_deviceId']['_SerialNumber'])) {
+                // Log failure if device not found
+                LogController::saveLog('device_reboot_failed', "Device with serial number {$serialNumber} not found or incomplete device ID information.");
                 return response()->json([
                     'success' => false,
                     'message' => "Device with serial number $serialNumber not found or incomplete device ID information.",
                 ], 404);
             }
     
+            // Log the reboot action initiation
+            LogController::saveLog('device_reboot_action', "User initiated reboot for device {$serialNumber}");
+    
             // Generate the Device ID using the url_ID function
             $deviceId = $this->url_ID($deviceData);
     
             // Construct the API URL using the generated Device ID
-            $apiUrl = "https://172.18.0.1:7557/devices/$deviceId/tasks?connection_request";
+            $apiUrl = "https://10.99.31.1:7557/devices/$deviceId/tasks?connection_request";
     
             // Construct the request payload
             $payload = [
                 'name' => 'reboot',
             ];
-            
- 
-
+    
             // Send the POST request to the external API
             $response = Http::withOptions(['verify' => false]) // Disable SSL verification if needed
                             ->post($apiUrl, $payload);
-            // dd($response);
-            // Check the HTTP status code
-            if ($response->status() === 200) {
-                
     
-                    return response()->json([
-                        'success' => true,
-                        'message' => 'Device Rebooted successfully',
-                        'status_code' => $response->status(),
-
-                    ]);
-                } elseif ($response->status() === 202) {
-                    return response()->json([
-                        'success' => true,
-                        'message' => "Device Reboot Saved as a Task",
-                        'status_code' => $response->status(),
-                        'data' => $response->json(),
-                    ]);
-                } else {
-                    return response()->json([
-                        'success' => false,
-                        'message' => "Fail  to Reboot this " . $response->body(),
-                        'status_code' => $response->status(),
-                    ], $response->status());
-                }
+            // Check the HTTP status code and log the result
+            if ($response->status() === 200) {
+                // Log success
+                LogController::saveLog('device_reboot_success', "Device {$serialNumber} rebooted successfully.");
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Device Rebooted successfully',
+                    'status_code' => $response->status(),
+                ]);
+            } elseif ($response->status() === 202) {
+                // Log task acceptance
+                LogController::saveLog('device_reboot_task', "Reboot request for device {$serialNumber} saved as a task.");
+                return response()->json([
+                    'success' => true,
+                    'message' => "Device Reboot Saved as a Task",
+                    'status_code' => $response->status(),
+                    'data' => $response->json(),
+                ]);
+            } else {
+                // Log failure
+                LogController::saveLog('device_reboot_failed', "Failed to reboot device {$serialNumber}: " . $response->body());
+                return response()->json([
+                    'success' => false,
+                    'message' => "Fail to Reboot this device: " . $response->body(),
+                    'status_code' => $response->status(),
+                ], $response->status());
+            }
         } catch (\Exception $e) {
+            // Log exception
+            LogController::saveLog('device_reboot_failed', "Error occurred while rebooting device {$serialNumber}: " . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => "An error occurred while fetching the value: " . $e->getMessage(),
+                'message' => "An error occurred while rebooting the device: " . $e->getMessage(),
             ], 500);
         }
     }
+    
 
     public function ResetDevice(Request $request)
     {
-
         // Validate incoming data
         $validated = $request->validate([
             'serialNumber' => 'required|string',
         ]);
     
         $serialNumber = $validated['serialNumber'];
-
     
         try {
             // Fetch only the necessary fields (_OUI, _ProductClass, _SerialNumber) for the given serial number
             $deviceData = Device::where('_deviceId._SerialNumber', $serialNumber)->first();
-            
-            
+    
             if (!$deviceData || empty($deviceData['_deviceId']['_OUI']) || empty($deviceData['_deviceId']['_ProductClass']) || empty($deviceData['_deviceId']['_SerialNumber'])) {
+                // Log failure if device not found
+                LogController::saveLog('device_reset_failed', "Device with serial number {$serialNumber} not found or incomplete device ID information.");
                 return response()->json([
                     'success' => false,
                     'message' => "Device with serial number $serialNumber not found or incomplete device ID information.",
                 ], 404);
             }
     
+            // Log the reset action initiation
+            LogController::saveLog('device_reset_action', "User initiated factory reset for device {$serialNumber}");
+    
             // Generate the Device ID using the url_ID function
             $deviceId = $this->url_ID($deviceData);
     
             // Construct the API URL using the generated Device ID
-            $apiUrl = "https://172.18.0.1:7557/devices/$deviceId/tasks?connection_request";
+            $apiUrl = "https://10.99.31.1:7557/devices/$deviceId/tasks?connection_request";
     
             // Construct the request payload
             $payload = [
                 'name' => 'factoryReset',
             ];
-            
- 
-
+    
             // Send the POST request to the external API
             $response = Http::withOptions(['verify' => false]) // Disable SSL verification if needed
                             ->post($apiUrl, $payload);
-            // dd($response);
-            // Check the HTTP status code
+    
+            // Check the HTTP status code and log the result
             if ($response->status() === 200) {
-                $responseData = $response->json();
-    
-                // Extract the value from the response
-                $value = isset($responseData['parameterValues'][0]) ? $responseData['parameterValues'][0] : null;
-    
+                // Log success
+                LogController::saveLog('device_reset_success', "Device {$serialNumber} reset successfully.");
                 return response()->json([
                     'success' => true,
-                    'value' => $value,
+                    'message' => 'Device reset successfully',
+                    'status_code' => $response->status(),
                 ]);
             } elseif ($response->status() === 202) {
+                // Log task acceptance
+                LogController::saveLog('device_reset_task', "Factory reset request for device {$serialNumber} saved as a task.");
                 return response()->json([
                     'success' => true,
-                    'message' => "Value fetch request accepted as a task for $path ($type)",
+                    'message' => "Factory reset request accepted as a task for device {$serialNumber}",
+                    'status_code' => $response->status(),
                     'data' => $response->json(),
                 ]);
             } else {
+                // Log failure
+                LogController::saveLog('device_reset_failed', "Failed to reset device {$serialNumber}: " . $response->body());
                 return response()->json([
                     'success' => false,
-                    'message' => "Failed to fetch value for $path ($type): " . $response->body(),
+                    'message' => "Failed to reset device: " . $response->body(),
                     'status_code' => $response->status(),
                 ], $response->status());
             }
         } catch (\Exception $e) {
+            // Log exception
+            LogController::saveLog('device_reset_failed', "Error occurred while resetting device {$serialNumber}: " . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => "An error occurred while fetching the value: " . $e->getMessage(),
+                'message' => "An error occurred while resetting the device: " . $e->getMessage(),
             ], 500);
         }
     }
+    
 
     public function destroy($id)
     {
@@ -528,16 +704,23 @@ class DeviceController extends Controller
         $device = Device::where('_deviceId._SerialNumber', $id)->first();
     
         if (!$device) {
+            // Log failure if device not found
+            LogController::saveLog('device_delete_failed', "Device with serial number {$id} not found.");
             return redirect()->route('dashboard')->with('error', 'Device not found.');
         }
     
         try {
             $device->delete();
+            // Log success
+            LogController::saveLog('device_delete_success', "Device with serial number {$id} deleted successfully.");
             return redirect()->route('dashboard')->with('success', 'Device deleted successfully.');
         } catch (\Exception $e) {
+            // Log exception
+            LogController::saveLog('device_delete_failed', "Error occurred while deleting device {$id}: " . $e->getMessage());
             return redirect()->route('dashboard')->with('error', 'Failed to delete device.');
         }
     }
+    
     
 
 

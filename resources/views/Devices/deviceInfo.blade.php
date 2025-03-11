@@ -30,8 +30,9 @@
     </div>
 
     <div class="row">
-        <div class="col-md-6">
-            <table class="table table-striped">
+
+        <div class="col-md-4">
+        <table class="table table-striped">
                 <tbody>
                     <tr>
                         <th>Serial Number:</th>
@@ -56,12 +57,55 @@
                 </tbody>
             </table>
         </div>
-        <div class="col-md-6">
-        <img src="{{ isset($deviceData['_deviceId']['children']['_ProductClass']['value']) 
+        <div class="col-md-4">
+    <table class="table table-striped">
+        <tbody>
+        @if ($rfValues)
+            @foreach ($rfValues as $key => $value)
+                <tr>
+                    <th>{{ $key }}:</th>
+                    <td>{{ $value ?? 'Unknown' }}</td>
+                </tr>
+            @endforeach
+        @endif
+
+        @if ($signalStatus)
+    <tr>
+        <th>4G Signal Status</th>
+        <td>
+            <strong>{{ $signalStatus['4G'] }}</strong>
+            <span class="signal-indicator {{ strtolower($signalStatus['4G']) }}"></span>
+        </td>
+    </tr>
+    @isset($signalStatus['5G'])
+        <tr>
+            <th>5G Signal Status</th>
+            <td>
+                <strong>{{ $signalStatus['5G'] }}</strong>
+                <span class="signal-indicator {{ strtolower($signalStatus['5G']) }}"></span>
+            </td>
+        </tr>
+    @endisset
+@endif
+
+
+        </tbody>
+    </table>
+</div>
+
+
+
+        <div class="col-md-4">
+        <img src="{{ 
+        file_exists(public_path('assets/Devices/' . $deviceData['_deviceId']['children']['_ProductClass']['value'] . '.png'))
             ? asset('assets/Devices/' . $deviceData['_deviceId']['children']['_ProductClass']['value'] . '.png') 
             : asset('assets/AVXAV Logos/default.png') }}" 
         class="card-img-top">
     </div>
+
+
+
+
 
     <div class="row HeatmapRow">
         <div class="col-md-8">
@@ -199,6 +243,32 @@
 @endsection
 
 @section('styles')
+<!-- Add this CSS to style the signal indicator -->
+<style>
+    .signal-indicator {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        margin-left: 10px;
+    }
+
+    .strong {
+        background-color: green;
+    }
+
+    .medium {
+        background-color: orange;
+    }
+
+    .weak {
+        background-color: red;
+    }
+
+    .unknown {
+        background-color: gray;
+    }
+</style>
 <style>
     ul {
         list-style-type: none;

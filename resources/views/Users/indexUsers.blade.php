@@ -50,6 +50,7 @@
                     <td><span class="badge bg-info">{{ ucfirst(optional($user->access)->role ?? 'N/A') }}</span></td>
                     <td>{{ $user->created_at->format('M d, Y H:i A') }}</td>
                     <td>
+                        @if ($user->access->role != "owner")
                         @if (auth()->user()->access && auth()->user()->access->permissions['user_management']['edit'])
                             <button class="btn btn-sm btn-warning edit-user-btn"
                                     data-id="{{ $user->id }}"
@@ -70,6 +71,10 @@
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </form>
+                        @endif
+                        <button class="btn btn-sm btn-info check-logs-btn" data-id="{{ $user->id }}" data-bs-toggle="modal" data-bs-target="#logsModal">
+                            User Logs
+                        </button>
                         @endif
                     </td>
                 </tr>
@@ -220,6 +225,28 @@
         </div>
     </div>
 </div>
+
+<!-- Logs Modal -->
+<div class="modal fade" id="logsModal" tabindex="-1" aria-labelledby="logsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="logsModalLabel">User Logs</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="logs-container">
+                    <!-- Logs will be loaded here -->
+                    <p class="text-center">Loading logs...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @section('scripts')
@@ -273,5 +300,45 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 });
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+    // Handle Check Logs button click
+    document.querySelectorAll(".check-logs-btn").forEach(button => {
+        button.addEventListener("click", function () {
+            const userId = this.dataset.id;
+            const logsContainer = document.getElementById("logs-container");
+
+            // Clear the previous logs and show loading text
+            logsContainer.innerHTML = "<p class='text-center'>Loading logs...</p>";
+
+            // Fetch logs for the selected user
+            fetch(`/users/${userId}/logs`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.length > 0) {
+                        let logsHtml = '<table class="table table-bordered"><thead><tr><th>Date</th><th>Action</th><th>Details</th></tr></thead><tbody>';
+                        data.forEach(log => {
+                            logsHtml += `
+                                <tr>
+                                    <td>${new Date(log.created_at).toLocaleString()}</td>
+                                    <td>${log.action}</td>
+                                    <td>${log.response}</td>
+                                </tr>
+                            `;
+                        });
+                        logsHtml += '</tbody></table>';
+                        logsContainer.innerHTML = logsHtml;
+                    } else {
+                        logsContainer.innerHTML = "<p class='text-center'>No logs found for this user.</p>";
+                    }
+                })
+                .catch(error => {
+                    logsContainer.innerHTML = "<p class='text-center text-danger'>Error fetching logs.</p>";
+                });
+        });
+    });
+});
+
 </script>
 @endsection
