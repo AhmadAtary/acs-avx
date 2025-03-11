@@ -63,113 +63,91 @@ class DeviceController extends Controller
 
     public function getRfValues($deviceData)
     {
-        // dd($deviceData);
         $rfValues = [];
         $signalStatus = "Unknown";
-
-        // Traverse the device data to find 5G or 4G related nodes
-        $is5G = $this->checkFor5GNodes($deviceData);
-        $is4G = $this->checkFor4GNodes($deviceData);
-
-        // If 5G nodes are present, retrieve 5G RF values
+    
+        // Determine which model the device uses (TR-069 or TR-181)
+        $useTR181 = isset($deviceData['Device']);
+        $useTR069 = isset($deviceData['InternetGatewayDevice']);
+    
+        // Set base path based on detected model
+        $basePath = $useTR181 ? $deviceData['Device'] : ($useTR069 ? $deviceData['InternetGatewayDevice'] : []);
+    
+        // Check for 5G and 4G nodes
+        $is5G = $this->checkFor5GNodes($basePath);
+        $is4G = $this->checkFor4GNodes($basePath);
+    
         if ($is5G) {
             $rfValues = [
-                '5G RSRP' => $deviceData['InternetGatewayDevice']['children']['X_Web']['children']['MobileNetwork']['children']['SignalStatus']['children']['ENDC_RSRP']['value'] ?? null,
-                '5G RSRQ' => $deviceData['InternetGatewayDevice']['children']['X_Web']['children']['MobileNetwork']['children']['SignalStatus']['children']['ENDC_RSRQ']['value'] ?? null,
-                '5G SNR'  => $deviceData['InternetGatewayDevice']['children']['X_Web']['children']['MobileNetwork']['children']['SignalStatus']['children']['ENDC_SNR']['value'] ?? null,
-                'RSRP' => $deviceData['InternetGatewayDevice']['children']['X_Web']['children']['MobileNetwork']['children']['SignalStatus']['children']['RSRP']['value'] ?? null,
-                'RSRQ' => $deviceData['InternetGatewayDevice']['children']['X_Web']['children']['MobileNetwork']['children']['SignalStatus']['children']['RSRQ']['value'] ?? null,
-                'SINR' => $deviceData['InternetGatewayDevice']['children']['X_Web']['children']['MobileNetwork']['children']['SignalStatus']['children']['SINR']['value'] ?? null
+                '5G RSRP' => $basePath['children']['X_Web']['children']['MobileNetwork']['children']['SignalStatus']['children']['ENDC_RSRP']['value'] ?? null,
+                '5G RSRQ' => $basePath['children']['X_Web']['children']['MobileNetwork']['children']['SignalStatus']['children']['ENDC_RSRQ']['value'] ?? null,
+                '5G SNR'  => $basePath['children']['X_Web']['children']['MobileNetwork']['children']['SignalStatus']['children']['ENDC_SNR']['value'] ?? null,
+                'RSRP'     => $basePath['children']['X_Web']['children']['MobileNetwork']['children']['SignalStatus']['children']['RSRP']['value'] ?? null,
+                'RSRQ'     => $basePath['children']['X_Web']['children']['MobileNetwork']['children']['SignalStatus']['children']['RSRQ']['value'] ?? null,
+                'SINR'     => $basePath['children']['X_Web']['children']['MobileNetwork']['children']['SignalStatus']['children']['SINR']['value'] ?? null,
             ];
             $signalStatus = $this->getSignalStrength($rfValues, true);
-        }
-        // If 4G nodes are present, retrieve 4G RF values
+        } 
         elseif ($is4G) {
             $rfValues = [
-                'RSCP' => $deviceData['InternetGatewayDevice']['children']['WANDevice']['children']['1']['children']['X_WANNetConfigInfo']['children']['RSCP']['value'] ?? null,
-                'RSRP' => $deviceData['InternetGatewayDevice']['children']['WANDevice']['children']['1']['children']['X_WANNetConfigInfo']['children']['RSRP']['value'] ?? null,
-                'RSRQ' => $deviceData['InternetGatewayDevice']['children']['WANDevice']['children']['1']['children']['X_WANNetConfigInfo']['children']['RSRQ']['value'] ?? null
+                'RSCP' => $basePath['children']['WANDevice']['children']['1']['children']['X_WANNetConfigInfo']['children']['RSCP']['value'] ?? null,
+                'RSRP' => $basePath['children']['WANDevice']['children']['1']['children']['X_WANNetConfigInfo']['children']['RSRP']['value'] ?? null,
+                'RSRQ' => $basePath['children']['WANDevice']['children']['1']['children']['X_WANNetConfigInfo']['children']['RSRQ']['value'] ?? null,
             ];
             $signalStatus = $this->getSignalStrength($rfValues);
         }
-        
-
+    
         return ['rfValues' => $rfValues, 'signalStatus' => $signalStatus];
     }
-
-    // Function to check if the device supports 5G based on available node
+    
+    // Function to check for 5G nodes (TR-181 and TR-069)
     public function checkFor5GNodes($deviceData)
     {
-        // Search for 5G-related nodes in the device data
-        return isset($deviceData['InternetGatewayDevice']['children']['X_Web']['children']['MobileNetwork']['children']['SignalStatus']);
+        return isset($deviceData['children']['X_Web']['children']['MobileNetwork']['children']['SignalStatus']);
     }
-
-    // Function to check if the device supports 4G based on available node
+    
+    // Function to check for 4G nodes (TR-181 and TR-069)
     public function checkFor4GNodes($deviceData)
     {
-        // Search for 4G-related nodes in the device data
-        return isset($deviceData['InternetGatewayDevice']['children']['WANDevice']['children']['1']['children']['X_WANNetConfigInfo']);
+        return isset($deviceData['children']['WANDevice']['children']['1']['children']['X_WANNetConfigInfo']);
     }
-
+    
+    // Function to determine signal strength
     public function getSignalStrength($rfValues, $is5G = false)
     {
-        // Helper function to convert dBm string to numeric value
         $parseDbm = function($value) {
             if (is_string($value) && preg_match('/(-?\d+) dBm/', $value, $matches)) {
-                return (int) $matches[1]; // Return numeric value from the dBm string
+                return (int) $matches[1];
             }
-            return $value; // Return the value if it's already numeric
+            return $value;
         };
     
-        // dd($rfValues['RSRP']);
-        // Parse the RSRP values
-        $rsrp = isset($rfValues['RSRP']) ? $parseDbm($rfValues['RSRP']) : null;
-        $rsrq = isset($rfValues['RSRQ']) ? $parseDbm($rfValues['RSRQ']) : null;
-        $sinr = isset($rfValues['SINR']) ? $parseDbm($rfValues['SINR']) : null;
-        $rsrp5G = isset($rfValues['5G RSRP']) ? $parseDbm($rfValues['5G RSRP']) : null;
-        $rsrq5G = isset($rfValues['5G RSRQ']) ? $parseDbm($rfValues['5G RSRQ']) : null;
-        $sinr5G = isset($rfValues['5G SNR']) ? $parseDbm($rfValues['5G SNR']) : null;
+        // Parse RSRP values
+        $rsrp    = isset($rfValues['RSRP']) ? $parseDbm($rfValues['RSRP']) : null;
+        $rsrq    = isset($rfValues['RSRQ']) ? $parseDbm($rfValues['RSRQ']) : null;
+        $sinr    = isset($rfValues['SINR']) ? $parseDbm($rfValues['SINR']) : null;
+        $rsrp5G  = isset($rfValues['5G RSRP']) ? $parseDbm($rfValues['5G RSRP']) : null;
+        $rsrq5G  = isset($rfValues['5G RSRQ']) ? $parseDbm($rfValues['5G RSRQ']) : null;
+        $sinr5G  = isset($rfValues['5G SNR']) ? $parseDbm($rfValues['5G SNR']) : null;
     
         $signalStatus = [];
     
-        // If it's a 5G device, use 5G values and also return 4G signal status if available
         if ($is5G) {
-            // 5G Signal strength classification
             if ($rsrp5G !== null) {
-                if ($rsrp5G >= -65) {
-                    $signalStatus['5G'] = 'Strong';
-                } elseif ($rsrp5G >= -90) {
-                    $signalStatus['5G'] = 'Medium';
-                } else {
-                    $signalStatus['5G'] = 'Weak';
-                }
+                $signalStatus['5G'] = ($rsrp5G >= -65) ? 'Strong' : (($rsrp5G >= -90) ? 'Medium' : 'Weak');
             } else {
                 $signalStatus['5G'] = 'Unknown';
             }
     
-            // 4G Signal strength classification (If 4G data is available)
             if ($rsrp !== null) {
-                if ($rsrp >= -65) {
-                    $signalStatus['4G'] = 'Strong';
-                } elseif ($rsrp >= -90) {
-                    $signalStatus['4G'] = 'Medium';
-                } else {
-                    $signalStatus['4G'] = 'Weak';
-                }
+                $signalStatus['4G'] = ($rsrp >= -65) ? 'Strong' : (($rsrp >= -90) ? 'Medium' : 'Weak');
             } else {
                 $signalStatus['4G'] = 'Unknown';
             }
-    
-        } else {
-            // If it's a 4G device, use 4G signal strength
+        } 
+        else {
             if ($rsrp !== null) {
-                if ($rsrp >= -65) {
-                    $signalStatus['4G'] = 'Strong';
-                } elseif ($rsrp >= -90) {
-                    $signalStatus['4G'] = 'Medium';
-                } else {
-                    $signalStatus['4G'] = 'Weak';
-                }
+                $signalStatus['4G'] = ($rsrp >= -65) ? 'Strong' : (($rsrp >= -90) ? 'Medium' : 'Weak');
             } else {
                 $signalStatus['4G'] = 'Unknown';
             }
