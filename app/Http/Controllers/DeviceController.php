@@ -381,7 +381,7 @@ class DeviceController extends Controller
             $deviceId = $this->url_ID($deviceData);
     
             // Construct the API URL using the generated Device ID
-            $apiUrl = "https://10.99.31.1:7557/devices/$deviceId/tasks?connection_request";
+            $apiUrl = "http://17.18.0.1:7557/devices/$deviceId/tasks?connection_request";
     
             // Construct the request payload
             $payload = [
@@ -466,7 +466,7 @@ class DeviceController extends Controller
             $deviceId = $this->url_ID($deviceData);
 
             // Construct the API URL using the generated Device ID
-            $apiUrl = "https://10.99.31.1:7557/devices/$deviceId/tasks?connection_request";
+            $apiUrl = "http://17.18.0.1:7557/devices/$deviceId/tasks?connection_request";
 
             // Construct the request payload
             $payload = [
@@ -549,7 +549,7 @@ class DeviceController extends Controller
             $deviceId = $this->url_ID($deviceData);
     
             // Construct the API URL using the generated Device ID
-            $apiUrl = "https://10.99.31.1:7557/devices/$deviceId/tasks?connection_request";
+            $apiUrl = "http://17.18.0.1:7557/devices/$deviceId/tasks?connection_request";
     
             // Construct the request payload
             $payload = [
@@ -627,7 +627,7 @@ class DeviceController extends Controller
             $deviceId = $this->url_ID($deviceData);
     
             // Construct the API URL using the generated Device ID
-            $apiUrl = "https://10.99.31.1:7557/devices/$deviceId/tasks?connection_request";
+            $apiUrl = "http://17.18.0.1:7557/devices/$deviceId/tasks?connection_request";
     
             // Construct the request payload
             $payload = [
