@@ -21,7 +21,7 @@ class CheckDatabaseConnection
             DB::connection('mysql')->getPdo();
         } catch (Exception $e) {
             Log::error('MySQL Database Connection Failed: ' . $e->getMessage());
-            return response()->view('errors.503', [], 503);
+            return response()->view('Errors.503', [], 503);
         }
 
         try {

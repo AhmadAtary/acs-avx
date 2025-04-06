@@ -9,6 +9,7 @@ use App\Models\DeviceModel;
 use App\Models\Host;
 use App\Models\File;
 use App\Http\Controllers\LogController; 
+use App\Http\Controllers\DeviceLogController;
 
 
 class DeviceController extends Controller
@@ -170,6 +171,7 @@ class DeviceController extends Controller
     
         // Log the action
         LogController::saveLog('device_index', "User opened the Device Info Page for: {$serialNumber}");
+        
     
         // Get the model name
         $modelName = $device['_deviceId']['_ProductClass'] ?? null;
@@ -363,6 +365,7 @@ class DeviceController extends Controller
     
         // Log the user initiating the set value action
         LogController::saveLog('device_set_action', "User initiated setting value for device {$serialNumber} on Node {$path}, New Value: {$newValue}");
+        
     
         try {
             // Fetch only the necessary fields (_OUI, _ProductClass, _SerialNumber) for the given serial number
@@ -381,7 +384,7 @@ class DeviceController extends Controller
             $deviceId = $this->url_ID($deviceData);
     
             // Construct the API URL using the generated Device ID
-            $apiUrl = "http://17.18.0.1:7557/devices/$deviceId/tasks?connection_request";
+            $apiUrl = "https://10.106.45.1:7557/devices/$deviceId/tasks?connection_request";
     
             // Construct the request payload
             $payload = [
@@ -398,8 +401,15 @@ class DeviceController extends Controller
             // Check the HTTP status code and log accordingly
             if ($response->status() === 200) {
                 $responseData = $response->json();
-                // Log success action
+
                 LogController::saveLog('device_set_action_success', "Successfully set value for device {$serialNumber} on Node {$path}, New Value: {$newValue}");
+
+                DeviceLogController::saveDeviceLog(
+                    'device_set_action_success', 
+                    "The action was successful for node {$path}. The new value is {$newValue}.", 
+                    $serialNumber
+                );        
+
                 return response()->json([
                     'status_code' => $response->status(),
                     'success' => true,
@@ -407,8 +417,16 @@ class DeviceController extends Controller
                     'data' => $responseData,
                 ]);
             } elseif ($response->status() === 202) {
+
+                DeviceLogController::saveDeviceLog('device_set_action_success', json_encode($response->json()), $serialNumber);
+
+                DeviceLogController::saveDeviceLog(
+                    'device_set_action_pending_task', 
+                    "The action was pending as a task for node {$path}, The new value is {$newValue}.", 
+                    $serialNumber
+                );       
+                
                 $responseData = $response->json();
-                // Log task acceptance as pending
                 LogController::saveLog('device_set_action_task', "Set value request for device {$serialNumber} on Node {$path} accepted as task: $newValue");
                 return response()->json([
                     'status_code' => $response->status(),
@@ -417,7 +435,13 @@ class DeviceController extends Controller
                     'data' => $responseData,
                 ]);
             } else {
-                // Log failure response
+
+                DeviceLogController::saveDeviceLog(
+                    'device_set_action_failed', 
+                    "Failed to complete the task for node {$path}. Attempted to set the value to {$newValue}.", 
+                    $serialNumber
+                ); 
+
                 LogController::saveLog('device_set_action_failed', "Failed to set value for device {$serialNumber} on Node {$path}");
                 return response()->json([
                     'success' => false,
@@ -426,7 +450,7 @@ class DeviceController extends Controller
                 ], $response->status());
             }
         } catch (\Exception $e) {
-            // Log exception error
+
             LogController::saveLog('device_set_action_failed', "Error occurred while setting value for device {$serialNumber}: " . $e->getMessage());
             return response()->json([
                 'success' => false,
@@ -466,7 +490,7 @@ class DeviceController extends Controller
             $deviceId = $this->url_ID($deviceData);
 
             // Construct the API URL using the generated Device ID
-            $apiUrl = "http://17.18.0.1:7557/devices/$deviceId/tasks?connection_request";
+            $apiUrl = "https://10.106.45.1:7557/devices/$deviceId/tasks?connection_request";
 
             // Construct the request payload
             $payload = [
@@ -487,6 +511,13 @@ class DeviceController extends Controller
                 $value = $this->searchMongoData($latestDeviceData->toArray(), $path); // Use the helper function
                 
 
+                DeviceLogController::saveDeviceLog(
+                    'device_get_action_success', 
+                    "Successfully completed the action for node {$path}. The updated value is {$value}.", 
+                    $serialNumber
+                );  
+
+
                 LogController::saveLog('device_get_action_success', "Successfully get value for device {$serialNumber} on Node {$path}, New Value: {$value}");
                 return response()->json([
                     'success' => true,
@@ -496,6 +527,13 @@ class DeviceController extends Controller
                     'response_data' => $response->json(), // Optional: Include external API response
                 ]);
             } elseif ($response->status() === 202) {
+
+                DeviceLogController::saveDeviceLog(
+                    'device_get_action_pending_task', 
+                    "The action for node {$path} has been successfully saved as a task.", 
+                    $serialNumber
+                ); 
+
                 LogController::saveLog('device_get_action_task', "get value request for device {$serialNumber} on Node {$path} accepted as task");
                 return response()->json([
                     'success' => true,
@@ -504,6 +542,12 @@ class DeviceController extends Controller
                     'data' => $response->json(),
                 ]);
             } else {
+
+                DeviceLogController::saveDeviceLog(
+                    'device_get_action_failed', 
+                    "Failed to complete the task for node {$path}.", 
+                    $serialNumber
+                ); 
                 LogController::saveLog('device_get_action_failed', "Failed to get value for device {$serialNumber} on Node {$path}");
                 return response()->json([
                     'success' => false,
@@ -549,7 +593,7 @@ class DeviceController extends Controller
             $deviceId = $this->url_ID($deviceData);
     
             // Construct the API URL using the generated Device ID
-            $apiUrl = "http://17.18.0.1:7557/devices/$deviceId/tasks?connection_request";
+            $apiUrl = "https://10.106.45.1:7557/devices/$deviceId/tasks?connection_request";
     
             // Construct the request payload
             $payload = [
@@ -563,6 +607,12 @@ class DeviceController extends Controller
             // Check the HTTP status code and log the result
             if ($response->status() === 200) {
                 // Log success
+                DeviceLogController::saveDeviceLog(
+                    'device_reboot_success', 
+                    "Devices have been successfully rebooted.", 
+                    $serialNumber
+                );  
+
                 LogController::saveLog('device_reboot_success', "Device {$serialNumber} rebooted successfully.");
                 return response()->json([
                     'success' => true,
@@ -570,7 +620,14 @@ class DeviceController extends Controller
                     'status_code' => $response->status(),
                 ]);
             } elseif ($response->status() === 202) {
+
                 // Log task acceptance
+                DeviceLogController::saveDeviceLog(
+                    'device_reboot_pending_task', 
+                    "Device reboot has been scheduled as a pending task.", 
+                    $serialNumber
+                ); 
+
                 LogController::saveLog('device_reboot_task', "Reboot request for device {$serialNumber} saved as a task.");
                 return response()->json([
                     'success' => true,
@@ -580,6 +637,12 @@ class DeviceController extends Controller
                 ]);
             } else {
                 // Log failure
+                DeviceLogController::saveDeviceLog(
+                    'device_reboot_failed', 
+                    "Device reboot failed", 
+                    $serialNumber
+                ); 
+
                 LogController::saveLog('device_reboot_failed', "Failed to reboot device {$serialNumber}: " . $response->body());
                 return response()->json([
                     'success' => false,
@@ -627,7 +690,7 @@ class DeviceController extends Controller
             $deviceId = $this->url_ID($deviceData);
     
             // Construct the API URL using the generated Device ID
-            $apiUrl = "http://17.18.0.1:7557/devices/$deviceId/tasks?connection_request";
+            $apiUrl = "https://10.106.45.1:7557/devices/$deviceId/tasks?connection_request";
     
             // Construct the request payload
             $payload = [
@@ -641,6 +704,12 @@ class DeviceController extends Controller
             // Check the HTTP status code and log the result
             if ($response->status() === 200) {
                 // Log success
+                DeviceLogController::saveDeviceLog(
+                    'device_reset_success', 
+                    "Devices have been successfully reset.", 
+                    $serialNumber
+                ); 
+
                 LogController::saveLog('device_reset_success', "Device {$serialNumber} reset successfully.");
                 return response()->json([
                     'success' => true,
@@ -649,6 +718,13 @@ class DeviceController extends Controller
                 ]);
             } elseif ($response->status() === 202) {
                 // Log task acceptance
+
+                DeviceLogController::saveDeviceLog(
+                    'device_reset_pending_task', 
+                    "Device reset has been scheduled as a pending task.", 
+                    $serialNumber
+                ); 
+
                 LogController::saveLog('device_reset_task', "Factory reset request for device {$serialNumber} saved as a task.");
                 return response()->json([
                     'success' => true,
@@ -658,6 +734,12 @@ class DeviceController extends Controller
                 ]);
             } else {
                 // Log failure
+                DeviceLogController::saveDeviceLog(
+                    'device_reset_failed', 
+                    "Device reset failed", 
+                    $serialNumber
+                ); 
+
                 LogController::saveLog('device_reset_failed', "Failed to reset device {$serialNumber}: " . $response->body());
                 return response()->json([
                     'success' => false,

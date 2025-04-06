@@ -25,6 +25,15 @@
                     </li>
                 </ul>
             </div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#deviceLogsModal" 
+                        data-device-id="{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? '' }}">
+                    Check Device Logs
+                </button>
+            </div>
+
         </div>
         <hr>
     </div>
@@ -107,25 +116,25 @@
 
 
 
-    <div class="row HeatmapRow">
-        <div class="col-md-8">
-            <h2>Heatmap</h2>
-            @include('partials.heatmap')
-        </div>
-        <div class="col-md-4">
-            <h2>Connected Devices</h2>
-            <div class="d-flex justify-content-center">
-            <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Device Name</th>
-                <th>RSSI</th>
-            </tr>
-        </thead>
-        <tbody id="deviceTableBody">
-            <!-- Table rows will be populated dynamically -->
-        </tbody>
-    </table>
+                <div class="row HeatmapRow">
+                    <div class="col-md-8">
+                        <h2>Heatmap</h2>
+                        @include('partials.heatmap')
+                    </div>
+                    <div class="col-md-4">
+                        <h2>Connected Devices</h2>
+                        <div class="d-flex justify-content-center">
+                        <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Device Name</th>
+                            <th>RSSI</th>
+                        </tr>
+                    </thead>
+                    <tbody id="deviceTableBody">
+                        <!-- Table rows will be populated dynamically -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -223,6 +232,35 @@
             </form>
         </div>
     </div>
+</div>
+
+<!-- Device Logs Modal -->
+<div class="modal fade" id="deviceLogsModal" tabindex="-1" aria-labelledby="deviceLogsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deviceLogsModalLabel">Device Logs</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive">
+          <table class="table table-striped table-bordered">
+            <thead class="table-light">
+              <tr>
+                <th>Username</th>
+                <th>Action</th>
+                <th>Response</th>
+                <th>Created At</th>
+              </tr>
+            </thead>
+            <tbody id="deviceLogsTableBody">
+              <tr><td colspan="4" class="text-center">No logs available.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 
@@ -837,5 +875,80 @@
         });
 
 </script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+    const checkLogsButton = document.querySelector('[data-bs-target="#deviceLogsModal"]');
+
+    if (checkLogsButton) {
+        checkLogsButton.addEventListener('click', () => {
+            const deviceId = checkLogsButton.getAttribute('data-device-id');
+            console.log('Device ID from Button:', deviceId);
+
+            if (deviceId) {
+                fetchDeviceLogs(deviceId);
+            } else {
+                console.warn('Device ID is empty or invalid.');
+            }
+        });
+    } else {
+        console.error('Check Device Logs button not found.');
+    }
+});
+
+</script>
+<script>
+function fetchDeviceLogs(deviceId, page = 1) {
+    console.log(`Fetching logs for Device ID: ${deviceId}, Page: ${page}`);
+
+    fetch(`/device-logs/${deviceId}?page=${page}`)
+        .then(response => {
+            console.log('Response Status:', response.status);
+            if (!response.ok) {
+                throw new Error(`Network response was not ok. Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('API Response Data:', data);
+            const tableBody = document.getElementById('deviceLogsTableBody');
+            tableBody.innerHTML = '';
+
+            if (!data.logs || data.logs.length === 0) {
+                console.warn('No logs available for this device.');
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No logs available for this device.</td></tr>';
+                return;
+            }
+
+            // Append logs to table
+            data.logs.forEach(log => {
+                console.log('Log Data:', log);
+                const createdAt = log.created_at ? new Date(log.created_at).toLocaleString() : 'N/A';
+                const row = `<tr>
+                                <td>${log.username || 'Unknown'}</td>
+                                <td>${log.action || 'N/A'}</td>
+                                <td>${log.response || 'N/A'}</td>
+                                <td>${createdAt}</td>
+                             </tr>`;
+                tableBody.innerHTML += row;
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching logs:', error);
+            document.getElementById('deviceLogsTableBody').innerHTML = '<tr><td colspan="4" class="text-center text-danger">Failed to load logs.</td></tr>';
+        });
+}
+
+// Initial load
+document.addEventListener('DOMContentLoaded', () => {
+    const deviceId = '{{ $deviceId ?? "" }}'; // Assuming deviceId is passed from the backend
+    console.log('Device ID from Backend:', deviceId);
+    if (deviceId) {
+        fetchDeviceLogs(deviceId);
+    } else {
+        console.warn('Device ID is empty or invalid.');
+    }
+});
+</script>
+
 
 @endsection
