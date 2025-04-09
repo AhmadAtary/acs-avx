@@ -33,32 +33,34 @@ class BulkActionsController extends Controller
             'newValue' => 'nullable|string',
             'nodeTypeDetailed' => 'nullable|string'
         ]);
-
-        // Get details from the request
+    
+        // Get user details and request data
+        $userId = auth()->id();
         $deviceModel = $request->input('model');
         $action = $request->input('action');
         $nodePath = $request->input('nodePath');
         $newValue = $request->input('newValue') ?: 'N/A';
         $nodeTypeDetailed = $request->input('nodeTypeDetailed');
         $date = now()->format('Y-m-d_H-i-s');
-
-        // Generate the filename
+    
+        // Generate the filename and store the file
         $filename = "{$deviceModel}_{$action}_{$date}.csv";
-
-        // Store the file
         $path = $request->file('csvFile')->storeAs('csv_files', $filename);
-
+    
+        // Save log: File uploaded
+        LogController::saveLog($userId, 'Bulk Action csv file upload', "User uploaded CSV file: {$filename}");
+    
         try {
             // Read and process the CSV data
             $csvData = array_map('str_getcsv', file(Storage::path($path)));
         } catch (\Exception $e) {
-            Log::error('Error reading CSV file: ' . $e->getMessage());
+            LogController::saveLog($userId, 'csv_upload_failed', "Error processing CSV file: " . $e->getMessage());
             return redirect()->back()->withErrors(['csvFile' => 'There was an error processing the CSV file.']);
         }
-
+    
         $total = count($csvData);
-        $bulkName = $total . ' Devices / Node Path: ' . $nodePath . ' / Action: ' . $action;
-
+        $bulkName = "{$total} Devices / Node Path: {$nodePath} / Action: {$action}";
+    
         // Create progress tracking record
         $progress = UploadProgress::create([
             'name' => $bulkName,
@@ -66,7 +68,10 @@ class BulkActionsController extends Controller
             'total' => $total,
             'status' => 'processing',
         ]);
-
+    
+        // Save log: Bulk action created
+        LogController::saveLog($userId, 'bulk_action_created', "Bulk action initiated: {$bulkName}");
+    
         // Dispatch jobs based on the action type
         foreach ($csvData as $row) {
             if (isset($row[0])) {
@@ -76,16 +81,18 @@ class BulkActionsController extends Controller
                 } elseif ($action === "get") {
                     ProcessSerialJobGet::dispatch($serialNumber, $progress->id, $nodePath, $action, null, $nodeTypeDetailed, $deviceModel);
                 }
-            } else {
-                Log::warning('CSV row missing serial number: ' . json_encode($row));
             }
         }
-
-        // Delete the uploaded CSV file after dispatching jobs
+    
+        // Delete the uploaded CSV file
         Storage::delete($path);
-
+        
+        // Save log: CSV processing completed
+        LogController::saveLog($userId, 'csv_upload_success', "CSV file processed and deleted: {$filename}");
+    
         return redirect()->back()->with('success', 'Bulk action successfully started. Progress is being tracked.');
     }
+    
 
     public function pause($progressId)
     {

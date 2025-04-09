@@ -741,7 +741,7 @@
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td>${device.hostName || "Unknown"}</td>
-                    <td>${isWired ? "Cable Connection" : `${rssi} dBm`}</td>
+                    <td>${isWired ? "N/A" : `${rssi} dBm`}</td>
                 `;
                 tableBody.appendChild(row);
             });

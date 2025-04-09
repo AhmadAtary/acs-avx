@@ -25,13 +25,23 @@
                     </li>
                 </ul>
             </div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#deviceLogsModal" 
+                        data-device-id="{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? '' }}">
+                    Check Device Logs
+                </button>
+            </div>
+
         </div>
         <hr>
     </div>
 
     <div class="row">
-        <div class="col-md-6">
-            <table class="table table-striped">
+
+        <div class="col-md-4">
+        <table class="table table-striped">
                 <tbody>
                     <tr>
                         <th>Serial Number:</th>
@@ -56,32 +66,75 @@
                 </tbody>
             </table>
         </div>
-        <div class="col-md-6">
-        <img src="{{ isset($deviceData['_deviceId']['children']['_ProductClass']['value']) 
+        <div class="col-md-4">
+    <table class="table table-striped">
+        <tbody>
+        @if ($rfValues)
+            @foreach ($rfValues as $key => $value)
+                <tr>
+                    <th>{{ $key }}:</th>
+                    <td>{{ $value ?? 'Unknown' }}</td>
+                </tr>
+            @endforeach
+        @endif
+
+        @if ($signalStatus)
+    <tr>
+        <th>4G Signal Status</th>
+        <td>
+            <strong>{{ $signalStatus['4G'] }}</strong>
+            <span class="signal-indicator {{ strtolower($signalStatus['4G']) }}"></span>
+        </td>
+    </tr>
+    @isset($signalStatus['5G'])
+        <tr>
+            <th>5G Signal Status</th>
+            <td>
+                <strong>{{ $signalStatus['5G'] }}</strong>
+                <span class="signal-indicator {{ strtolower($signalStatus['5G']) }}"></span>
+            </td>
+        </tr>
+    @endisset
+@endif
+
+
+        </tbody>
+    </table>
+</div>
+
+
+
+        <div class="col-md-4">
+        <img src="{{ 
+        file_exists(public_path('assets/Devices/' . $deviceData['_deviceId']['children']['_ProductClass']['value'] . '.png'))
             ? asset('assets/Devices/' . $deviceData['_deviceId']['children']['_ProductClass']['value'] . '.png') 
             : asset('assets/AVXAV Logos/default.png') }}" 
         class="card-img-top">
     </div>
 
-    <div class="row HeatmapRow">
-        <div class="col-md-8">
-            <h2>Heatmap</h2>
-            @include('partials.heatmap')
-        </div>
-        <div class="col-md-4">
-            <h2>Connected Devices</h2>
-            <div class="d-flex justify-content-center">
-            <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Device Name</th>
-                <th>RSSI</th>
-            </tr>
-        </thead>
-        <tbody id="deviceTableBody">
-            <!-- Table rows will be populated dynamically -->
-        </tbody>
-    </table>
+
+
+
+
+                <div class="row HeatmapRow">
+                    <div class="col-md-8">
+                        <h2>Heatmap</h2>
+                        @include('partials.heatmap')
+                    </div>
+                    <div class="col-md-4">
+                        <h2>Connected Devices</h2>
+                        <div class="d-flex justify-content-center">
+                        <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Device Name</th>
+                            <th>RSSI</th>
+                        </tr>
+                    </thead>
+                    <tbody id="deviceTableBody">
+                        <!-- Table rows will be populated dynamically -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -181,6 +234,35 @@
     </div>
 </div>
 
+<!-- Device Logs Modal -->
+<div class="modal fade" id="deviceLogsModal" tabindex="-1" aria-labelledby="deviceLogsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deviceLogsModalLabel">Device Logs</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive">
+          <table class="table table-striped table-bordered">
+            <thead class="table-light">
+              <tr>
+                <th>Username</th>
+                <th>Action</th>
+                <th>Response</th>
+                <th>Created At</th>
+              </tr>
+            </thead>
+            <tbody id="deviceLogsTableBody">
+              <tr><td colspan="4" class="text-center">No logs available.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 
 <!-- Loading Overlay -->
@@ -199,6 +281,32 @@
 @endsection
 
 @section('styles')
+<!-- Add this CSS to style the signal indicator -->
+<style>
+    .signal-indicator {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        margin-left: 10px;
+    }
+
+    .strong {
+        background-color: green;
+    }
+
+    .medium {
+        background-color: orange;
+    }
+
+    .weak {
+        background-color: red;
+    }
+
+    .unknown {
+        background-color: gray;
+    }
+</style>
 <style>
     ul {
         list-style-type: none;
@@ -679,7 +787,7 @@
                         <strong>${device.hostName || "Unknown"}</strong><br>
                         IP: ${device.ipAddress || "N/A"}<br>
                         MAC: ${device.macAddress || "N/A"}<br>
-                        ${isWired ? "Connection: <strong>Cable</strong>" : `RSSI: -${rssi} dBm`}
+                        ${isWired ? "N/A" : `RSSI: -${rssi} dBm`}
                     `;
                 });
 
@@ -693,7 +801,7 @@
                 const row = document.createElement("tr");
                 row.innerHTML = `
                     <td>${device.hostName || "Unknown"}</td>
-                    <td>${isWired ? "Cable Connection" : `${rssi} dBm`}</td>
+                    <td>${isWired ? "N/A" : `${rssi} dBm`}</td>
                 `;
                 tableBody.appendChild(row);
             });
@@ -767,5 +875,80 @@
         });
 
 </script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+    const checkLogsButton = document.querySelector('[data-bs-target="#deviceLogsModal"]');
+
+    if (checkLogsButton) {
+        checkLogsButton.addEventListener('click', () => {
+            const deviceId = checkLogsButton.getAttribute('data-device-id');
+            console.log('Device ID from Button:', deviceId);
+
+            if (deviceId) {
+                fetchDeviceLogs(deviceId);
+            } else {
+                console.warn('Device ID is empty or invalid.');
+            }
+        });
+    } else {
+        console.error('Check Device Logs button not found.');
+    }
+});
+
+</script>
+<script>
+function fetchDeviceLogs(deviceId, page = 1) {
+    console.log(`Fetching logs for Device ID: ${deviceId}, Page: ${page}`);
+
+    fetch(`/device-logs/${deviceId}?page=${page}`)
+        .then(response => {
+            console.log('Response Status:', response.status);
+            if (!response.ok) {
+                throw new Error(`Network response was not ok. Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('API Response Data:', data);
+            const tableBody = document.getElementById('deviceLogsTableBody');
+            tableBody.innerHTML = '';
+
+            if (!data.logs || data.logs.length === 0) {
+                console.warn('No logs available for this device.');
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No logs available for this device.</td></tr>';
+                return;
+            }
+
+            // Append logs to table
+            data.logs.forEach(log => {
+                console.log('Log Data:', log);
+                const createdAt = log.created_at ? new Date(log.created_at).toLocaleString() : 'N/A';
+                const row = `<tr>
+                                <td>${log.username || 'Unknown'}</td>
+                                <td>${log.action || 'N/A'}</td>
+                                <td>${log.response || 'N/A'}</td>
+                                <td>${createdAt}</td>
+                             </tr>`;
+                tableBody.innerHTML += row;
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching logs:', error);
+            document.getElementById('deviceLogsTableBody').innerHTML = '<tr><td colspan="4" class="text-center text-danger">Failed to load logs.</td></tr>';
+        });
+}
+
+// Initial load
+document.addEventListener('DOMContentLoaded', () => {
+    const deviceId = '{{ $deviceId ?? "" }}'; // Assuming deviceId is passed from the backend
+    console.log('Device ID from Backend:', deviceId);
+    if (deviceId) {
+        fetchDeviceLogs(deviceId);
+    } else {
+        console.warn('Device ID is empty or invalid.');
+    }
+});
+</script>
+
 
 @endsection
