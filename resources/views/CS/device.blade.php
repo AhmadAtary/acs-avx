@@ -9,6 +9,75 @@
             <h1>Device Info</h1>
         </div>
         <div class="col-md-6 text-end">
+{{--Start Add task pop-up by Email --}}
+ <!-- Trigger Button -->
+<button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#SendTaskModal">
+    <i class="bi bi-plus-lg me-2"></i> Send Task by Email
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="SendTaskModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="send-task-form" method="POST" action="{{ route('send.task') }}" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Send Task via Email</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+
+
+
+                    <div class="mb-3">
+                        <label class="form-label">Your Name</label>
+                        <input type="text" class="form-control" name="username" value="{{ auth()->user()->name }}" readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Your Email</label>
+                        <input type="text" class="form-control" name="user_email" value="{{ auth()->user()->email }}" readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Device Serial Number</label>
+                        <input type="text" class="form-control" name="device_id" value="{{ $device['_deviceId']['_SerialNumber'] ?? 'Unknown Serial Number' }}" readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Recipient Email</label>
+                        <input type="email" class="form-control" name="email" placeholder="Enter recipient's email address" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email Subject</label>
+                        <input type="text" class="form-control" name="subject" placeholder="Email Subject" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Task Description</label>
+                        <textarea class="form-control" name="description" placeholder="Describe the task here..." rows="3" required></textarea>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success" id="submit-btn">
+                        <i class="bi bi-send me-1"></i> Send Task
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@if(session('success'))
+    <div class="alert alert-success mt-3" id="success-alert">
+        {{ session('success') }}
+    </div>
+@endif
+{{-- End Add task pop-up by Email --}}
+
+
             <div class="btn-group">
                 <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
                     Actions
@@ -51,7 +120,7 @@
             </table>
         </div>
         <div class="col-md-6">
-        <img src="{{ asset('assets/Devices/' . $device['_deviceId']['_ProductClass'] . '.png') }}" 
+        <img src="{{ asset('assets/Devices/' . $device['_deviceId']['_ProductClass'] . '.png') }}"
                          class="card-img-top">
         </div>
     </div>
@@ -95,7 +164,7 @@
 
         <div class="tab-content mt-3" id="nodeTabsContent">
             @foreach ($uniqueNodeTypes as $index => $category)
-                <div class="tab-pane fade {{ $index == 0 ? 'show active' : '' }}" id="{{ Str::slug($category) }}" 
+                <div class="tab-pane fade {{ $index == 0 ? 'show active' : '' }}" id="{{ Str::slug($category) }}"
                     role="tabpanel" aria-labelledby="{{ Str::slug($category) }}-tab">
 
                     <div class="card">
@@ -104,7 +173,7 @@
                                 @csrf
                                 <!-- Hidden input to send device_id -->
                                 <input type="hidden" name="device_id" value="{{ $device['_id'] ?? '' }}">
-                                <input type="hidden" id="url_Id" name="url_Id" class="form-control" 
+                                <input type="hidden" id="url_Id" name="url_Id" class="form-control"
                                 value="{{ $url_Id }}">
 
                                 <table class="table">
@@ -122,11 +191,11 @@
                                                     <td>
                                                         @if (isset($nodeValues[$nodeKey]['value']))
                                                             @if ($nodeValues[$nodeKey]['nodeMode'])
-                                                                <input type="text" name="nodes[{{ $nodeKey }}][value]" 
-                                                                    value="{{ $nodeValues[$nodeKey]['value'] }}" 
+                                                                <input type="text" name="nodes[{{ $nodeKey }}][value]"
+                                                                    value="{{ $nodeValues[$nodeKey]['value'] }}"
                                                                     class="form-control">
                                                             @else
-                                                                <input type="hidden" name="nodes[{{ $nodeKey }}][value]" 
+                                                                <input type="hidden" name="nodes[{{ $nodeKey }}][value]"
                                                                     value="{{ $nodeValues[$nodeKey]['value'] }}">
                                                                 <span>{{ $nodeValues[$nodeKey]['value'] }}</span>
                                                             @endif
@@ -208,11 +277,11 @@
                 @csrf
                 <div class="modal-body">
                     <div class="mb-3">
-                        
+
                         <!-- Properly handle the value and ensure it is enclosed in quotes -->
-                        <input type="hidden" id="device_id" name="device_id" class="form-control" 
+                        <input type="hidden" id="device_id" name="device_id" class="form-control"
                                value="{{ $device['_deviceId']['_SerialNumber'] }}">
-                        
+
                     </div>
                     <div class="mb-3">
                         <label for="swFile" class="form-label">Select Software File</label>
@@ -327,7 +396,7 @@
         opacity: 1;
         transform: translateY(0);
     }
-    
+
     .card-img-top {
         width: 100%; /* Ensures the image fits the card width */
         height: 200px; /* Set a fixed height for consistency across cards */
@@ -346,7 +415,7 @@
         cursor: pointer;
         margin-right: 5px;
     }
-    
+
 </style>
 @endsection
 
@@ -455,7 +524,7 @@
 
 
             // it's return null
-            
+
             if (fieldElement) {
                 fieldElement.textContent = value;
                 console.log(`Field "${path}" updated successfully.`);
