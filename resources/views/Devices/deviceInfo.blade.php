@@ -66,42 +66,43 @@
                 </tbody>
             </table>
         </div>
+        
+        {{-- Only show this column if 4G signal exists --}}
+        @if(isset($signalStatus['4G']))
         <div class="col-md-4">
-    <table class="table table-striped">
-        <tbody>
-        @if ($rfValues)
-            @foreach ($rfValues as $key => $value)
-                <tr>
-                    <th>{{ $key }}:</th>
-                    <td>{{ $value ?? 'Unknown' }}</td>
-                </tr>
-            @endforeach
+            <table class="table table-striped">
+                <tbody>
+                @if ($rfValues)
+                    @foreach ($rfValues as $key => $value)
+                        <tr>
+                            <th>{{ $key }}:</th>
+                            <td>{{ $value ?? 'Unknown' }}</td>
+                        </tr>
+                    @endforeach
+                @endif
+
+                @if ($signalStatus)
+                    <tr>
+                        <th>4G Signal Status</th>
+                        <td>
+                            <strong>{{ $signalStatus['4G'] }}</strong>
+                            <span class="signal-indicator {{ strtolower($signalStatus['4G']) }}"></span>
+                        </td>
+                    </tr>
+                    @isset($signalStatus['5G'])
+                        <tr>
+                            <th>5G Signal Status</th>
+                            <td>
+                                <strong>{{ $signalStatus['5G'] }}</strong>
+                                <span class="signal-indicator {{ strtolower($signalStatus['5G']) }}"></span>
+                            </td>
+                        </tr>
+                    @endisset
+                @endif
+                </tbody>
+            </table>
+        </div>
         @endif
-
-        @if ($signalStatus)
-    <tr>
-        <th>4G Signal Status</th>
-        <td>
-            <strong>{{ $signalStatus['4G'] }}</strong>
-            <span class="signal-indicator {{ strtolower($signalStatus['4G']) }}"></span>
-        </td>
-    </tr>
-    @isset($signalStatus['5G'])
-        <tr>
-            <th>5G Signal Status</th>
-            <td>
-                <strong>{{ $signalStatus['5G'] }}</strong>
-                <span class="signal-indicator {{ strtolower($signalStatus['5G']) }}"></span>
-            </td>
-        </tr>
-    @endisset
-@endif
-
-
-        </tbody>
-    </table>
-</div>
-
 
 
         <div class="col-md-4">
@@ -110,7 +111,7 @@
             ? asset('assets/Devices/' . $deviceData['_deviceId']['children']['_ProductClass']['value'] . '.png') 
             : asset('assets/AVXAV Logos/default.png') }}" 
         class="card-img-top">
-    </div>
+        </div>
 
 
 
@@ -949,6 +950,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 </script>
-
-
 @endsection

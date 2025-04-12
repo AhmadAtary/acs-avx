@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\Device;
 use App\Models\DeviceModel;
 use App\Models\DeviceCount;
+use App\Models\DeviceUser;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -14,11 +15,20 @@ class DashboardController extends Controller
         $user = auth()->user();
         $role = $user->getRole(); // Fetch role using the helper method in the User model
 
+        // Fetch assigned devices permission from the user's access permissions
+        $user_assigned = $user->access->permissions['assign_devices']['assign'] ?? null;
+
+        // Debugging the fetched permission
+        // dd($user_assigned);
+
         switch ($role) {
             case 'owner':
                 return $this->ownerDashboard();
             case 'eng':
-                return $this->ownerDashboard();
+                if($user_assigned) {
+                    return $this->engineerDashboardAssignedDevices();
+                }
+                return $this->engineerDashboard();
             case 'cs':
                 return $this->customerSupportDashboard();
             default:
@@ -99,4 +109,39 @@ class DashboardController extends Controller
 
         return view('CS.dashboard');
     }
+
+    private function engineerDashboardAssignedDevices()
+{
+    // Get all serial numbers assigned to the current user
+    $deviceIds = DeviceUser::where('user_id', auth()->id())
+        ->pluck('serial_number')
+        ->toArray();
+
+    // Fetch only valid serials that actually exist in the Mongo devices collection
+    $existingSerials = Device::whereIn('_deviceId._SerialNumber', $deviceIds)
+        ->pluck('_deviceId._SerialNumber')
+        ->toArray();
+
+    // Remove duplicates
+    $existingSerials = array_unique($existingSerials);
+
+    // dd($existingSerials);
+    // Fetch the actual device data based on the valid serial numbers only
+    $devices = Device::whereIn('_deviceId._SerialNumber', $existingSerials)
+        ->select(
+            '_deviceId._SerialNumber',
+            '_deviceId._Manufacturer',
+            '_deviceId._OUI',
+            '_deviceId._ProductClass',
+            'InternetGatewayDevice.DeviceInfo.SoftwareVersion._value as SoftwareVersion',
+            'InternetGatewayDevice.DeviceInfo.UpTime._value as UpTime',
+            '_lastInform'
+        )
+        ->paginate(10);
+
+        // dd($devices);
+    return view('Eng.assignedDevices', compact('devices'));
+}
+
+    
 }
