@@ -43,6 +43,8 @@ class CustomerSupportController extends Controller
             return redirect()->back()->with('error', 'Device not found');
         }
     
+ 
+
         $device = Device::where('_deviceId._SerialNumber', $serial)->first();
     
         if (!$device) {
@@ -50,6 +52,16 @@ class CustomerSupportController extends Controller
             return redirect()->back()->with('error', 'Device not found');
         }
     
+               // Check if the user has permission assigned
+               if (auth()->user()->access->permissions['assign_devices']['assign'] === true) {
+                $deviceUser = \App\Models\DeviceUser::where('serial_number', $serial)->where('user_id', $userId)->first();
+    
+                if (!$deviceUser) {
+                LogController::saveLog('Custome_Support_Device_info', "User {$userId} attempted to access device {$serial} without proper assignment.");
+                return redirect()->back()->with('error', 'You do not have permission to access this device.');
+                }
+            }
+            
         $url_Id = $this->url_ID($device); // Generate URL ID for the device
     
        

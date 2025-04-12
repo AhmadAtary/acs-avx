@@ -344,6 +344,10 @@ class DeviceController extends Controller
             $model = str_replace('-', '%252D', $model);
             $url_Id = $oui . '-' . $model . '-' . $serial;
             return $url_Id;
+        }elseif(str_contains($model, ' ')) {
+            $model = str_replace(' ', '%2520', $model);
+            $url_Id = $oui . '-' . $model . '-' . $serial;
+            return $url_Id;
         }
         return $device->_id;
     }
@@ -477,17 +481,21 @@ class DeviceController extends Controller
             // Fetch only the necessary fields (_OUI, _ProductClass, _SerialNumber) for the given serial number
             $deviceData = Device::where('_deviceId._SerialNumber', $serialNumber)->first();
 
+            $deviceId = $this->url_ID($deviceData);
+
+            // dd($deviceId);
+
             if (!$deviceData || empty($deviceData['_deviceId']['_OUI']) || empty($deviceData['_deviceId']['_ProductClass']) || empty($deviceData['_deviceId']['_SerialNumber'])) {
                 return response()->json([
                     'success' => false,
-                    'message' => "Device with serial number $serialNumber not found or incomplete device ID information.",
+                    'message' => "Device with serial number $deviceId not found or incomplete device ID information.",
                 ], 404);
             }
 
             LogController::saveLog('device_get_action', "User initiated getting value for device {$serialNumber} on Node {$path}");
     
             // Generate the Device ID using the url_ID function
-            $deviceId = $this->url_ID($deviceData);
+            
 
             // Construct the API URL using the generated Device ID
             $apiUrl = "https://10.106.45.1:7557/devices/$deviceId/tasks?connection_request";
@@ -791,6 +799,7 @@ class DeviceController extends Controller
      * @param string $path The dot-separated path to the desired value.
      * @return mixed|null The value if found, or null if not found.
      */
+    
     private function searchMongoData(array $data, string $path)
     {
         $keys = explode('.', $path); // Split the dot-separated path into keys.

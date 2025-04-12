@@ -16,7 +16,9 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\OtpController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\DeviceLogController;
+use App\Http\Controllers\UserDeviceController;
 use App\Http\Controllers\TaskMailController;
+
 
 
 use Illuminate\Support\Facades\Route;
@@ -58,6 +60,7 @@ Route::middleware(['auth', 'otp.verify'])->group(function () {
 
     Route::post('/Customer-serves/device/manage', [CustomerSupportController::class, 'manage'])->name('node.manageCustomer');
 
+    Route::post('/send-task', [TaskMailController::class, 'send'])->name('send.task');
 
 });
 
@@ -178,9 +181,13 @@ Route::middleware(['auth', 'otp.verify','eng'])->group(function () {
 
     Route::get('/device-logs/{device_id}', [DeviceLogController::class, 'getLogs'])->name('device-logs');
 
+    Route::put('/users/devices/full-access', [UserDeviceController::class, 'grantFullAccess'])->name('assign.devices.full-access');
+    Route::put('/users/devices/upload', [UserDeviceController::class, 'uploadDevices'])->name('assign.devices.csv');
+    Route::get('/users/{user}/devices/export', [UserDeviceController::class, 'export'])->name('export.devices.csv');
+    
 });
 
-Route::post('/send-task', [TaskMailController::class, 'send'])->name('send.task');
+
 
 Route::get('/error/403', function () {
     return response()->view('Errors.page-error-403', [], 403);
