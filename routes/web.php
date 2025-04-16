@@ -17,7 +17,9 @@ use App\Http\Controllers\OtpController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\DeviceLogController;
 use App\Http\Controllers\UserDeviceController;
+use App\Http\Controllers\TaskMailController;
 use App\Http\Controllers\DeviceStandardNodeController;
+
 
 
 
@@ -48,7 +50,7 @@ Route::middleware(['auth', 'otp.verify'])->group(function () {
     Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 
     Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
-    
+
     Route::get('/Customer-serves/device', [CustomerSupportController::class, 'show'])->middleware(['auth', 'verified'])->name('customer.device');
 
     Route::post('/device-action/reboot' , [DeviceController::class, 'RebootDevice'])->name('device.reboot');
@@ -57,9 +59,11 @@ Route::middleware(['auth', 'otp.verify'])->group(function () {
     Route::delete('/device-action/destroy/{id}', [DeviceController::class, 'destroy'])->name('device.delete');
     Route::post('/Customer-serves/device/manage', [CustomerSupportController::class, 'manage'])->name('node.manageCustomer');
 
+
     // This is the general route for all users to access device information return json 
     Route::get('/device/hosts/{serialNumber}' , [HostController::class, 'HostsInfo'])->name('device.host');
     Route::get('/device/nodes/{model}', [DeviceController::class, 'getStandardNodes'])->name('neighbor.nodes');
+    Route::post('/send-task', [TaskMailController::class, 'send'])->name('send.task');
 
 });
 
@@ -75,7 +79,7 @@ Route::middleware(['auth', 'otp.verify','eng'])->group(function () {
     Route::post('/device-action/get-Node' , [DeviceController::class, 'getNodevalue'])->name('node.get');
 
 
-    
+
     Route::get('/admin/hosts/create', [HostController::class, 'create'])->name('hosts.create');
     Route::post('/admin/hosts/store', [HostController::class, 'store'])->name('hosts.store');
     Route::get('/admin/hosts/{id}/edit', [HostController::class, 'edit'])->name('hosts.edit');
@@ -107,52 +111,52 @@ Route::middleware(['auth', 'otp.verify','eng'])->group(function () {
     Route::get('/dashboard/files', [FileController::class, 'index'])
         ->middleware(['check.permission:files_management,view'])
         ->name('files.index'); // List all files
-    
+
     Route::post('/dashboard/files/store', [FileController::class, 'store'])
         ->middleware(['check.permission:files_management,create'])
         ->name('files.store'); // Store a new file
-    
+
     Route::put('/dashboard/files/update/{id}', [FileController::class, 'update'])
         ->middleware(['check.permission:files_management,edit'])
         ->name('files.update'); // Update an existing file
-    
+
     Route::delete('/dashboard/filesdelete/{id}', [FileController::class, 'destroy'])
         ->middleware(['check.permission:files_management,delete'])
         ->name('files.destroy'); // Delete a file
-    
+
 
         Route::get('/dashboard/bulk-actions', [BulkActionsController::class, 'index'])
         ->middleware(['check.permission:bulk_actions,view'])
         ->name('bulk-actions.index'); // View bulk actions
-    
+
     Route::post('/dashboard/bulk-actions/upload', [BulkActionsController::class, 'upload'])
         ->middleware(['check.permission:bulk_actions,create'])
         ->name('bulk-actions.upload'); // Upload bulk actions
-    
+
     Route::get('/dashboard/bulk-actions/pause/{progressId}', [BulkActionsController::class, 'pause'])
         ->middleware(['check.permission:bulk_actions,edit'])
         ->name('bulk-actions.pause'); // Pause bulk actions
-    
+
     Route::get('/dashboard/bulk-actions/resume/{progressId}', [BulkActionsController::class, 'resume'])
         ->middleware(['check.permission:bulk_actions,edit'])
         ->name('bulk-actions.resume'); // Resume bulk actions
-    
+
     Route::get('/dashboard/bulk-actions/delete/{progressId}', [BulkActionsController::class, 'delete'])
         ->middleware(['check.permission:bulk_actions,delete'])
         ->name('bulk-actions.delete'); // Delete bulk actions
-    
+
     Route::get('/dashboard/bulk-actions/progress/{progressId}', [BulkActionsController::class, 'progress'])
         ->middleware(['check.permission:bulk_actions,view'])
         ->name('bulk-actions.progress'); // View bulk action progress
-    
+
     Route::get('/dashboard/bulk-actions/export/{id}', [BulkActionsController::class, 'exportReport'])
         ->middleware(['check.permission:bulk_actions,view'])
         ->name('bulk-actions.export'); // Export bulk action reports
-    
+
     Route::get('/dashboard/bulk-actions/nodes/{modelId}', [NodeController::class, 'getNodes'])
         ->middleware(['check.permission:bulk_actions,view'])
         ->name('bulk-actions.nodes'); // View nodes for bulk actions
-    
+
 
 
     Route::get('/dashboard/models-managment', [ModelController::class, 'index'])
@@ -189,6 +193,7 @@ Route::middleware(['auth', 'otp.verify','eng'])->group(function () {
     Route::get('/wifi/standard-nodes/{serialNumber}', [DeviceStandardNodeController::class, 'getStandardNodes'])->name('standard-nodes.get');
     
 });
+
 
 
 
