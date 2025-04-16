@@ -24,4 +24,9 @@ class DeviceModel extends Model
     {
         return $this->hasMany(DataModelNode::class, 'device_model_id');
     }
+
+    public function standardNodes()
+    {
+        return $this->hasMany(DeviceStandardNode::class);
+    }
 }

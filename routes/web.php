@@ -17,6 +17,7 @@ use App\Http\Controllers\OtpController;
 use App\Http\Controllers\LogController;
 use App\Http\Controllers\DeviceLogController;
 use App\Http\Controllers\UserDeviceController;
+use App\Http\Controllers\DeviceStandardNodeController;
 
 
 
@@ -54,11 +55,11 @@ Route::middleware(['auth', 'otp.verify'])->group(function () {
     Route::post('/device-action/reset', [DeviceController::class, 'ResetDevice'])->name('device.reset');
     Route::post('/device-action/pushSW', [FileController::class, 'pushSW'])->name('device.pushSW');
     Route::delete('/device-action/destroy/{id}', [DeviceController::class, 'destroy'])->name('device.delete');
-
-    Route::get('/device/hosts/{serialNumber}' , [HostController::class, 'HostsInfo'])->name('device.host');
-
     Route::post('/Customer-serves/device/manage', [CustomerSupportController::class, 'manage'])->name('node.manageCustomer');
 
+    // This is the general route for all users to access device information return json 
+    Route::get('/device/hosts/{serialNumber}' , [HostController::class, 'HostsInfo'])->name('device.host');
+    Route::get('/device/nodes/{model}', [DeviceController::class, 'getStandardNodes'])->name('neighbor.nodes');
 
 });
 
@@ -182,11 +183,13 @@ Route::middleware(['auth', 'otp.verify','eng'])->group(function () {
     Route::put('/users/devices/full-access', [UserDeviceController::class, 'grantFullAccess'])->name('assign.devices.full-access');
     Route::put('/users/devices/upload', [UserDeviceController::class, 'uploadDevices'])->name('assign.devices.csv');
     Route::get('/users/{user}/devices/export', [UserDeviceController::class, 'export'])->name('export.devices.csv');
+
+    Route::get('/wifi/standard-nodes/create', [DeviceStandardNodeController::class, 'create'])->name('standard-nodes.create');
+    Route::post('/wifi/standard-nodes/store', [DeviceStandardNodeController::class, 'store'])->name('standard-nodes.store');
+    Route::get('/wifi/standard-nodes/{serialNumber}', [DeviceStandardNodeController::class, 'getStandardNodes'])->name('standard-nodes.get');
     
 });
 
 
-Route::get('/error/403', function () {
-    return response()->view('Errors.page-error-403', [], 403);
-})->name('Errors.page-error-403');
+
 
