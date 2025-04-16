@@ -33,6 +33,11 @@
                     Check Device Logs
                 </button>
             </div>
+            <div class="btn-group">
+                <button type="button" id="checkWifiBtn" class="btn btn-secondary" >
+                    Check Nearby WiFi
+                </button>
+            </div>
 
         </div>
         <hr>
@@ -40,84 +45,77 @@
 
     <div class="row">
 
-        <div class="col-md-4">
-        <table class="table table-striped">
-                <tbody>
-                    <tr>
-                        <th>Serial Number:</th>
-                        <td>{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? 'Unknown Serial Number' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Device ID:</th>
-                        <td>{{ $deviceData['_id'] ?? 'Unknown' }}</td>
-                    </tr>
-                    <tr>
-                        <th>OUI:</th>
-                        <td>{{ $deviceData['_deviceId']['children']['_OUI']['value'] ?? 'Unknown' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Manufacturer:</th>
-                        <td>{{ $deviceData['_deviceId']['children']['_Manufacturer']['value'] ?? 'Unknown' }}</td>
-                    </tr>
-                    <tr>
-                        <th>Product Class:</th>
-                        <td>{{ $deviceData['_deviceId']['children']['_ProductClass']['value'] ?? 'Unknown' }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        
-        {{-- Only show this column if 4G signal exists --}}
-        @if(isset($signalStatus['4G']))
-        <div class="col-md-4">
-            <table class="table table-striped">
-                <tbody>
-                @if ($rfValues)
-                    @foreach ($rfValues as $key => $value)
-                        <tr>
-                            <th>{{ $key }}:</th>
-                            <td>{{ $value ?? 'Unknown' }}</td>
-                        </tr>
-                    @endforeach
+                <div class="col-md-4">
+                <table class="table table-striped">
+                        <tbody>
+                            <tr>
+                                <th>Serial Number:</th>
+                                <td>{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? 'Unknown Serial Number' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Device ID:</th>
+                                <td>{{ $deviceData['_id'] ?? 'Unknown' }}</td>
+                            </tr>
+                            <tr>
+                                <th>OUI:</th>
+                                <td>{{ $deviceData['_deviceId']['children']['_OUI']['value'] ?? 'Unknown' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Manufacturer:</th>
+                                <td>{{ $deviceData['_deviceId']['children']['_Manufacturer']['value'] ?? 'Unknown' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Product Class:</th>
+                                <td>{{ $deviceData['_deviceId']['children']['_ProductClass']['value'] ?? 'Unknown' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                {{-- Only show this column if 4G signal exists --}}
+                @if(isset($signalStatus['4G']))
+                <div class="col-md-4">
+                    <table class="table table-striped">
+                        <tbody>
+                        @if ($rfValues)
+                            @foreach ($rfValues as $key => $value)
+                                <tr>
+                                    <th>{{ $key }}:</th>
+                                    <td>{{ $value ?? 'Unknown' }}</td>
+                                </tr>
+                            @endforeach
+                        @endif
+
+                        @if ($signalStatus)
+                            <tr>
+                                <th>4G Signal Status</th>
+                                <td>
+                                    <strong>{{ $signalStatus['4G'] }}</strong>
+                                    <span class="signal-indicator {{ strtolower($signalStatus['4G']) }}"></span>
+                                </td>
+                            </tr>
+                            @isset($signalStatus['5G'])
+                                <tr>
+                                    <th>5G Signal Status</th>
+                                    <td>
+                                        <strong>{{ $signalStatus['5G'] }}</strong>
+                                        <span class="signal-indicator {{ strtolower($signalStatus['5G']) }}"></span>
+                                    </td>
+                                </tr>
+                            @endisset
+                        @endif
+                        </tbody>
+                    </table>
+                </div>
                 @endif
-
-                @if ($signalStatus)
-                    <tr>
-                        <th>4G Signal Status</th>
-                        <td>
-                            <strong>{{ $signalStatus['4G'] }}</strong>
-                            <span class="signal-indicator {{ strtolower($signalStatus['4G']) }}"></span>
-                        </td>
-                    </tr>
-                    @isset($signalStatus['5G'])
-                        <tr>
-                            <th>5G Signal Status</th>
-                            <td>
-                                <strong>{{ $signalStatus['5G'] }}</strong>
-                                <span class="signal-indicator {{ strtolower($signalStatus['5G']) }}"></span>
-                            </td>
-                        </tr>
-                    @endisset
-                @endif
-                </tbody>
-            </table>
-        </div>
-        @endif
-
-
-        <div class="col-md-4">
-        <img src="{{ 
-        file_exists(public_path('assets/Devices/' . $deviceData['_deviceId']['children']['_ProductClass']['value'] . '.png'))
-            ? asset('assets/Devices/' . $deviceData['_deviceId']['children']['_ProductClass']['value'] . '.png') 
-            : asset('assets/AVXAV Logos/default.png') }}" 
-        class="card-img-top">
-        </div>
-
-
-
-
-
-                <div class="row HeatmapRow">
+                <div class="col-md-4">
+                <img src="{{ 
+                file_exists(public_path('assets/Devices/' . $deviceData['_deviceId']['children']['_ProductClass']['value'] . '.png'))
+                    ? asset('assets/Devices/' . $deviceData['_deviceId']['children']['_ProductClass']['value'] . '.png') 
+                    : asset('assets/AVXAV Logos/default.png') }}" 
+                class="card-img-top">
+                </div>
+                <div id="HeatmapRow" class="row Heatmap">
                     <div class="col-md-8">
                         <h2>Heatmap</h2>
                         @include('partials.heatmap')
@@ -144,16 +142,21 @@
     <div class="col-md-12 p-4">
         <h2>Device Data Tree</h2>
         <!-- Search bar -->
-        <div style="margin-bottom: 10px; display: flex; gap: 10px;">
-            <input 
-                type="text" 
-                id="search-bar" 
-                placeholder="Search by path, name, or value..." 
-                style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-            <button id="clear-search" style="padding: 8px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                Clear
-            </button>
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <input 
+            type="text" 
+            id="search-bar" 
+            placeholder="Search by path, name, or value..." 
+            style="flex-grow: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px;" 
+        />
+        <button 
+            id="clear-search" 
+            style="padding: 0.5rem 1rem; background-color: #007bff; color: #fff; border: none; border-radius: 4px; cursor: pointer;"
+        >
+            Clear
+        </button>
         </div>
+
 
         <!-- Device Tree -->
         @if ($deviceData)
@@ -279,35 +282,32 @@
 <div id="simplePopup" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 300px; background-color: #fff; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); border-radius: 8px; padding: 20px; font-family: Arial, sans-serif;">
     <div id="popupMessage" style="font-size: 16px; color: #333;"></div>
 </div>
+
+<!-- Wi-Fi Modal -->
+<div class="modal" id="wifiModal" style="display: none;">
+  <div class="modal-content" style="width: 600px; margin: 10% auto; background: white; padding: 20px; border-radius: 8px; position: relative;">
+    <span class="close" style="position: absolute; right: 15px; top: 10px; cursor: pointer;">&times;</span>
+    <h4>Nearby WiFi Signals</h4>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>SSID</th>
+          <th>Signal</th>
+          <th>Channel</th>
+          <th>BSSID</th>
+          <th>Mode</th>
+        </tr>
+      </thead>
+      <tbody id="wifiTableBody">
+        <!-- Data will be injected here -->
+      </tbody>
+    </table>
+    <p id="recommendation" class="text-success fw-bold mt-3"></p>
+  </div>
+</div>
 @endsection
 
 @section('styles')
-<!-- Add this CSS to style the signal indicator -->
-<style>
-    .signal-indicator {
-        display: inline-block;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        margin-left: 10px;
-    }
-
-    .strong {
-        background-color: green;
-    }
-
-    .medium {
-        background-color: orange;
-    }
-
-    .weak {
-        background-color: red;
-    }
-
-    .unknown {
-        background-color: gray;
-    }
-</style>
 <style>
     ul {
         list-style-type: none;
@@ -407,50 +407,78 @@
         cursor: pointer;
         margin-right: 5px;
     }
+
+    .signal-indicator {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        margin-left: 10px;
+    }
+
+    .strong {
+        background-color: green;
+    }
+
+    .medium {
+        background-color: orange;
+    }
+
+    .weak {
+        background-color: red;
+    }
+
+    .unknown {
+        background-color: gray;
+    }
 </style>
 @endsection
 
+
 @section('scripts')
 <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            // Function to show the loading overlay
-            function showLoadingOverlay() {
-                document.getElementById('loadingOverlay').style.display = 'block';
-            }
+    document.addEventListener("DOMContentLoaded", function () {
+        // =============================================
+        //  CORE UTILITY FUNCTIONS
+        // =============================================
+        
+        /**
+         * Show/hide loading overlay
+         */
+        function showLoadingOverlay() {
+            document.getElementById('loadingOverlay').style.display = 'block';
+        }
+        function hideLoadingOverlay() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
 
-            // Function to hide the loading overlay
-            function hideLoadingOverlay() {
-                document.getElementById('loadingOverlay').style.display = 'none';
-            }
+        /**
+         * Simple popup notification system
+         */
+        function showSimplePopup(message) {
+            const popup = document.getElementById('simplePopup');
+            const popupMessage = document.getElementById('popupMessage');
+            popupMessage.textContent = message;
+            popup.style.display = 'block';
+            popup.style.opacity = '1';
+            popup.style.transform = 'translateY(0)';
+            setTimeout(hideSimplePopup, 3000);
+        }
+        function hideSimplePopup() {
+            const popup = document.getElementById('simplePopup');
+            popup.style.opacity = '0';
+            popup.style.transform = 'translateY(-20px)';
+            setTimeout(() => popup.style.display = 'none', 300);
+        }
 
-            // Function to show the popup with a message
-            function showSimplePopup(message) {
-                const popup = document.getElementById('simplePopup');
-                const popupMessage = document.getElementById('popupMessage');
+        // =============================================
+        //  TREE VIEW MANAGEMENT
+        // =============================================
 
-                popupMessage.textContent = message;
-                popup.style.display = 'block';
-                popup.style.opacity = '1';
-                popup.style.transform = 'translateY(0)';
-
-                // Hide the popup after 3 seconds
-                setTimeout(hideSimplePopup, 3000);
-            }
-
-            // Function to hide the popup
-            function hideSimplePopup() {
-                const popup = document.getElementById('simplePopup');
-                popup.style.opacity = '0';
-                popup.style.transform = 'translateY(-20px)';
-                setTimeout(() => {
-                    popup.style.display = 'none';
-                }, 300); // Matches CSS transition duration
-            }
-
-            // Expand/Collapse functionality for tree items
-            const toggles = document.querySelectorAll(".expand-icon");
-            toggles.forEach((toggle) => {
-                toggle.addEventListener("click", function () {
+        /** Initialize expand/collapse functionality */
+        function initializeTreeView() {
+            document.querySelectorAll(".expand-icon").forEach(toggle => {
+                toggle.addEventListener("click", function() {
                     const parentLi = this.closest("li");
                     const childUl = parentLi.querySelector("ul");
                     if (childUl) {
@@ -460,84 +488,65 @@
                     }
                 });
             });
+        }
 
-            // Function to handle fetching node data (GET action)
-            function handleGetButton(button) {
-            const path = button.dataset.path; // The path to the field being fetched
-            const type = button.dataset.type; // The type of the field
+        /** Update field value in UI with MutationObserver fallback */
+        function updateFieldValue(path, value) {
+            const fieldElement = document.getElementById(path);
+            if (fieldElement) {
+                fieldElement.textContent = value;
+                return;
+            }
+
+            const observer = new MutationObserver((mutations, observer) => {
+                const element = document.getElementById(path);
+                if (element) {
+                    element.textContent = value;
+                    observer.disconnect();
+                }
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+        }
+
+        // =============================================
+        //  DEVICE DATA ACTIONS
+        // =============================================
+
+        /** Handle GET requests for node values */
+        function handleGetButton(button) {
+            const path = button.dataset.path;
+            const type = button.dataset.type;
             const serialNumber = "{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? 'Unknown' }}";
 
             showLoadingOverlay();
-
             fetch('/device-action/get-Node', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({ serialNumber, path, type }) // Send the required data
+                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
+                body: JSON.stringify({ serialNumber, path, type })
             })
             .then(response => {
                 hideLoadingOverlay();
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                 return response.json();
             })
             .then(data => {
                 if (data.status_code === 200) {
-                    const value = data.value; // The fetched value from the server
-                    updateFieldValue(path, value); // Update the UI with the new value
+                    updateFieldValue(path, data.value);
                     showSimplePopup('Value fetched successfully.');
                 } else if (data.status_code === 202) {
-                    showSimplePopup('Fetch value saved as a task.');
+                    showSimplePopup('Fetch value saved as task.');
                 } else {
-                    showSimplePopup('Failed to fetch the value.');
+                    showSimplePopup('Fetch failed.');
                 }
             })
             .catch(error => {
                 hideLoadingOverlay();
-                console.error('Error fetching value:', error);
-                showSimplePopup('An error occurred while fetching the value.');
+                console.error('Fetch error:', error);
+                showSimplePopup('Error fetching value.');
             });
         }
 
-        /**
-         * Update the field value in the UI based on the path.
-         *
-         * @param {string} path - The dot-separated path of the field to update.
-         * @param {string|number} value - The new value to display.
-         */
-        function updateFieldValue(path, value) {
-
-            // Check if the element already exists
-            const fieldElement = document.getElementById(path);
-
-
-            // it's return null
-            
-            if (fieldElement) {
-                fieldElement.textContent = value;
-                console.log(`Field "${path}" updated successfully.`);
-                return;
-            }
-
-            // If the element doesn't exist, set up a MutationObserver to watch for its creation
-            const observer = new MutationObserver((mutationsList, observer) => {
-                const fieldElement = document.getElementById(path);
-                if (fieldElement) {
-                    fieldElement.textContent = value;
-                    console.log(`Field "${path}" updated successfully.`);
-                    observer.disconnect(); // Stop observing once the element is found
-                }
-            });
-
-            // Start observing the entire document for child node additions
-            observer.observe(document.body, { childList: true, subtree: true });
-        }
-
-
-        // Function to handle setting a new value
+        /** Handle SET requests for node values */
         function handleSetValue(button) {
             const path = button.dataset.path;
             const type = button.dataset.type;
@@ -601,353 +610,442 @@
             });
         });
 
-        // Handle reboot action
-        document.querySelectorAll(".reboot-device").forEach((button) => {
-            button.addEventListener("click", function () {
-                const serialNumber = this.getAttribute('data-serial-number');
+        // =============================================
+        //  DEVICE COMMANDS (REBOOT/RESET)
+        // =============================================
 
-                showLoadingOverlay();
+        /** Generic device command handler */
+        function handleDeviceCommand(action, serialNumber) {
+            showLoadingOverlay();
+            fetch(`/device-action/${action}`, {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' },
+                body: JSON.stringify({ serialNumber })
+            })
+            .then(response => {
+                hideLoadingOverlay();
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showSimplePopup(`Device ${action} request accepted.`);
+                } else {
+                    showSimplePopup(`${action} failed: ${data.message}`);
+                }
+            })
+            .catch(error => {
+                hideLoadingOverlay();
+                console.error(`${action} error:`, error);
+                showSimplePopup(`${action} error occurred.`);
+            });
+        }
 
-                fetch('/device-action/reboot', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ serialNumber })
-                })
-                .then(response => {
-                    hideLoadingOverlay();
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        showSimplePopup('Device reboot request accepted.');
-                    } else {
-                        showSimplePopup(`Failed to reboot device: ${data.message}`);
-                    }
-                })
-                .catch(error => {
-                    hideLoadingOverlay();
-                    console.error('Error rebooting device:', error);
-                    showSimplePopup('An error occurred while rebooting the device.');
-                });
+        // Attach command handlers
+        document.querySelectorAll(".reboot-device, .reset-device").forEach(button => {
+            button.addEventListener("click", function() {
+                const action = this.classList.contains('reboot-device') ? 'reboot' : 'reset';
+                handleDeviceCommand(action, this.dataset.serialNumber);
             });
         });
 
-        // Handle reset action
-        document.querySelectorAll(".reset-device").forEach((button) => {
-            button.addEventListener("click", function () {
-                const serialNumber = this.getAttribute('data-serial-number');
+        // =============================================
+        //  SEARCH FUNCTIONALITY
+        // =============================================
 
-                showLoadingOverlay();
+        /** Initialize search functionality */
+        function initializeSearch() {
+            const searchBar = document.getElementById("search-bar");
+            const clearButton = document.getElementById("clear-search");
+            const treeItems = document.querySelectorAll(".node-content");
 
-                fetch('/device-action/reset', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ serialNumber })
-                })
-                .then(response => {
-                    hideLoadingOverlay();
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
+            if (!searchBar || !clearButton) {
+                console.warn("Search bar or clear button not found.");
+                return;
+            }
+
+            // Search input event
+            searchBar.addEventListener("input", function () {
+                const query = searchBar.value.trim().toLowerCase();
+
+                resetTree();
+                if (!query) return;
+
+                let found = false;
+
+                treeItems.forEach(item => {
+                    const valueElement = item.querySelector(".node-value");
+                    const nameElement = item.querySelector(".node-name");
+
+                    const nodePath = valueElement?.id?.toLowerCase() || "";
+                    const nodeName = nameElement?.textContent?.toLowerCase() || "";
+                    const nodeValue = valueElement?.textContent?.toLowerCase() || "";
+
+                    if (nodePath.includes(query) || nodeName.includes(query) || nodeValue.includes(query)) {
+                        found = true;
+
+                        // Highlight matched element
+                        if (nodePath.includes(query)) {
+                            valueElement?.classList.add("highlight");
+                        } else if (nodeName.includes(query)) {
+                            nameElement?.classList.add("highlight");
+                        } else if (nodeValue.includes(query)) {
+                            valueElement?.classList.add("highlight");
+                        }
+
+                        // Expand all parent uls
+                        let parent = item.closest("ul");
+                        while (parent) {
+                            parent.classList.remove("collapsed");
+                            parent = parent.parentElement.closest("ul");
+                        }
                     }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        showSimplePopup('Device reset request accepted.');
-                    } else {
-                        showSimplePopup(`Failed to reset device: ${data.message}`);
-                    }
-                })
-                .catch(error => {
-                    hideLoadingOverlay();
-                    console.error('Error resetting device:', error);
-                    showSimplePopup('An error occurred while resetting the device.');
                 });
+
+                if (!found) {
+                    console.log("No matching nodes found.");
+                }
             });
-        });
+
+            // Clear button event
+            clearButton.addEventListener("click", function () {
+                searchBar.value = "";
+                resetTree();
+            });
+
+            // Reset highlights and collapse all
+            function resetTree() {
+                document.querySelectorAll(".highlight").forEach(el => el.classList.remove("highlight"));
+                document.querySelectorAll("ul").forEach(ul => ul.classList.add("collapsed"));
+            }
+        }
 
 
-        // Attach event listeners for "Get" and "Set" buttons
-        document.querySelectorAll(".get-button").forEach(button => button.addEventListener('click', () => handleGetButton(button)));
-        document.querySelectorAll(".set-button").forEach(button => button.addEventListener('click', () => handleSetValue(button)));
+        /** Highlight matching elements */
+        function highlightMatches(item, query, path, name, value) {
+            const valueElement = item.querySelector(".node-value");
+            const nameElement = item.querySelector(".node-name");
+            
+            if (path.includes(query)) valueElement?.classList.add("highlight");
+            else if (name.includes(query)) nameElement?.classList.add("highlight");
+            else if (value.includes(query)) valueElement?.classList.add("highlight");
+        }
+
+        /** Expand parent nodes of matches */
+        function expandParentNodes(item) {
+            let parent = item.closest("ul");
+            while (parent) {
+                parent.classList.remove("collapsed");
+                parent = parent.parentElement.closest("ul");
+            }
+        }
+
+        /** Reset search state */
+        function resetTree() {
+            document.querySelectorAll(".highlight").forEach(el => el.classList.remove("highlight"));
+            document.querySelectorAll("ul").forEach(ul => ul.classList.add("collapsed"));
+        }
+
+        // =============================================
+        //  INITIALIZATION
+        // =============================================
         
-        const heatmapContainer = document.getElementById("heatmap");
-        const tooltip = document.getElementById("tooltip");
-        const tableBody = document.getElementById("deviceTableBody");
-        const serialNumber = "{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] }}";
-        const heatmapRow = document.querySelector(".HeatmapRow"); // The row containing the heatmap and table
+        // Attach core event listeners
+        document.querySelectorAll(".get-button").forEach(btn => 
+            btn.addEventListener('click', () => handleGetButton(btn)));
+        document.querySelectorAll(".set-button").forEach(btn => 
+            btn.addEventListener('click', () => handleSetValue(btn)));
 
-        // Fetch connected device data from the Laravel API
-        async function fetchConnectedDevices(serialNumber) {
-            try {
-                const response = await fetch(`/device/hosts/${serialNumber}`);
-                if (!response.ok) {
-                    console.error("Failed to fetch connected device data");
-                    return { success: false, message: "Failed to fetch data" };
-                }
-                const data = await response.json();
-                return data;
-            } catch (error) {
-                console.error("Error fetching connected devices:", error);
-                return { success: false, message: "Error occurred while fetching data" };
-            }
-        }
-
-        // Map RSSI to Distance (Smaller distances for stronger signals)
-        function mapRssiToDistance(rssi) {
-            const minRssi = 30;
-            const maxRssi = 100;
-            const minDistance = 20;
-            const maxDistance = 200;
-
-            if (rssi === 0) {
-                return 40; // Cable connection (not based on RSSI)
-            }
-
-            return maxDistance - ((rssi - minRssi) / (maxRssi - minRssi)) * (maxDistance - minDistance);
-        }
-
-        // Initialize Heatmap and Table
-        async function initializeHeatmapAndTable() {
-            const result = await fetchConnectedDevices(serialNumber);
-
-            // Hide the HeatmapRow if there's an error or no devices are found
-            if (!result.success || result.message.includes("No host nodes configuration found")) {
-                console.error(result.message || "No devices found.");
-                heatmapRow.style.display = "none"; // Hide the entire row
-                return;
-            }
-
-            const devices = result.data || [];
-
-            if (!devices.length) {
-                console.error("No devices found for the provided serial number.");
-                heatmapRow.style.display = "none"; // Hide the entire row
-                return;
-            }
-
-            // Show the HeatmapRow if data is successfully fetched
-            heatmapRow.style.display = "flex"; // Ensure the row is displayed as a flex container
-
-            // Set heatmap container to fixed dimensions
-            heatmapContainer.style.width = "500px";
-            heatmapContainer.style.height = "500px";
-
-            const containerWidth = heatmapContainer.offsetWidth;
-            const containerHeight = heatmapContainer.offsetHeight;
-
-            // Create Circular Range Indicators
-            const radarRanges = [30, 60, 90, 120, 150, 200];
-            radarRanges.forEach((radius) => {
-                const circle = document.createElement("div");
-                circle.className = "radar-circle";
-                circle.style.width = `${radius * 2}px`;
-                circle.style.height = `${radius * 2}px`;
-                circle.style.left = `${containerWidth / 2 - radius}px`;
-                circle.style.top = `${containerHeight / 2 - radius}px`;
-                heatmapContainer.appendChild(circle);
-            });
-
-            // Place Devices and Populate Table
-            devices.forEach((device, index) => {
-                const rssi = device.signalStrength || 0;
-                const isWired = rssi === 0; // Check if it's a wired connection
-
-                const angle = (index / devices.length) * 2 * Math.PI; // Distribute evenly
-                const distance = mapRssiToDistance(rssi);
-                const x = containerWidth / 2 + Math.cos(angle) * distance;
-                const y = containerHeight / 2 + Math.sin(angle) * distance;
-
-                const deviceNode = document.createElement("div");
-                deviceNode.className = "device-node";
-                deviceNode.style.left = `${x - 15}px`;
-                deviceNode.style.top = `${y - 15}px`;
-
-                // Set color based on connection type
-
-
-                const icon = document.createElement("i");
-                icon.className = "fa-solid fa-user";
-                icon.style.color = isWired ? "lightblue" : "white"; // Light blue for wired connections
-                deviceNode.appendChild(icon);
-
-                deviceNode.addEventListener("mouseenter", () => {
-                    tooltip.style.opacity = 1;
-                    tooltip.style.left = `${x + 20}px`;
-                    tooltip.style.top = `${y}px`;
-                    tooltip.innerHTML = `
-                        <strong>${device.hostName || "Unknown"}</strong><br>
-                        IP: ${device.ipAddress || "N/A"}<br>
-                        MAC: ${device.macAddress || "N/A"}<br>
-                        ${isWired ? "N/A" : `RSSI: -${rssi} dBm`}
-                    `;
-                });
-
-                deviceNode.addEventListener("mouseleave", () => {
-                    tooltip.style.opacity = 0;
-                });
-
-                heatmapContainer.appendChild(deviceNode);
-
-                // Add Row to Table
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td>${device.hostName || "Unknown"}</td>
-                    <td>${isWired ? "N/A" : `${rssi} dBm`}</td>
-                `;
-                tableBody.appendChild(row);
-            });
-        }
-
-        // Initialize Heatmap and Table
-        initializeHeatmapAndTable();
-
-
-    const searchBar = document.getElementById("search-bar");
-    const clearButton = document.getElementById("clear-search");
-    const treeItems = document.querySelectorAll(".node-content");
-
-    // Event listener for search
-    searchBar.addEventListener("input", function () {
-        const query = searchBar.value.trim().toLowerCase();
-
-        // Reset highlights and collapse all nodes
-        resetTree();
-
-        if (!query) return;
-
-        let found = false;
-
-        treeItems.forEach(item => {
-            const nodePath = item.querySelector(".node-value")?.id || "";
-            const nodeName = item.querySelector(".node-name")?.textContent.toLowerCase();
-            const nodeValue = item.querySelector(".node-value")?.textContent.toLowerCase();
-
-            if (nodePath.includes(query) || (nodeName && nodeName.includes(query)) || (nodeValue && nodeValue.includes(query))) {
-                found = true;
-
-                // Highlight matching element
-                const valueElement = item.querySelector(".node-value");
-                const nameElement = item.querySelector(".node-name");
-
-                if (nodePath.includes(query)) {
-                    valueElement?.classList.add("highlight");
-                } else if (nodeName.includes(query)) {
-                    nameElement?.classList.add("highlight");
-                } else if (nodeValue.includes(query)) {
-                    valueElement?.classList.add("highlight");
-                }
-
-                // Expand parent nodes
-                let parent = item.closest("ul");
-                while (parent) {
-                    parent.classList.remove("collapsed");
-                    parent = parent.parentElement.closest("ul");
-                }
-            }
-        });
-
-        if (!found) {
-            console.log("No matching nodes found.");
-        }
+        // Initialize components
+        initializeTreeView();
+        initializeSearch();
     });
-
-    // Reset search and clear highlights
-    clearButton.addEventListener("click", function () {
-        searchBar.value = "";
-        resetTree();
-    });
-
-    // Reset highlights and collapse nodes
-    function resetTree() {
-        document.querySelectorAll(".highlight").forEach(el => el.classList.remove("highlight"));
-        document.querySelectorAll("ul").forEach(ul => ul.classList.add("collapsed"));
-    }
-
-        });
-
 </script>
+
+<!-- Device Logs Script -->
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-    const checkLogsButton = document.querySelector('[data-bs-target="#deviceLogsModal"]');
+        const logsModal = document.getElementById('deviceLogsModal');
 
-    if (checkLogsButton) {
-        checkLogsButton.addEventListener('click', () => {
-            const deviceId = checkLogsButton.getAttribute('data-device-id');
-            console.log('Device ID from Button:', deviceId);
+        // Extract device ID from data attribute instead of blade
+        logsModal?.addEventListener('show.bs.modal', (event) => {
+            const button = event.relatedTarget;
+            const deviceId = button?.getAttribute('data-device-id');
+
+            console.log('Opening logs modal for device:', deviceId);
 
             if (deviceId) {
                 fetchDeviceLogs(deviceId);
             } else {
-                console.warn('Device ID is empty or invalid.');
+                console.warn('No device ID provided for logs modal.');
+                document.getElementById('deviceLogsTableBody').innerHTML =
+                    '<tr><td colspan="4" class="text-center text-warning">Device ID not found.</td></tr>';
             }
         });
-    } else {
-        console.error('Check Device Logs button not found.');
-    }
-});
 
-</script>
-<script>
-function fetchDeviceLogs(deviceId, page = 1) {
-    console.log(`Fetching logs for Device ID: ${deviceId}, Page: ${page}`);
+        function fetchDeviceLogs(deviceId, page = 1) {
+            console.log(`Fetching logs for Device ID: ${deviceId}, Page: ${page}`);
 
-    fetch(`/device-logs/${deviceId}?page=${page}`)
-        .then(response => {
-            console.log('Response Status:', response.status);
-            if (!response.ok) {
-                throw new Error(`Network response was not ok. Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('API Response Data:', data);
             const tableBody = document.getElementById('deviceLogsTableBody');
+            tableBody.innerHTML = '<tr><td colspan="4" class="text-center">Loading...</td></tr>';
+
+            fetch(`/device-logs/${deviceId}?page=${page}`)
+                .then(response => {
+                    console.log('Response Status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('API Response Data:', data);
+                    if (!data.logs || data.logs.length === 0) {
+                        tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No logs available for this device.</td></tr>';
+                        return;
+                    }
+
+                    tableBody.innerHTML = '';
+                    data.logs.forEach(log => {
+                        const createdAt = log.created_at ? new Date(log.created_at).toLocaleString() : 'N/A';
+                        const row = `<tr>
+                            <td>${log.username || 'Unknown'}</td>
+                            <td>${log.action || 'N/A'}</td>
+                            <td>${log.response || 'N/A'}</td>
+                            <td>${createdAt}</td>
+                        </tr>`;
+                        tableBody.innerHTML += row;
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching logs:', error);
+                    tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Failed to load logs.</td></tr>';
+                });
+        }
+    });
+</script>
+
+
+<!-- Heatmap Script -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const heatmapContainer = document.getElementById("heatmap");
+        const heatmapRow = document.getElementById("HeatmapRow");
+        const serialNumber = "{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] }}";
+
+        async function initializeHeatmap() {
+            try {
+                const response = await fetch(`/device/hosts/${serialNumber}`);
+                const { data: devices } = await response.json();
+                
+                console.log("Devices data:", devices);
+                if (!heatmapContainer || !heatmapRow) {
+                    console.error("Heatmap container or row not found.");
+                    return;
+                }
+                if (!devices || devices.length === 0) {
+                    console.warn("No devices found for heatmap.");
+                    heatmapRow.style.display = "none";
+                    return;
+                }
+
+                createRadarCircles();
+                devices.forEach((device, index) => {
+                    createDeviceNode(device, index, devices.length);
+                    addDeviceToTable(device);
+                });
+            } catch (error) {
+                console.error("Heatmap error:", error);
+                if (heatmapRow) {
+                    heatmapRow.style.display = "none";
+                }
+            }
+        }
+
+        function createRadarCircles() {
+            [30, 60, 90, 120, 150, 200].forEach(radius => {
+                const circle = document.createElement("div");
+                circle.className = "radar-circle";
+                circle.style.cssText = `
+                    width: ${radius * 2}px;
+                    height: ${radius * 2}px;
+                    left: ${250 - radius}px;
+                    top: ${250 - radius}px;
+                `;
+                heatmapContainer.appendChild(circle);
+            });
+        }
+
+        function createDeviceNode(device, index, totalDevices) {
+            const angle = (index / totalDevices) * Math.PI * 2;
+            const distance = device.signalStrength ? 200 - (device.signalStrength * 2) : 40;
+            const node = document.createElement("div");
+            
+            node.className = "device-node";
+            node.style.cssText = `
+                left: ${250 + Math.cos(angle) * distance - 15}px;
+                top: ${250 + Math.sin(angle) * distance - 15}px;
+            `;
+            
+            const icon = document.createElement("i");
+            icon.className = "fa-solid fa-user";
+            icon.style.color = device.signalStrength ? 'white' : 'lightblue';
+            node.appendChild(icon);
+
+            // Tooltip functionality
+            node.addEventListener("mouseenter", () => showDeviceTooltip(device, node));
+            node.addEventListener("mouseleave", () => 
+                document.getElementById("tooltip").style.opacity = 0);
+
+            heatmapContainer.appendChild(node);
+        }
+
+        function showDeviceTooltip(device, node) {
+            const tooltip = document.getElementById("tooltip");
+            const rect = node.getBoundingClientRect();
+            
+            tooltip.innerHTML = `
+                <strong>${device.hostName || "Unknown"}</strong><br>
+                IP: ${device.ipAddress || "N/A"}<br>
+                MAC: ${device.macAddress || "N/A"}<br>
+                ${device.signalStrength ? `RSSI: -${device.signalStrength} dBm` : 'N/A'}
+            `;
+            tooltip.style.cssText = `
+                opacity: 1;
+                left: ${rect.right + 10}px;
+                top: ${rect.top}px;
+            `;
+        }
+
+        function addDeviceToTable(device) {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${device.hostName}</td>
+                <td>${device.signalStrength ? `${device.signalStrength} dBm` : 'N/A'}</td>
+            `;
+            document.getElementById("deviceTableBody").appendChild(row);
+        }
+
+        initializeHeatmap();
+    });
+</script>
+
+<!-- Wifi Signal Script -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const modal = document.getElementById("wifiModal");
+    const closeBtn = document.querySelector(".modal .close");
+    const tableBody = document.getElementById("wifiTableBody");
+    const recommendation = document.getElementById("recommendation");
+    const serialNumber = "{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] }}";
+
+    document.getElementById("checkWifiBtn").addEventListener("click", async function () {
+        console.log("Checking WiFi...");
+        try {
+            const response = await fetch(`/wifi/standard-nodes/${serialNumber}`);
+            const wifiList = await response.json();
+
+            // Clear table
             tableBody.innerHTML = '';
 
-            if (!data.logs || data.logs.length === 0) {
-                console.warn('No logs available for this device.');
-                tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No logs available for this device.</td></tr>';
-                return;
+            // Fill table
+            wifiList.forEach(wifi => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${wifi.SSID}</td>
+                    <td>${wifi.Signal}</td>
+                    <td>${wifi.Channel}</td>
+                    <td>${wifi.BSSID}</td>
+                    <td>${wifi.Mode}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            // Smart 2.4GHz best channel suggestion
+            const is24GHz = wifiList.some(wifi => wifi.Channel <= 14); // crude check
+            if (wifiList.length > 0 && is24GHz) {
+                const interferenceScore = {};
+
+                // Initialize scores for channels 1–11
+                for (let ch = 1; ch <= 11; ch++) {
+                    interferenceScore[ch] = 0;
+                }
+
+                // Function to calculate influence of one signal on a channel
+                function addInterference(center, signal) {
+                    // Affect center ±2 (overlapping)
+                    for (let offset = -2; offset <= 2; offset++) {
+                        const ch = center + offset;
+                        if (ch >= 1 && ch <= 11) {
+                            // Add weighted signal (stronger = worse)
+                            const weight = 1 / (Math.abs(offset) + 1);
+                            interferenceScore[ch] += weight * Math.abs(Number(signal));
+                        }
+                    }
+                }
+
+                wifiList.forEach(wifi => {
+                    const ch = Number(wifi.Channel);
+                    const signal = Number(wifi.Signal);
+                    if (ch >= 1 && ch <= 11) {
+                        addInterference(ch, signal);
+                    }
+                });
+
+                // Pick channel with lowest interference
+                const bestChannel = Object.entries(interferenceScore).sort((a, b) => a[1] - b[1])[0];
+                recommendation.textContent = `📶 Best 2.4GHz Channel: ${bestChannel[0]} (Lowest Interference Score: ${bestChannel[1].toFixed(2)})`;
+            } else if (wifiList.length > 0) {
+                recommendation.textContent = "WiFi channels detected are not in the 2.4GHz range.";
+            } else {
+                recommendation.textContent = "No nearby WiFi networks detected.";
             }
 
-            // Append logs to table
-            data.logs.forEach(log => {
-                console.log('Log Data:', log);
-                const createdAt = log.created_at ? new Date(log.created_at).toLocaleString() : 'N/A';
-                const row = `<tr>
-                                <td>${log.username || 'Unknown'}</td>
-                                <td>${log.action || 'N/A'}</td>
-                                <td>${log.response || 'N/A'}</td>
-                                <td>${createdAt}</td>
-                             </tr>`;
-                tableBody.innerHTML += row;
-            });
-        })
-        .catch(error => {
-            console.error('Error fetching logs:', error);
-            document.getElementById('deviceLogsTableBody').innerHTML = '<tr><td colspan="4" class="text-center text-danger">Failed to load logs.</td></tr>';
-        });
+            // Show modal
+            modal.style.display = "block";
+        } catch (error) {
+            console.error("Error fetching WiFi signals:", error);
+        }
+    });
+
+    // Close modal
+    closeBtn?.addEventListener("click", () => {
+        modal.style.display = "none";
+    });
+
+    window.addEventListener("click", (event) => {
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+    });
+});
+</script>
+<script>
+
+    const checkWifiBtn = document.getElementById("checkWifiBtn");
+const serialNumber = "{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? '' }}";
+
+// You can optionally hide the button on load
+checkWifiBtn.style.display = "none";
+
+// Check if WiFi data exists before enabling button
+async function checkWifiAvailability() {
+    try {
+        const response = await fetch(`/wifi/standard-nodes/${serialNumber}`);
+        const wifiList = await response.json();
+
+        if (wifiList.length > 0) {
+            checkWifiBtn.style.display = "inline-block"; // or "block" if full width
+        } else {
+            checkWifiBtn.style.display = "none";
+        }
+    } catch (error) {
+        console.error("Failed to fetch WiFi signals:", error);
+        checkWifiBtn.style.display = "none";
+    }
 }
 
-// Initial load
-document.addEventListener('DOMContentLoaded', () => {
-    const deviceId = '{{ $deviceId ?? "" }}'; // Assuming deviceId is passed from the backend
-    console.log('Device ID from Backend:', deviceId);
-    if (deviceId) {
-        fetchDeviceLogs(deviceId);
-    } else {
-        console.warn('Device ID is empty or invalid.');
-    }
-});
+// Call the function on page load
+checkWifiAvailability();
+
 </script>
 @endsection

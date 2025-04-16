@@ -111,7 +111,7 @@
                 data.devices.data.forEach(device => {
                     const row = tableBody.insertRow();
                     row.innerHTML = `
-                        <td><a href="/device/info/${device._deviceId._SerialNumber}" class="btn btn-link text-decoration-none">${device._deviceId._SerialNumber || "N/A"}</a></td>
+                        <td><a href="/device-info/${device._deviceId._SerialNumber}" class="btn btn-link text-decoration-none">${device._deviceId._SerialNumber || "N/A"}</a></td>
                         <td>${device._deviceId._Manufacturer || "N/A"}</td>
                         <td>${device._deviceId._OUI || "N/A"}</td>
                         <td>${device._deviceId._ProductClass || "N/A"}</td>

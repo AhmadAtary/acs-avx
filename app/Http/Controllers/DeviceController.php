@@ -61,7 +61,6 @@ class DeviceController extends Controller
         ]);
     }
     
-
     public function getRfValues($deviceData)
     {
         $rfValues = [];
@@ -156,8 +155,6 @@ class DeviceController extends Controller
     
         return $signalStatus;
     }
-    
-
 
     public function info($serialNumber)
     {
@@ -196,7 +193,6 @@ class DeviceController extends Controller
             'signalStatus' => $rfData['signalStatus'],
         ]);
     }
-    
     
     
     Public function device_model()

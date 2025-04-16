@@ -91,7 +91,7 @@ class ModelController extends Controller
             }
         }
     
-        LogController::saveLog("model_upload", "User uploaded new model {$request->$model_name}");
+        // LogController::saveLog("model_upload", "User uploaded new model {$request->$model_name}");
 
         return redirect()->back()->with('success', 'Model and DataModel uploaded successfully.');
     }
@@ -164,5 +164,25 @@ class ModelController extends Controller
         LogController::saveLog("model_upload", "User delete mdoel {$id}");
         return redirect()->back()->with('success', 'Device model deleted successfully.');
     }
+    /**
+     * Get the model details by serial number.
+     *
+     * @param string $serial
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getModel($serial){
+        $deviceModel = DeviceModel::where('serial', $serial)->first();
+        if ($deviceModel) {
+            $device = [
+                '_deviceId' => [
+                    '_ProductClass' => $deviceModel->product_class,
+                ],
+            ];
+            return response()->json($device);
+        } else {
+            return response()->json(['error' => 'Device model not found'], 404);
+        }
+    }
+    
     
 }

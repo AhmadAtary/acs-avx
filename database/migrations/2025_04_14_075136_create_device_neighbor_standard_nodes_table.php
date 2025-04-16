@@ -13,9 +13,7 @@ return new class extends Migration
     {
         Schema::create('device_standard_nodes', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('device_model_id')
-                  ->constrained('device_models')
-                  ->onDelete('cascade'); // Optional: deletes related nodes if model is deleted
+            $table->foreignId('device_model_id')->constrained('device_models')->onDelete('cascade');
             $table->string('node_path'); // Node path (e.g., "InternetGatewayDevice.SystemConfig.WiFi.NeighborAP.1.BSSID")
             $table->timestamps();
         });
