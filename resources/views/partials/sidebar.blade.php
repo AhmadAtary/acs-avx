@@ -68,6 +68,16 @@
                 </li>
             @endif
 
+            @if($user->access->role == 'owner' || $user->access->role == 'eng')
+            <!-- Network Analysis -->
+            <li class="{{ request()->routeIs('analysis.index') ? 'active' : '' }}">
+                <a href="{{ route('analysis.index') }}" class="menu-label">
+                    <div class="parent-icon"><i class="material-icons-outlined">analytics</i></div>
+                    <div class="menu-title">Network Analysis</div>
+                </a>
+            </li>
+            @endif
+                
             <!-- Models Management -->
             @if(isset($permissions['models_management']['view']) && $permissions['models_management']['view'])
                 <li class="{{ request()->routeIs('device-models.index') ? 'active' : '' }}">

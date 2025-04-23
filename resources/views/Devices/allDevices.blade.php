@@ -45,7 +45,18 @@
                           <td>{{ $device->_deviceId['_OUI'] ?? 'N/A' }}</td>
                           <td>{{ $device->_deviceId['_ProductClass'] ?? 'N/A' }}</td>
                           <td>{{ $device->InternetGatewayDevice['DeviceInfo']['SoftwareVersion']['_value'] ?? 'N/A' }}</td>
-                          <td>{{ $device->InternetGatewayDevice['DeviceInfo']['UpTime']['_value'] ?? 'N/A' }}</td>
+                          <td>
+                            @php
+                                $uptimeSeconds = $device->InternetGatewayDevice['DeviceInfo']['UpTime']['_value'] ?? null;
+                                if ($uptimeSeconds) {
+                                    $hours = floor($uptimeSeconds / 3600);
+                                    $minutes = floor(($uptimeSeconds % 3600) / 60);
+                                    echo "{$hours}h {$minutes}m";
+                                } else {
+                                    echo '0h 1m';
+                                }
+                            @endphp
+                          </td>
                           <td>{{ $device->_lastInform ?? 'N/A' }}</td>
                         </tr>
                       @endforeach

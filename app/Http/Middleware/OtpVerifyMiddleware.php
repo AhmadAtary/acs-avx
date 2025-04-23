@@ -20,8 +20,8 @@ class OtpVerifyMiddleware
         // If OTP verification is required but not completed
         if ($user->is_otp_verified == "1" && !$request->session()->get('otp_verified', false)) {
             // Prevent redirect loop for OTP page
-            if ($request->route()->getName() !== 'Otp.prompt') {
-                return redirect()->route('Otp.prompt');
+            if ($request->route()->getName() !== 'otp.prompt') {
+                return redirect()->route('otp.prompt');
             }
         }
 

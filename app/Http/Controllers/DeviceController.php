@@ -10,6 +10,7 @@ use App\Models\Host;
 use App\Models\File;
 use App\Http\Controllers\LogController; 
 use App\Http\Controllers\DeviceLogController;
+use App\Services\DiagnosticsService;
 
 
 class DeviceController extends Controller
@@ -193,6 +194,7 @@ class DeviceController extends Controller
             'signalStatus' => $rfData['signalStatus'],
         ]);
     }
+
     
     
     Public function device_model()
@@ -784,8 +786,49 @@ class DeviceController extends Controller
             return redirect()->route('dashboard')->with('error', 'Failed to delete device.');
         }
     }
+
+    public function testPing(Request $request, DiagnosticsService $tr069)
+    {
+        $deviceId = $request->input('device_id');
+        $host = $request->input('host');
+
+        $result = $tr069->runPingTest($deviceId, $host);
+
+        return response()->json($result);
+    }
+
+    public function diagnostics(Request $request, DiagnosticsService $tr069, $serialNumber)
+    {
+        $deviceId = $serialNumber;
+        $host = $request->input('host', '8.8.8.8');
+        $method = $request->input('method', 'Ping'); // "Ping" or "Traceroute"
     
+        if ($method === 'Traceroute') {
+            $tr069->runTracerouteTest($deviceId, $host);
+            $results = $this->pollForResults(fn() => $tr069->getTracerouteResults($deviceId));
+        } else {
+            $tr069->runPingTest($deviceId, $host);
+            $results = $this->pollForResults(fn() => $tr069->getPingTestResults($deviceId));
+        }
     
+        return response()->json([
+            'success' => true,
+            'message' => 'Diagnostics completed successfully',
+            'results' => $results,
+        ]);
+    }
+    
+    private function pollForResults(callable $getResultsFn, $maxAttempts = 10, $delaySeconds = 3)
+    {
+        for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
+            $results = $getResultsFn();
+            if (is_array($results) && !empty(array_filter($results))) {
+                return $results;
+            }
+            sleep($delaySeconds);
+        }
+        return ['error' => 'No results received within time limit.'];
+    }
 
 
     /**

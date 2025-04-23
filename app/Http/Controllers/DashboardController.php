@@ -58,7 +58,8 @@ class DashboardController extends Controller
             ->orderBy('Date', 'ASC')
             ->get()
             ->keyBy('Date'); // ✅ Index by date for easier lookup
-    
+        // dd($deviceCounts);
+        // ✅ Initialize the array to hold device counts
         // ✅ Generate all dates within the last 60 days
         $dates = [];
         $newDevices = [];

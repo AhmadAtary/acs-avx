@@ -29,4 +29,9 @@ class DeviceModel extends Model
     {
         return $this->hasMany(DeviceStandardNode::class);
     }
+    
+    public function signalNodes()
+    {
+        return $this->hasMany(SignalNode::class, 'model_id');
+    }
 }

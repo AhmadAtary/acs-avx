@@ -176,6 +176,7 @@ class ModelController extends Controller
             $device = [
                 '_deviceId' => [
                     '_ProductClass' => $deviceModel->product_class,
+                    '_ModelName' => $deviceModel->model_name,
                 ],
             ];
             return response()->json($device);

@@ -67,7 +67,8 @@ class CustomerSupportController extends Controller
        
         // Fetch device model ID
         $model = DeviceModel::where('product_class', $device['_deviceId']['_ProductClass'])->first();
-    
+        
+        // dd($device);
         if (!$model) {
             return redirect()->back()->with('error', 'Device model not found.');
         }
@@ -136,33 +137,52 @@ class CustomerSupportController extends Controller
     
     public function manage(Request $request)
     {
+        
+        // Debug: Log incoming request data
+        Log::debug('Manage Request Data:', $request->all());
+
         $userId = auth()->id(); // Get the authenticated user ID
         $url_id = $request->input('url_Id');
         $device_id = $request->input('device_id');
         $action = $request->input('action');
         $nodes = $request->input('nodes');
-    
+
+        // Debug: Log extracted variables
+        Log::debug('Extracted Variables:', [
+            'userId' => $userId,
+            'url_id' => $url_id,
+            'device_id' => $device_id,
+            'action' => $action,
+            'nodes' => $nodes,
+        ]);
+
         // Log: User is attempting to manage device
         LogController::saveLog('Custome_Support_Device_Action', "CS User attempted to manage device: {$device_id} with action: {$action}");
-    
+
         // Validate nodes
         if (!$nodes || !is_array($nodes)) {
             LogController::saveLog('Custome_Support_Device_Action_failed', "Invalid nodes provided for device management (device ID: {$device_id})");
             return redirect()->back()->with('error', 'No valid nodes found in request.');
         }
-    
+
         $client = new Client(['verify' => false]); // Disable SSL verification
         $api_url = "https://10.106.45.1:7557/devices/{$url_id}/tasks?connection_request";
-    
+
+        // Debug: Log API URL
+        Log::debug('API URL:', ['url' => $api_url]);
+
         try {
             if ($action == 'GET') {
                 $parameter_names = array_keys($nodes);
-    
+
+                // Debug: Log parameter names for GET
+                Log::debug('GET Parameter Names:', $parameter_names);
+
                 if (empty($parameter_names)) {
                     LogController::saveLog('Custome_Support_Device_Action_failed', "No parameters selected for GET request (device ID: {$device_id})");
                     return redirect()->back()->with('error', 'No parameters selected for GET request.');
                 }
-    
+
                 $json_body = [
                     'device' => $device_id,
                     'name' => 'getParameterValues',
@@ -170,18 +190,21 @@ class CustomerSupportController extends Controller
                 ];
             } elseif ($action == 'SET') {
                 $parameter_values = [];
-    
+
                 foreach ($nodes as $nodePath => $nodeData) {
                     if (isset($nodeData['value'])) {
                         $parameter_values[] = [$nodePath, $nodeData['value']];
                     }
                 }
-    
+
+                // Debug: Log parameter values for SET
+                Log::debug('SET Parameter Values:', $parameter_values);
+
                 if (empty($parameter_values)) {
                     LogController::saveLog('Custome_Support_Device_Action_failed', "No writable parameters selected for SET request (device ID: {$device_id})");
                     return redirect()->back()->with('error', 'No writable parameters selected for SET request.');
                 }
-    
+
                 $json_body = [
                     'device' => $device_id,
                     'name' => 'setParameterValues',
@@ -191,15 +214,23 @@ class CustomerSupportController extends Controller
                 LogController::saveLog('Custome_Support_Device_Action_failed', "Invalid action specified for device management (device ID: {$device_id})");
                 return redirect()->back()->with('error', 'Invalid action specified.');
             }
-    
+
+
+            $response = $client->post($api_url, ['json' => $json_body]);
+
             // Log: API request being sent
             LogController::saveLog('Custome_Support_Device_Action', "CS User Sent {$action} to {$device_id} 'Nodes' => $parameter_values");
 
-            $response = $client->post($api_url, ['json' => $json_body]);
-    
+
+
             $statusCode = $response->getStatusCode();
             $responseBody = $response->getBody()->getContents();
-    
+
+            // Debug: Log API response
+            Log::debug('API Response:', [
+                'statusCode' => $statusCode,
+                'responseBody' => $responseBody,
+            ]);
 
             if ($statusCode == 200) {
                 LogController::saveLog('Custome_Support_Device_Action', "API response received for device management (device ID: {$device_id}) 'status' => 'Operation completed successfully' ");
@@ -208,19 +239,23 @@ class CustomerSupportController extends Controller
                 LogController::saveLog('Custome_Support_Device_Action', "API response received for device management (device ID: {$device_id}) 'status' => 'Pending as Task'");
                 return redirect()->back()->with('task', 'Pending as Task, Check Device Connection.');
             }
-    
+
             return redirect()->back()->with('error', 'Unexpected API response received.');
         } catch (RequestException $e) {
-            // Log error: RequestException
-            // LogController::saveLog('api_request_failed', "Guzzle RequestException: " . $e->getMessage(), ['response' => $e->getResponse()?->getBody()->getContents()]);
+            // Debug: Log RequestException details
+            Log::error('Guzzle RequestException:', [
+                'message' => $e->getMessage(),
+                'response' => $e->getResponse() ? $e->getResponse()->getBody()->getContents() : null,
+            ]);
+
             return redirect()->back()->with('error', 'API request failed: ' . $e->getMessage());
         } catch (\Exception $e) {
-            // Log error: General Exception
-            // LogController::saveLog('api_request_failed', "General Exception: " . $e->getMessage());
+            // Debug: Log general exception details
+            Log::error('General Exception:', ['message' => $e->getMessage()]);
+
             return redirect()->back()->with('error', 'An unexpected error occurred: ' . $e->getMessage());
         }
     }
-    
 
     private function url_ID($device)
     {
