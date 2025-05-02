@@ -46,7 +46,7 @@ class LoginController extends Controller
         }
     
         // Log failed login attempt
-        LogController::saveLog('login_failed', "Failed login attempt for email: {$request->email} from IP: {$ipAddress} at " . now());
+        // LogController::saveLog('login_failed', "Failed login attempt for email: {$request->email} at " . now());
     
         return redirect()->back()->withErrors(['email' => 'Invalid credentials.']);
     }

@@ -21,7 +21,8 @@ use App\Http\Controllers\TaskMailController;
 use App\Http\Controllers\DeviceStandardNodeController;
 use App\Http\Controllers\NetworkController;
 use App\Http\Controllers\AnalysisController;
-
+use App\Http\Controllers\enduser\AuthController;
+use App\Http\Controllers\enduser\End_user_DeviceController;
 
 
 
@@ -205,14 +206,12 @@ Route::middleware(['auth', 'otp.verify','eng'])->group(function () {
     
 });
 
-
-});
-
-
-use App\Http\Controllers\enduser\AuthController;
-use App\Http\Controllers\enduser\End_user_DeviceController;
 Route::get('/device/{url_Id}', [End_user_DeviceController::class, 'show'])->name('device.show');Route::post('/node/update', [End_user_DeviceController::class, 'updateNodes'])->name('node.update');
 Route::post('/generate-link', [End_user_DeviceController::class, 'generateLink'])->name('generate.link');
 Route::post('/node/update', [End_user_DeviceController::class, 'updateNodes'])->name('node.update');
 Route::get('/end-user-login/{token}', [AuthController::class, 'showLogin'])->name('end.user.login.show');
 Route::post('/end-user-login', [AuthController::class, 'login'])->name('end.user.login');
+
+
+
+
