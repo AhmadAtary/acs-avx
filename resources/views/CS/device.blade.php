@@ -15,6 +15,11 @@
     <i class="bi bi-plus-lg me-2"></i> Send Task by Email
 </button>
 
+<!-- Generate End-User Link Button -->
+<button class="btn btn-primary px-4 mt-2" data-bs-toggle="modal" data-bs-target="#GenerateLinkModal">
+    <i class="bi bi-plus-lg me-2"></i> Generate end link
+</button>
+
 <!-- Modal -->
 <div class="modal fade" id="SendTaskModal" tabindex="-1">
     <div class="modal-dialog">
@@ -75,7 +80,109 @@
         {{ session('success') }}
     </div>
 @endif
+
 {{-- End Add task pop-up by Email --}}
+
+<!-- Generate End-User Link Modal -->
+<div class="modal fade" id="GenerateLinkModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('generate.link') }}">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Generate End-User Link</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="m   odal-body">
+                    <div class="mb-3">
+                        <label class="form-label">End-User Link</label>
+                        <input type="text" class="form-control" name="link" value="{{ url('/end-user-login/' . Str::random(32)) }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-control" name="username" value="{{ $device['_deviceId']['_SerialNumber'] ?? 'Unknown Serial Number' }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="text" class="form-control" name="password" value="{{ Str::random(12) }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Expiration Date</label>
+                        <input type="text" class="form-control" name="expires_at" value="{{ now()->addMinutes(5)->toDateTimeString() }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-link me-1"></i> Generate Link
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+ // Handle Generate Link button if the modal exists
+ const generateLinkForm = document.getElementById('GenerateLinkModal');
+            if (GenerateLinkModal) {
+                GenerateLinkModal.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    showLoadingOverlay();
+
+                    fetch(this.action, {
+                        method: 'POST',
+                        body: new FormData(this),
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        hideLoadingOverlay();
+                        if (data.success) {
+                            const linkInput = document.getElementById('link');
+                            if (linkInput) {
+                                linkInput.value = data.link;
+                                navigator.clipboard.writeText(data.link)
+                                    .then(() => {
+                                        showSimplePopup('Link generated and copied to clipboard!');
+                                    })
+                                    .catch(() => {
+                                        showSimplePopup('Link generated! Please copy it manually.');
+                                    });
+                            }
+                        } else {
+                            showSimplePopup(data.message || 'Failed to generate link.', true);
+                        }
+                    })
+                    .catch(error => {
+                        hideLoadingOverlay();
+                        showSimplePopup('Error: ' + error.message, true);
+                    });
+                });
+            }
+
+
+
+</script>
+@if(session('success'))
+    <div class="alert alert-success mt-3" id="success-alert">
+        {{ session('success') }}
+    </div>
+@endif
+
+
+
+
+
 
 
             <div class="btn-group">
