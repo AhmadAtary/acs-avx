@@ -37,6 +37,10 @@
     box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.5);
     transform: translate(-50%, -50%);
 }
+.fa-user {
+    color: white;
+    font-size: 16px;
+}   
 
 /* Position each circle correctly */
 .range-circle:nth-child(1) { top: 50%; left: 50%; }
@@ -58,17 +62,18 @@
 }
 
 /* Darker Colors for Signal Strength */
-.device-node[data-signal="strong"] {
+/* .device-node[data-signal="strong"] {
     background-color: rgba(0, 255, 0, 0.9); /* Strong Signal - Green */
-}
 
-.device-node[data-signal="medium"] {
-    background-color: rgba(255, 255, 0, 0.9); /* Medium Signal - Yellow */
+
+/* .device-node[data-signal="medium"] {
+    background-color: rgba(255, 255, 0, 0.9); /* Medium Signal - Yellow 
 }
 
 .device-node[data-signal="weak"] {
-    background-color: rgba(255, 0, 0, 0.9); /* Weak Signal - Red */
-}
+    background-color: rgba(255, 0, 0, 0.9); /* Weak Signal - Red 
+} 
+*/
 
 /* Hover Effect */
 .device-node:hover {

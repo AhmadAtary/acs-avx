@@ -19,6 +19,8 @@ use App\Http\Controllers\DeviceLogController;
 use App\Http\Controllers\UserDeviceController;
 use App\Http\Controllers\TaskMailController;
 use App\Http\Controllers\DeviceStandardNodeController;
+use App\Http\Controllers\NetworkController;
+use App\Http\Controllers\AnalysisController;
 
 
 
@@ -64,6 +66,8 @@ Route::middleware(['auth', 'otp.verify'])->group(function () {
     Route::get('/device/hosts/{serialNumber}' , [HostController::class, 'HostsInfo'])->name('device.host');
     Route::get('/device/nodes/{model}', [DeviceController::class, 'getStandardNodes'])->name('neighbor.nodes');
     Route::post('/send-task', [TaskMailController::class, 'send'])->name('send.task');
+
+    Route::get('/device/{serialNumber}/diagnostics', [DeviceController::class, 'diagnostics'])->name('device.diagnostics');   
 
 });
 
@@ -191,6 +195,16 @@ Route::middleware(['auth', 'otp.verify','eng'])->group(function () {
     Route::get('/wifi/standard-nodes/create', [DeviceStandardNodeController::class, 'create'])->name('standard-nodes.create');
     Route::post('/wifi/standard-nodes/store', [DeviceStandardNodeController::class, 'store'])->name('standard-nodes.store');
     Route::get('/wifi/standard-nodes/{serialNumber}', [DeviceStandardNodeController::class, 'getStandardNodes'])->name('standard-nodes.get');
+
+
+    Route::get('/signal-node', [NetworkController::class, 'create'])->name('signal-nodes.create');
+    Route::post('/signal-node/store', [NetworkController::class, 'storeMultiple'])->name('signal-nodes.storeMultiple');
+
+    Route::get('/analysis', [AnalysisController::class, 'index'])->name('analysis.index');
+    Route::get('/analysis/process', [AnalysisController::class, 'process'])->name('analysis.process');
+    
+});
+
 
 });
 

@@ -136,6 +136,10 @@ class CustomerSupportController extends Controller
 
     public function manage(Request $request)
     {
+        
+        // Debug: Log incoming request data
+        Log::debug('Manage Request Data:', $request->all());
+
         $userId = auth()->id(); // Get the authenticated user ID
         $url_id = $request->input('url_Id');
         $device_id = $request->input('device_id');
@@ -154,9 +158,11 @@ class CustomerSupportController extends Controller
         $client = new Client(['verify' => false]); // Disable SSL verification
         $api_url = "https://10.106.45.1:7557/devices/{$url_id}/tasks?connection_request";
 
+
         try {
             if ($action == 'GET') {
                 $parameter_names = array_keys($nodes);
+
 
                 if (empty($parameter_names)) {
                     LogController::saveLog('Custome_Support_Device_Action_failed', "No parameters selected for GET request (device ID: {$device_id})");
@@ -177,6 +183,7 @@ class CustomerSupportController extends Controller
                     }
                 }
 
+
                 if (empty($parameter_values)) {
                     LogController::saveLog('Custome_Support_Device_Action_failed', "No writable parameters selected for SET request (device ID: {$device_id})");
                     return redirect()->back()->with('error', 'No writable parameters selected for SET request.');
@@ -192,13 +199,19 @@ class CustomerSupportController extends Controller
                 return redirect()->back()->with('error', 'Invalid action specified.');
             }
 
-            // Log: API request being sent
-            LogController::saveLog('Custome_Support_Device_Action', "CS User Sent {$action} to {$device_id} 'Nodes' => $parameter_values");
+
 
             $response = $client->post($api_url, ['json' => $json_body]);
 
+            // Log: API request being sent
+            LogController::saveLog('Custome_Support_Device_Action', "CS User Sent {$action} to {$device_id} 'Nodes' => $parameter_values");
+
+
+
+
             $statusCode = $response->getStatusCode();
             $responseBody = $response->getBody()->getContents();
+
 
 
             if ($statusCode == 200) {
@@ -211,12 +224,17 @@ class CustomerSupportController extends Controller
 
             return redirect()->back()->with('error', 'Unexpected API response received.');
         } catch (RequestException $e) {
-            // Log error: RequestException
-            // LogController::saveLog('api_request_failed', "Guzzle RequestException: " . $e->getMessage(), ['response' => $e->getResponse()?->getBody()->getContents()]);
+            // Debug: Log RequestException details
+            Log::error('Guzzle RequestException:', [
+                'message' => $e->getMessage(),
+                'response' => $e->getResponse() ? $e->getResponse()->getBody()->getContents() : null,
+            ]);
+
             return redirect()->back()->with('error', 'API request failed: ' . $e->getMessage());
         } catch (\Exception $e) {
-            // Log error: General Exception
-            // LogController::saveLog('api_request_failed', "General Exception: " . $e->getMessage());
+            // Debug: Log general exception details
+            Log::error('General Exception:', ['message' => $e->getMessage()]);
+
             return redirect()->back()->with('error', 'An unexpected error occurred: ' . $e->getMessage());
         }
     }
