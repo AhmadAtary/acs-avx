@@ -10,9 +10,183 @@
             <h1>Device Info</h1>
         </div>
         <div class="col-md-6 text-end">
-            <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#sendTaskModal">
-                <i class="bi bi-plus-lg me-2"></i> Send Ticket by Email
-            </button>
+
+{{--Start Add task pop-up by Email --}}
+ <!-- Trigger Button -->
+<button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#SendTaskModal">
+    <i class="bi bi-plus-lg me-2"></i> Send Ticket by Email
+</button>
+
+<!-- Generate End-User Link Button -->
+<button class="btn btn-primary px-4 mt-2" data-bs-toggle="modal" data-bs-target="#GenerateLinkModal">
+    <i class="bi bi-plus-lg me-2"></i> Generate end link
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="SendTaskModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="send-task-form" method="POST" action="{{ route('send.task') }}" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Send Task via Email</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+
+
+
+                    <div class="mb-3">
+                        <label class="form-label">Your Name</label>
+                        <input type="text" class="form-control" name="username" value="{{ auth()->user()->name }}" readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Your Email</label>
+                        <input type="text" class="form-control" name="user_email" value="{{ auth()->user()->email }}" readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Device Serial Number</label>
+                        <input type="text" class="form-control" name="device_id" value="{{ $device['_deviceId']['_SerialNumber'] ?? 'Unknown Serial Number' }}" readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Recipient Email</label>
+                        <input type="email" class="form-control" name="email" placeholder="Enter recipient's email address" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email Subject</label>
+                        <input type="text" class="form-control" name="subject" placeholder="Email Subject" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Task Description</label>
+                        <textarea class="form-control" name="description" placeholder="Describe the task here..." rows="3" required></textarea>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success" id="submit-btn">
+                        <i class="bi bi-send me-1"></i> Send Task
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@if(session('success'))
+    <div class="alert alert-success mt-3" id="success-alert">
+        {{ session('success') }}
+    </div>
+@endif
+
+{{-- End Add task pop-up by Email --}}
+
+<!-- Generate End-User Link Modal -->
+<div class="modal fade" id="GenerateLinkModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('generate.link') }}">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Generate End-User Link</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="m   odal-body">
+                    <div class="mb-3">
+                        <label class="form-label">End-User Link</label>
+                        <input type="text" class="form-control" name="link" value="{{ url('/end-user-login/' . Str::random(32)) }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-control" name="username" value="{{ $device['_deviceId']['_SerialNumber'] ?? 'Unknown Serial Number' }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="text" class="form-control" name="password" value="{{ Str::random(12) }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Expiration Date</label>
+                        <input type="text" class="form-control" name="expires_at" value="{{ now()->addMinutes(5)->toDateTimeString() }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-link me-1"></i> Generate Link
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+ // Handle Generate Link button if the modal exists
+ const generateLinkForm = document.getElementById('GenerateLinkModal');
+            if (GenerateLinkModal) {
+                GenerateLinkModal.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    showLoadingOverlay();
+
+                    fetch(this.action, {
+                        method: 'POST',
+                        body: new FormData(this),
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        hideLoadingOverlay();
+                        if (data.success) {
+                            const linkInput = document.getElementById('link');
+                            if (linkInput) {
+                                linkInput.value = data.link;
+                                navigator.clipboard.writeText(data.link)
+                                    .then(() => {
+                                        showSimplePopup('Link generated and copied to clipboard!');
+                                    })
+                                    .catch(() => {
+                                        showSimplePopup('Link generated! Please copy it manually.');
+                                    });
+                            }
+                        } else {
+                            showSimplePopup(data.message || 'Failed to generate link.', true);
+                        }
+                    })
+                    .catch(error => {
+                        hideLoadingOverlay();
+                        showSimplePopup('Error: ' + error.message, true);
+                    });
+                });
+            }
+
+
+
+</script>
+@if(session('success'))
+    <div class="alert alert-success mt-3" id="success-alert">
+        {{ session('success') }}
+    </div>
+@endif
+
+
+
+
+
+
+
             <div class="btn-group">
                 <button class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Actions</button>
                 <ul class="dropdown-menu">
