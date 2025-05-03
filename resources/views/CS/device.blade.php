@@ -64,6 +64,8 @@
                                 </button>
                             </div>
                         </form>
+
+
                     </div>
                 </div>
             </div>
@@ -109,6 +111,7 @@
                                     <div class="input-group">
                                         <input type="datetime-local" class="form-control" id="expires_at" name="expires_at" value="{{ now()->addMinutes(10)->format('Y-m-d\TH:i') }}">
 
+
                                     </div>
                                 </div>
                             </div>
@@ -123,6 +126,7 @@
                         </form>
                     </div>
                 </div>
+
             </div>
 
 
@@ -195,56 +199,68 @@
             </ul>
 
             <div class="tab-content mt-3" id="nodeTabsContent">
-                @foreach ($uniqueNodeTypes as $index => $category)
-                    <div class="tab-pane fade {{ $index == 0 ? 'show active' : '' }}" id="{{ Str::slug($category) }}"
-                         role="tabpanel" aria-labelledby="{{ Str::slug($category) }}-tab">
-                        <div class="card">
-                            <div class="card-body">
-                                <form method="POST" action="{{ route('node.manageCustomer') }}">
-                                    @csrf
-                                    <input type="hidden" name="device_id" value="{{ $device['_id'] ?? '' }}">
-                                    <input type="hidden" name="url_Id" value="{{ $url_Id }}">
-                                    <table class="table">
-                                        <thead><tr><th>Node</th><th>Value</th></tr></thead>
-                                        <tbody>
-                                            @if (!empty($nodeCategories[$category]))
-                                                @foreach ($nodeCategories[$category] as $nodeKey)
-                                                    <tr>
-                                                        <td>{{ $nodeKey }}</td>
-                                                        <td>
-                                                            @if (isset($nodeValues[$nodeKey]['value']))
-                                                                @if ($nodeValues[$nodeKey]['nodeMode'])
-                                                                    <input type="text" name="nodes[{{ $nodeKey }}][value]"
-                                                                           value="{{ $nodeValues[$nodeKey]['value'] }}"
-                                                                           class="form-control">
-                                                                @else
-                                                                    <input type="hidden" name="nodes[{{ $nodeKey }}][value]"
-                                                                           value="{{ $nodeValues[$nodeKey]['value'] }}">
-                                                                    <span>{{ $nodeValues[$nodeKey]['value'] }}</span>
-                                                                @endif
-                                                            @else
-                                                                <span class="text-muted">No value found</span>
-                                                            @endif
-                                                        </td>
-                                                    </tr>
-                                                @endforeach
+    @foreach ($uniqueNodeTypes as $index => $category)
+        <div class="tab-pane fade {{ $index == 0 ? 'show active' : '' }}" id="{{ Str::slug($category) }}"
+             role="tabpanel" aria-labelledby="{{ Str::slug($category) }}-tab">
+
+            <div class="card">
+                <div class="card-body">
+
+                    <input type="hidden" class="device-id" value="{{ $device['_id'] ?? '' }}">
+                    <input type="hidden" class="url-id" value="{{ $url_Id }}">
+
+                    <table class="table">
+                        <thead><tr><th>Node</th><th>Value</th></tr></thead>
+                        <tbody>
+                            @if (!empty($nodeCategories[$category]))
+                                @foreach ($nodeCategories[$category] as $nodeKey)
+                                    <tr>
+                                        <td>{{ $nodeKey }}</td>
+                                        <td>
+                                            @if (isset($nodeValues[$nodeKey]['value']))
+                                                @if ($nodeValues[$nodeKey]['nodeMode'])
+                                                    <input type="text" class="form-control node-value" 
+                                                           data-node="{{ $nodeKey }}"
+                                                           value="{{ $nodeValues[$nodeKey]['value'] }}">
+                                                @else
+                                                    <input type="hidden" class="node-value" 
+                                                           data-node="{{ $nodeKey }}"
+                                                           value="{{ $nodeValues[$nodeKey]['value'] }}">
+                                                    <span>{{ $nodeValues[$nodeKey]['value'] }}</span>
+                                                @endif
                                             @else
-                                                <tr><td colspan="2" class="text-center">No nodes available</td></tr>
+                                                <span class="text-muted">No value found</span>
                                             @endif
-                                        </tbody>
-                                    </table>
-                                    <div class="text-end mt-3">
-                                        <button type="submit" name="action" value="GET" class="btn btn-primary me-2">Get</button>
-                                        @if ($category != 'RF')
-                                            <button type="submit" name="action" value="SET" class="btn btn-success">Set</button>
-                                        @endif
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @else
+                                <tr><td colspan="2" class="text-center">No nodes available</td></tr>
+                            @endif
+                        </tbody>
+                    </table>
+
+                    <div class="text-end mt-3">
+                        <button type="button" class="btn btn-primary me-2 manage-btn" data-action="GET">Get</button>
+                        @if ($category != 'RF')
+                            <button type="button" class="btn btn-success manage-btn" data-action="SET">Set</button>
+                        @endif
                     </div>
-                @endforeach
+
+                    <div class="mt-3">
+                        <div class="loading-spinner" style="display:none;">Loading...</div>
+                        <div class="response-message"></div>
+                    </div>
+
+                </div>
             </div>
+
+        </div>
+    @endforeach
+</div>
+
+
+
         </div>
     </div>
 
@@ -391,8 +407,8 @@
         </div>
     </div>
 
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 9998;">
+   <!-- Loading Overlay -->
+   <div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 9998;">
         <div class="spinner-border text-primary" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
     </div>
 
@@ -486,11 +502,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 popupMessage.innerHTML = message;
                 popup.style.display = 'block';
                 popup.style.background = isError ? '#f8d7da' : '#fff';
+
                 popup.classList.add('show');
                 setTimeout(() => {
                     popup.classList.remove('show');
                     setTimeout(() => popup.style.display = 'none', 300);
+
                 }, 5000); // Display for 5 seconds
+
             }
         },
         fetchData: async (url, options = {}) => {
@@ -603,6 +622,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Device Actions
     const deviceActions = {
+        init: () => {
+            console.log('loading device actions started');
+        },
         getNode: async (button) => {
             const { path, type } = button.dataset;
             try {
@@ -648,8 +670,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (data.status_code === 200) {
                     utils.updateFieldValue(path, newValue);
                     utils.showPopup('Value set successfully.');
+                    console.log('loading device actions finished');
                 } else if (data.status_code === 202) {
                     utils.showPopup('Set value saved as task.');
+                    
                 }
                 $('#setValueModal').modal('hide');
             } catch {
@@ -675,7 +699,7 @@ document.addEventListener("DOMContentLoaded", () => {
         init: async () => {
             const heatmapRow = document.querySelector('.heatmap-row');
             const heatmapContainer = document.getElementById('heatmap');
-            const tableBody = document.getElementById('deviceTableBody');
+            const MAX_DISPLAY_RADIUS = 180;
 
             try {
                 const { data: devices } = await utils.fetchData(`/device/hosts/${serialNumber}`);
@@ -685,55 +709,95 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
 
                 heatmapRow.style.display = 'flex';
-                heatmapContainer.style.width = '500px';
-                heatmapContainer.style.height = '500px';
-                const containerWidth = heatmapContainer.offsetWidth;
-                const containerHeight = heatmapContainer.offsetHeight;
+                heatmap.createCircles(heatmapContainer);
 
-                // Create Radar Circles
-                [30, 60, 90, 120, 150, 200].forEach(radius => {
-                    const circle = document.createElement('div');
-                    circle.className = 'radar-circle';
-                    circle.style.cssText = `width: ${radius * 2}px; height: ${radius * 2}px; left: ${containerWidth / 2 - radius}px; top: ${containerHeight / 2 - radius}px;`;
-                    heatmapContainer.appendChild(circle);
-                });
-
-                // Place Devices
+                const totalDevices = devices.length;
                 devices.forEach((device, index) => {
-                    const rssi = device.signalStrength || 0;
-                    const isWired = rssi === 0;
-                    const angle = (index / devices.length) * 2 * Math.PI;
-                    const distance = isWired ? 40 : Math.max(20, Math.min(200, 200 - (rssi / 100 * 180)));
-                    const x = containerWidth / 2 + Math.cos(angle) * distance;
-                    const y = containerHeight / 2 + Math.sin(angle) * distance;
-
-                    const node = document.createElement('div');
-                    node.className = 'device-node';
-                    node.style.cssText = `left: ${x - 15}px; top: ${y - 15}px;`;
-                    node.innerHTML = `<i class="fa-solid fa-user" style="color: ${isWired ? 'lightblue' : 'white'};"></i>`;
-                    node.addEventListener('mouseenter', () => {
-                        const tooltip = document.getElementById('tooltip');
-                        tooltip.style.opacity = '1';
-                        tooltip.style.left = `${x + 20}px`;
-                        tooltip.style.top = `${y}px`;
-                        tooltip.innerHTML = `
-                            <strong>${device.hostName || 'Unknown'}</strong><br>
-                            IP: ${device.ipAddress || 'N/A'}<br>
-                            MAC: ${device.macAddress || 'N/A'}<br>
-                            ${isWired ? 'Connection: <strong>Cable</strong>' : `RSSI: -${rssi} dBm`}
-                        `;
-                    });
-                    node.addEventListener('mouseleave', () => document.getElementById('tooltip').style.opacity = '0');
-                    heatmapContainer.appendChild(node);
-
-                    // Add to Table
-                    const row = document.createElement('tr');
-                    row.innerHTML = `<td>${device.hostName || 'Unknown'}</td><td>${isWired ? 'N/A' : `${rssi} dBm`}</td>`;
-                    tableBody.appendChild(row);
+                    const angle = (index / totalDevices) * Math.PI * 2;
+                    const signal = device.signalStrength || 0;
+                    const distance = heatmap.getDistance(signal);
+                    heatmap.createNode(device, angle, distance, heatmapContainer);
+                    heatmap.addToTable(device);
                 });
-            } catch {
+
+                heatmap.ensureTooltip();
+            } catch (error) {
+                console.error('Error initializing heatmap:', error);
                 heatmapRow.style.display = 'none';
             }
+        },
+
+        getDistance: (signal) => {
+            if (signal == null || signal === 0) return 30;
+            if (signal >= -20) return 60;
+            if (signal >= -40) return 90;
+            if (signal >= -60) return 120;
+            if (signal >= -80) return 150;
+            return 180;
+        },
+
+        createCircles: (container) => {
+            [30, 60, 90, 120, 150, 180].forEach(radius => {
+                const circle = document.createElement('div');
+                circle.className = 'radar-circle';
+                circle.style.cssText = `width: ${radius * 2}px; height: ${radius * 2}px; left: ${250 - radius}px; top: ${250 - radius}px;`;
+                container.appendChild(circle);
+            });
+        },
+
+        createNode: (device, angle, distance, container) => {
+            const node = document.createElement('div');
+            node.className = 'device-node';
+            const signal = device.signalStrength || 0;
+            node.setAttribute('data-signal', signal === 0 ? 'unknown' : signal >= -30 ? 'strong' : signal >= -70 ? 'medium' : 'weak');
+            node.style.cssText = `left: ${250 + Math.cos(angle) * distance - 15}px; top: ${250 + Math.sin(angle) * distance - 15}px; z-index: 10;`;
+            node.innerHTML = '<i class="fa-solid fa-user"></i>';
+            node.addEventListener('mouseenter', (e) => heatmap.showTooltip(e, device));
+            node.addEventListener('mouseleave', heatmap.hideTooltip);
+            container.appendChild(node);
+        },
+
+        addToTable: (device) => {
+            const row = document.createElement('tr');
+            const signalClass = device.signalStrength ? (device.signalStrength < -70 ? 'weak-signal' : 'good-signal') : '';
+            row.innerHTML = `
+                <td>${device.hostName || 'Unknown Device'}</td>
+                <td class="${signalClass}">${device.signalStrength ? `${device.signalStrength} dBm` : 'N/A'}</td>
+            `;
+            document.getElementById('deviceTableBody').appendChild(row);
+        },
+
+        ensureTooltip: () => {
+            let tooltip = document.getElementById('tooltip');
+            if (!tooltip) {
+                tooltip = document.createElement('div');
+                tooltip.id = 'tooltip';
+                tooltip.className = 'tooltip';
+                document.body.appendChild(tooltip);
+            }
+            tooltip.style.cssText = `
+                position: fixed; padding: 10px; background: rgba(0, 0, 0, 0.85); color: white; border-radius: 4px;
+                font-size: 12px; pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 9999;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); max-width: 200px; word-wrap: break-word;
+            `;
+        },
+
+        showTooltip: (event, device) => {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.innerHTML = `
+                <strong>${device.hostName || 'Unknown'}</strong><br>
+                IP: ${device.ipAddress || 'N/A'}<br>
+                MAC: ${device.macAddress || 'N/A'}<br>
+                ${device.signalStrength ? `RSSI: ${device.signalStrength} dBm` : 'RSSI: N/A'}
+            `;
+            tooltip.style.left = `${event.clientX + 15}px`;
+            tooltip.style.top = `${event.clientY - 15}px`;
+            tooltip.style.opacity = '1';
+        },
+
+        hideTooltip: () => {
+            const tooltip = document.getElementById('tooltip');
+            if (tooltip) tooltip.style.opacity = '0';
         }
     };
 
@@ -791,6 +855,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 </script>
+
 
 <script>
 
@@ -989,4 +1054,122 @@ const utils = {
     }
 
 </script>
+<script>
+ // Handle Generate Link button if the modal exists
+ const generateLinkForm = document.getElementById('GenerateLinkModal');
+            if (GenerateLinkModal) {
+                GenerateLinkModal.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    showLoadingOverlay();
+
+                    fetch(this.action, {
+                        method: 'POST',
+                        body: new FormData(this),
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        hideLoadingOverlay();
+                        if (data.success) {
+                            const linkInput = document.getElementById('link');
+                            if (linkInput) {
+                                linkInput.value = data.link;
+                                navigator.clipboard.writeText(data.link)
+                                    .then(() => {
+                                        showSimplePopup('Link generated and copied to clipboard!');
+                                    })
+                                    .catch(() => {
+                                        showSimplePopup('Link generated! Please copy it manually.');
+                                    });
+                            }
+                        } else {
+                            showSimplePopup(data.message || 'Failed to generate link.', true);
+                        }
+                    })
+                    .catch(error => {
+                        hideLoadingOverlay();
+                        showSimplePopup('Error: ' + error.message, true);
+                    });
+                });
+            }
+
+
+
+</script>
+<script>
+    // Define the showLoadingOverlay and hideLoadingOverlay functions
+    function showLoadingOverlay() {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+            overlay.style.display = 'block';
+        }
+    }
+    
+    function hideLoadingOverlay() {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+    }
+    
+    document.querySelectorAll('.manage-btn').forEach(button => {
+        button.addEventListener('click', async function () {
+            const tabPane = this.closest('.tab-pane');
+            const deviceId = tabPane.querySelector('.device-id').value;
+            const urlId = tabPane.querySelector('.url-id').value;
+            const action = this.getAttribute('data-action');
+
+            showLoadingOverlay(); // Centered global loading
+
+            const nodeInputs = tabPane.querySelectorAll('.node-value');
+            const nodes = {};
+            nodeInputs.forEach(input => {
+                const nodePath = input.getAttribute('data-node');
+                if (action === 'SET') {
+                    nodes[nodePath] = { value: input.value.trim() };
+                } else {
+                    nodes[nodePath] = {};
+                }
+            });
+
+            try {
+                const response = await fetch("{{ route('node.manageCustomer') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        device_id: deviceId,
+                        url_Id: urlId,
+                        action: action,
+                        nodes: nodes
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showSimplePopup(`Action ${action} completed successfully.`);
+                } else {
+                    showSimplePopup(`Error: ${result.message || 'An error occurred.'}`, true);
+                }
+
+            } catch (error) {
+                showSimplePopup(`Error: ${error.message}`, true);
+            } finally {
+                hideLoadingOverlay();
+            }
+        });
+    });
+</script>
 @endsection
+
