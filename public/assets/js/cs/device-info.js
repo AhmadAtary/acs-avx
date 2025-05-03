@@ -438,11 +438,16 @@ document.addEventListener("DOMContentLoaded", () => {
                         });
 
                         const result = await response.json();
-
-                        if (response.ok) {
-                            utils.showPopup(`Action ${action} completed successfully.`);
+                        console.log('Response:', result);
+                        if (result.statusCode === 200 && result.success) {
+                            utils.showPopup(result.message || `Action ${action} completed successfully.`);
+                            if (result.data && result.data.reload) {
+                                window.location.reload();
+                            }
+                        } else if (result.statusCode === 202) {
+                            utils.showPopup(result.message || 'Action saved as a task.');
                         } else {
-                            utils.showPopup(`Error: ${result.message || 'An error occurred.'}`, true);
+                            utils.showPopup(result.message || 'An error occurred.', true);
                         }
                     } catch (error) {
                         utils.showPopup(`Error: ${error.message}`, true);
