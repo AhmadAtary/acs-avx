@@ -100,6 +100,8 @@ class End_user_DeviceController extends Controller
         return view('End-user-link.device_info', compact('device', 'uniqueNodeTypes', 'nodeCategories', 'nodeValues', 'url_Id'));
     }
 
+
+
     public function updateNodes(Request $request)
     {
         $validated = $request->validate([
@@ -121,56 +123,73 @@ class End_user_DeviceController extends Controller
                     'serialNumber' => $serialNumber,
                     'nodes' => $nodes,
                 ]));
-                return response()->json($response->getData(true));
+
+                // Store the response data in session
+                $request->session()->flash('response_data', $response->getData(true));
+                return redirect()->back();
+
             } elseif ($action === 'SET') {
                 $response = $this->setNodeValue(new Request([
                     'serialNumber' => $serialNumber,
                     'nodes' => $nodes,
                 ]));
-                return response()->json($response->getData(true));
+
+                // Store the response data in session
+                $request->session()->flash('response_data', $response->getData(true));
+                return redirect()->back();
             }
         } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Failed to update nodes: ' . $e->getMessage());
+        }
+    }
+    public function generateLink(Request $request)
+    {
+        $validated = $request->validate([
+            'link' => 'required|string|url',
+            'username' => 'required|string|max:255',
+            'password' => 'required|string|min:8|max:255',
+            'expires_at' => 'required|date|after:now',
+        ]);
+
+        $link = $validated['link'];
+        $username = $validated['username'];
+        $password = $validated['password'];
+        $expiresAt = Carbon::parse($validated['expires_at']);
+
+        try {
+            $token = Str::afterLast($link, '/');
+
+            // Check if token already exists to prevent duplicates
+            $existingLink = EndUserLink::where('token', $token)->first();
+            if ($existingLink) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Link token already exists. Please try generating a new link.',
+                ], 400);
+            }
+
+            EndUserLink::create([
+                'token' => $token,
+                'username' => $username,
+                'password' => bcrypt($password),
+                'expires_at' => $expiresAt,
+                'is_used' => false,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'End-user link generated successfully',
+
+                'password' => $password,
+            ], 200);
+        } catch (\Exception $e) {
+            // Log::error('Failed to generate end-user link: ' . $e->getMessage(), ['exception' => $e]);
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating nodes: ' . $e->getMessage(),
+                'message' => 'Failed to generate end-user link: ' . $e->getMessage(),
             ], 500);
         }
     }
-
-    // public function generateLink(Request $request)
-    // {
-    //     $validated = $request->validate([
-    //         'link' => 'required|string',
-    //         'username' => 'required|string',
-    //         'password' => 'required|string',
-    //         'expires_at' => 'required|date',
-    //     ]);
-
-    //     $link = $validated['link'];
-    //     $username = $validated['username'];
-    //     $password = $validated['password'];
-    //     $expiresAt = Carbon::parse($validated['expires_at']);
-
-    //     try {
-    //         EndUserLink::create([
-    //             'token' => Str::afterLast($link, '/'),
-    //             'username' => $username,
-    //             'password' => bcrypt($password),
-    //             'expires_at' => $expiresAt,
-    //             'is_used' => false,
-    //         ]);
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'End-user link generated successfully',
-    //         ]);
-    //     } catch (\Exception $e) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Failed to generate end-user link: ' . $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
 
     public function getNodeValue(Request $request)
     {
@@ -321,6 +340,7 @@ class End_user_DeviceController extends Controller
                 }
             }
 
+
             if (empty($parameter_values)) {
                 return response()->json([
                     'success' => false,
@@ -406,5 +426,12 @@ class End_user_DeviceController extends Controller
             return $url_Id;
         }
         return $device->_id;
+    }
+
+    public function showEndSession()
+    {
+        return response()
+            ->view('End-user-link.session_expired')
+            ->header('Content-Type', 'text/html');
     }
 }

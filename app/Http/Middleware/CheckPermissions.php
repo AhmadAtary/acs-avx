@@ -21,7 +21,7 @@ class CheckPermissions
 
         // Get authenticated user
         $user = Auth::user();
-        
+
         // Fetch permissions from `access` table based on user ID
         $permissions = DB::table('accesses')
             ->where('user_id', $user->id)

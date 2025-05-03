@@ -10,180 +10,120 @@
             <h1>Device Info</h1>
         </div>
         <div class="col-md-6 text-end">
+            {{-- Start Add task pop-up by Email --}}
+            <!-- Trigger Button -->
+            <button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#SendTaskModal">
+                <i class="bi bi-plus-lg me-2"></i> Send Ticket by Email
+            </button>
 
-{{--Start Add task pop-up by Email --}}
- <!-- Trigger Button -->
-<button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#SendTaskModal">
-    <i class="bi bi-plus-lg me-2"></i> Send Ticket by Email
-</button>
+            <!-- Generate End-User Link Button -->
+            <button class="btn btn-primary px-4" data-bs-toggle="modal" data-bs-target="#generateLinkModal">
+                <i class="bi bi-plus-lg me-2"></i> Generate end link
+            </button>
 
-<!-- Generate End-User Link Button -->
-<button class="btn btn-primary px-4 mt-2" data-bs-toggle="modal" data-bs-target="#GenerateLinkModal">
-    <i class="bi bi-plus-lg me-2"></i> Generate end link
-</button>
-
-<!-- Modal -->
-<div class="modal fade" id="SendTaskModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="send-task-form" method="POST" action="{{ route('send.task') }}" enctype="multipart/form-data">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Send Task via Email</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-
-
-
-                    <div class="mb-3">
-                        <label class="form-label">Your Name</label>
-                        <input type="text" class="form-control" name="username" value="{{ auth()->user()->name }}" readonly>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Your Email</label>
-                        <input type="text" class="form-control" name="user_email" value="{{ auth()->user()->email }}" readonly>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Device Serial Number</label>
-                        <input type="text" class="form-control" name="device_id" value="{{ $device['_deviceId']['_SerialNumber'] ?? 'Unknown Serial Number' }}" readonly>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Recipient Email</label>
-                        <input type="email" class="form-control" name="email" placeholder="Enter recipient's email address" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Email Subject</label>
-                        <input type="text" class="form-control" name="subject" placeholder="Email Subject" required>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Task Description</label>
-                        <textarea class="form-control" name="description" placeholder="Describe the task here..." rows="3" required></textarea>
-                    </div>
-
-                </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-success" id="submit-btn">
-                        <i class="bi bi-send me-1"></i> Send Task
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-@if(session('success'))
-    <div class="alert alert-success mt-3" id="success-alert">
-        {{ session('success') }}
-    </div>
-@endif
-
-{{-- End Add task pop-up by Email --}}
-
-<!-- Generate End-User Link Modal -->
-<div class="modal fade" id="GenerateLinkModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form method="POST" action="{{ route('generate.link') }}">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title">Generate End-User Link</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="m   odal-body">
-                    <div class="mb-3">
-                        <label class="form-label">End-User Link</label>
-                        <input type="text" class="form-control" name="link" value="{{ url('/end-user-login/' . Str::random(32)) }}" readonly>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Username</label>
-                        <input type="text" class="form-control" name="username" value="{{ $device['_deviceId']['_SerialNumber'] ?? 'Unknown Serial Number' }}" readonly>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Password</label>
-                        <input type="text" class="form-control" name="password" value="{{ Str::random(12) }}" readonly>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Expiration Date</label>
-                        <input type="text" class="form-control" name="expires_at" value="{{ now()->addMinutes(5)->toDateTimeString() }}">
+            <!-- Modal -->
+            <div class="modal fade" id="SendTaskModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form id="send-task-form" method="POST" action="{{ route('send.task') }}" enctype="multipart/form-data">
+                            @csrf
+                            <div class="modal-header">
+                                <h5 class="modal-title">Send Ticket via Email</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="" style="display: none">
+                                <div class="mb-3">
+                                    <label class="form-label">Your Name</label>
+                                    <input type="hidden" class="form-control" name="username" value="{{ auth()->user()->name }}" readonly>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Your Email</label>
+                                    <input type="hidden" class="form-control" name="user_email"  value="{{ auth()->user()->email }}" readonly>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Device Serial Number</label>
+                                    <input type="hidden" class="form-control" name="device_id" value="{{ $device['_deviceId']['_SerialNumber'] ?? 'Unknown Serial Number' }}" readonly>
+                                </div></div>
+                                <div class="mb-3">
+                                    <label class="form-label">Recipient Email</label>
+                                    <input type="email" class="form-control" name="email" placeholder="Enter recipient's email address" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Email Subject</label>
+                                    <input type="text" class="form-control" name="subject" placeholder="Email Subject" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Ticket Description</label>
+                                    <textarea class="form-control" name="description" placeholder="Describe the task here..." rows="3" required></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-success" id="submit-btn">
+                                    <i class="bi bi-send me-1"></i> Send Ticket
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-link me-1"></i> Generate Link
-                    </button>
+            </div>
+
+
+            {{-- End Add task pop-up by Email --}}
+
+            <!-- Generate End-User Link Modal -->
+            <div class="modal fade" id="generateLinkModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <form id="generate-link-form" method="POST" action="{{ route('generate.link') }}">
+                            @csrf
+                            <div class="modal-header">
+                                <h5 class="modal-title">Generate End-User Link</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label">End-User Link</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="link" name="link" value="{{ url('/end-user-login/' . Str::random(32)) }}" readonly onclick="copyText('link')">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="copyText('link')">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Username</label>
+                                    <input type="text" class="form-control" id="username" name="username" value="{{ $device['_deviceId']['_SerialNumber'] ?? 'Unknown Serial Number' }}" readonly>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Password</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="password" name="password" value="{{ Str::random(12) }}" readonly onclick="copyText('password')">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="copyText('password')">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Expiration Date</label>
+                                    <div class="input-group">
+                                        <input type="datetime-local" class="form-control" id="expires_at" name="expires_at" value="{{ now()->addMinutes(10)->format('Y-m-d\TH:i') }}">
+
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-primary" onclick="regenerateLink()">Generate New Data</button>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-link me-1"></i> Generate Link
+                                </button>
+                                <div style="color: red;font-size: initial;color:  red !important;" class="form-text text-muted">The link is valid for 10 minutes</div style="color: red;font-size: initial;color:  red !important;">
+
+                            </div>
+                        </form>
+                    </div>
                 </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-
-
-<script>
- // Handle Generate Link button if the modal exists
- const generateLinkForm = document.getElementById('GenerateLinkModal');
-            if (GenerateLinkModal) {
-                GenerateLinkModal.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    showLoadingOverlay();
-
-                    fetch(this.action, {
-                        method: 'POST',
-                        body: new FormData(this),
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            'Accept': 'application/json'
-                        }
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok');
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        hideLoadingOverlay();
-                        if (data.success) {
-                            const linkInput = document.getElementById('link');
-                            if (linkInput) {
-                                linkInput.value = data.link;
-                                navigator.clipboard.writeText(data.link)
-                                    .then(() => {
-                                        showSimplePopup('Link generated and copied to clipboard!');
-                                    })
-                                    .catch(() => {
-                                        showSimplePopup('Link generated! Please copy it manually.');
-                                    });
-                            }
-                        } else {
-                            showSimplePopup(data.message || 'Failed to generate link.', true);
-                        }
-                    })
-                    .catch(error => {
-                        hideLoadingOverlay();
-                        showSimplePopup('Error: ' + error.message, true);
-                    });
-                });
-            }
-
-
-
-</script>
-@if(session('success'))
-    <div class="alert alert-success mt-3" id="success-alert">
-        {{ session('success') }}
-    </div>
-@endif
-
-
-
-
+            </div>
 
 
 
@@ -528,19 +468,30 @@ document.addEventListener("DOMContentLoaded", () => {
     const serialNumber = "{{ $device['_deviceId']['_SerialNumber'] ?? 'Unknown' }}";
     const csrfToken = "{{ csrf_token() }}";
 
+
     // Utility Functions
     const utils = {
-        showLoading: () => document.getElementById('loadingOverlay').style.display = 'block',
-        hideLoading: () => document.getElementById('loadingOverlay').style.display = 'none',
-        showPopup: (message) => {
+        showLoading: () => {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.style.display = 'block';
+        },
+        hideLoading: () => {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.style.display = 'none';
+        },
+        showPopup: (message, isError = false) => {
             const popup = document.getElementById('simplePopup');
-            document.getElementById('popupMessage').textContent = message;
-            popup.style.display = 'block';
-            popup.classList.add('show');
-            setTimeout(() => {
-                popup.classList.remove('show');
-                setTimeout(() => popup.style.display = 'none', 300);
-            }, 3000);
+            const popupMessage = document.getElementById('popupMessage');
+            if (popup && popupMessage) {
+                popupMessage.innerHTML = message;
+                popup.style.display = 'block';
+                popup.style.background = isError ? '#f8d7da' : '#fff';
+                popup.classList.add('show');
+                setTimeout(() => {
+                    popup.classList.remove('show');
+                    setTimeout(() => popup.style.display = 'none', 300);
+                }, 5000); // Display for 5 seconds
+            }
         },
         fetchData: async (url, options = {}) => {
             utils.showLoading();
@@ -553,7 +504,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return await response.json();
             } catch (error) {
                 console.error(`Fetch error: ${error}`);
-                utils.showPopup(`Error: ${error.message}`);
+                utils.showPopup(`Error: ${error.message}`, true);
                 throw error;
             } finally {
                 utils.hideLoading();
@@ -575,6 +526,8 @@ document.addEventListener("DOMContentLoaded", () => {
             observer.observe(document.body, { childList: true, subtree: true });
         }
     };
+
+
 
     // Tree View Management
     const treeView = {
@@ -634,6 +587,19 @@ document.addEventListener("DOMContentLoaded", () => {
             document.querySelectorAll('ul').forEach(ul => ul.classList.add('collapsed'));
         }
     };
+
+
+
+
+
+    // generate-link-form
+
+
+
+
+
+
+
 
     // Device Actions
     const deviceActions = {
@@ -794,7 +760,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         if (method === 'Ping') {
                             document.getElementById('diagnostics-data').textContent = `Success Count: ${results.SuccessCount ?? 'N/A'}\nFailure Count: ${results.FailureCount ?? 'N/A'}`;
                         } else {
-                            document.getElementById('diagnostics-data').textContent = results.map(hop => 
+                            document.getElementById('diagnostics-data').textContent = results.map(hop =>
                                 `${hop.HopNumber}. ${hop.HopHostAddress ?? '*'} (${hop.HopRTTimes ?? '*'} ms)`
                             ).join('\n') || 'No hops found.';
                         }
@@ -824,5 +790,203 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.addEventListener('click', () => deviceActions.executeCommand(btn.classList.contains('reboot-device') ? 'reboot' : 'reset', btn.dataset.serialNumber));
     });
 });
+</script>
+
+<script>
+
+const utils = {
+        showLoading: () => {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.style.display = 'block';
+        },
+        hideLoading: () => {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.style.display = 'none';
+        },
+        showPopup: (message, isError = false) => {
+            const popup = document.getElementById('simplePopup');
+            const popupMessage = document.getElementById('popupMessage');
+            if (popup && popupMessage) {
+                popupMessage.innerHTML = message;
+                popup.style.display = 'block';
+                popup.style.background = isError ? '#f8d7da' : '#fff';
+                popup.classList.add('show');
+                setTimeout(() => {
+                    popup.classList.remove('show');
+                    setTimeout(() => popup.style.display = 'none', 300);
+                }, 5000); // Display for 5 seconds
+            }
+        },
+        fetchData: async (url, options = {}) => {
+            utils.showLoading();
+            try {
+                const response = await fetch(url, {
+                    headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', ...options.headers },
+                    ...options
+                });
+                if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error(`Fetch error: ${error}`);
+                utils.showPopup(`Error: ${error.message}`, true);
+                throw error;
+            } finally {
+                utils.hideLoading();
+            }
+        },
+        updateFieldValue: (path, value) => {
+            const element = document.getElementById(path);
+            if (element) {
+                element.textContent = value;
+                return;
+            }
+            const observer = new MutationObserver((_, obs) => {
+                const el = document.getElementById(path);
+                if (el) {
+                    el.textContent = value;
+                    obs.disconnect();
+                }
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+        }
+    };
+
+    const generateLinkForm = document.getElementById('generate-link-form');
+    const linkInput = document.getElementById('link');
+    const passwordInput = document.getElementById('password');
+    const expiresAtInput = document.getElementById('expires_at');
+    const usernameInput = document.getElementById('username');
+
+    // Improved copy function
+    async function copyText(fieldId) {
+        const input = document.getElementById(fieldId);
+        try {
+            await navigator.clipboard.writeText(input.value);
+            utils.showPopup(`Copied to clipboard!`, false, 2000);
+        } catch (err) {
+            console.error('Copy error:', err);
+            utils.showPopup('Failed to copy text.', true, 2000);
+        }
+    }
+
+    // Generate random string for link and password
+    function generateRandomString(length) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let result = '';
+        for (let i = 0; i < length; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    }
+
+    // Set default expiration (10 minutes from now)
+    function setDefaultExpiration() {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() + 10);
+        expiresAtInput.value = now.toISOString().slice(0, 16);
+    }
+
+    // Initialize form with default values
+    function initializeForm() {
+        linkInput.value = `${window.location.origin}/end-user-login/${generateRandomString(32)}`;
+        passwordInput.value = generateRandomString(12);
+        setDefaultExpiration();
+    }
+
+    // Common function to handle API requests
+    async function handleLinkGeneration(formData) {
+        try {
+            const response = await fetch(generateLinkForm.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value,
+                    'Accept': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || `Server error: ${response.status}`);
+            }
+
+            return data;
+        } catch (error) {
+            console.error('API error:', error);
+            throw error;
+        }
+    }
+
+    // Regenerate link function
+    async function regenerateLink() {
+        utils.showLoading();
+        try {
+            // Generate new random values
+            linkInput.value = `${window.location.origin}/end-user-login/${generateRandomString(32)}`;
+            passwordInput.value = generateRandomString(12);
+            setDefaultExpiration();
+
+            utils.showPopup(`
+                <strong>New Link Generated!</strong><br>
+
+                Password: ${passwordInput.value}
+            `, false, 3000);
+        } catch (error) {
+            console.error('Regenerate link error:', error);
+            utils.showPopup(`Error regenerating link: ${error.message}`, true, 3000);
+        } finally {
+            utils.hideLoading();
+        }
+    }
+
+    // Form submission handler
+    if (generateLinkForm) {
+        // Initialize form when modal is shown
+        document.getElementById('generateLinkModal').addEventListener('show.bs.modal', initializeForm);
+
+        generateLinkForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            utils.showLoading();
+
+            try {
+                // Validate expiration date
+                const expiresAt = new Date(expiresAtInput.value);
+                if (isNaN(expiresAt.getTime())) {
+                    throw new Error('Invalid expiration date');
+                }
+
+                const formData = new FormData(this);
+                formData.set('link', linkInput.value);
+                formData.set('password', passwordInput.value);
+                formData.set('username', usernameInput.value);
+                formData.set('expires_at', expiresAtInput.value);
+
+                const data = await handleLinkGeneration(formData);
+
+                if (data.success) {
+                    linkInput.value = data.link || linkInput.value;
+                    passwordInput.value = data.password || passwordInput.value;
+                    expiresAtInput.value = data.expires_at ?
+                        new Date(data.expires_at).toISOString().slice(0, 16) :
+                        expiresAtInput.value;
+
+                    utils.showPopup(`
+                        <strong>Link Generated Successfully!</strong><br>
+
+                        Password: ${passwordInput.value}
+                    `, false, 3000);
+                } else {
+                    utils.showPopup(data.message || 'Failed to generate link.', true, 3000);
+                }
+            } catch (error) {
+                console.error('Generate link error:', error);
+                utils.showPopup(`Error generating link: ${error.message}`, true, 3000);
+            } finally {
+                utils.hideLoading();
+            }
+        });
+    }
+
 </script>
 @endsection

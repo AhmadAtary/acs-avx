@@ -17,15 +17,6 @@
         .alert {
             margin-top: 20px;
         }
-        #simplePopup {
-            transition: opacity 0.3s ease-in-out;
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-        #simplePopup.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
         .debug-section {
             background-color: #fff;
             border: 1px solid #e0e0e0;
@@ -41,21 +32,96 @@
         .table th, .table td {
             vertical-align: middle;
         }
+        #loadingOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9998;
+        }
+        #loadingSpinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+        }
     </style>
 </head>
 <body>
     <div class="container mt-4">
+        <!-- Display success/error messages from server -->
+        @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        @endif
+        @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        @endif
+
         <div class="row align-items-center">
             <div class="col-md-6">
                 <h1>Device Info: {{ $device['_deviceId']['_SerialNumber'] ?? 'Unknown' }}</h1>
             </div>
-            <div class="col-md-6 text-end">
 
-                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#generateLinkModal">
-                    Generate End-User Link
-                </button>
+            <div class="text-end text-muted">
+                Session expires in: <span id="sessionTimer">10:00</span>
+            </div>
+            <div class="col-md-6 text-end">
+                <!-- Empty for now -->
             </div>
         </div>
+
+
+
+
+        <script>
+const COUNTDOWN_DURATION = 10 * 60 * 1000;
+const LOGIN_URL = "{{ route('end.session') }}";
+
+function formatTime(ms) {
+    const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+    const seconds = String(totalSeconds % 60).padStart(2, '0');
+    return `${minutes}:${seconds}`;
+}
+
+function startTimer() {
+    const display = document.getElementById("sessionTimer");
+    let endTime = localStorage.getItem("sessionEndTime");
+
+    if (!endTime) {
+        endTime = Date.now() + COUNTDOWN_DURATION;
+        localStorage.setItem("sessionEndTime", endTime);
+    } else {
+        endTime = parseInt(endTime);
+    }
+
+    const timerInterval = setInterval(() => {
+        const remaining = endTime - Date.now();
+
+        if (remaining <= 0) {
+            clearInterval(timerInterval);
+            localStorage.removeItem("sessionEndTime");
+            // Force full page reload (bypass any AJAX/Single Page App behavior)
+            window.location.href = LOGIN_URL; // Or window.location.replace(LOGIN_URL)
+        } else {
+            if (display) display.textContent = formatTime(remaining);
+        }
+    }, 1000);
+}
+
+document.addEventListener('DOMContentLoaded', startTimer);
+        </script>
+
 
 
 
@@ -86,13 +152,11 @@
                                  role="tabpanel" aria-labelledby="{{ Str::slug($category) }}-tab">
                                 <div class="card">
                                     <div class="card-body">
-
-
-                                        <form method="POST" action="{{ route('node.update') }}">
+                                        <form method="POST" action="{{ route('node.update') }}" onsubmit="showLoading()">
                                             @csrf
                                             <input type="hidden" name="device_id" value="{{ $device['_id'] ?? '' }}">
-                                             <input type="hidden" name="url_Id" value="{{ $url_Id }}">
-                                             <input type="hidden" name="serialNumber" value="{{ $device['_deviceId']['_SerialNumber'] ?? '' }}">
+                                            <input type="hidden" name="url_Id" value="{{ $url_Id }}">
+                                            <input type="hidden" name="serialNumber" value="{{ $device['_deviceId']['_SerialNumber'] ?? '' }}">
                                             <table class="table table-hover">
                                                 <thead>
                                                     <tr>
@@ -149,174 +213,84 @@
             </div>
         </div>
 
-
-
-
         <!-- Loading Overlay -->
-        <div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9998;">
-            <div id="loadingSpinner" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999;">
+        <div id="loadingOverlay">
+            <div id="loadingSpinner">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
         </div>
-
-        <!-- Simple Popup -->
-        <div id="simplePopup" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 300px; background-color: #fff; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); border-radius: 8px; padding: 20px; font-family: Arial, sans-serif;">
-            <div id="popupMessage" style="font-size: 16px; color: #333;"></div>
-        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            function showLoadingOverlay() {
-                document.getElementById('loadingOverlay').style.display = 'block';
-            }
-
-            function hideLoadingOverlay() {
-                document.getElementById('loadingOverlay').style.display = 'none';
-            }
-
-            function showSimplePopup(message) {
-                const popup = document.getElementById('simplePopup');
-                const popupMessage = document.getElementById('popupMessage');
-                popupMessage.textContent = message;
-                popup.style.display = 'block';
-                popup.classList.add('show');
-                setTimeout(hideSimplePopup, 3000);
-            }
-
-            function hideSimplePopup() {
-                const popup = document.getElementById('simplePopup');
-                popup.classList.remove('show');
-                setTimeout(() => {
-                    popup.style.display = 'none';
-                }, 300);
-            }
-
-        //     document.querySelectorAll('form').forEach(form => {
-        //         form.addEventListener('submit', function (e) {
-        //             e.preventDefault();
-        //             showLoadingOverlay();
-        //             fetch(this.action, {
-        //                 method: 'POST',
-        //                 body: new FormData(this),
-        //                 headers: {
-        //                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
-        //                     'Accept': 'application/json'
-        //                 }
-        //             })
-        //             .then(response => {
-        //                 hideLoadingOverlay();
-        //                 if (!response.ok) {
-        //                     throw new Error('Network response was not ok');
-        //                 }
-        //                 return response.json();
-        //             })
-        //             .then(data => {
-        //                 showSimplePopup(data.message || (data.success ? 'Action completed successfully.' : 'Failed to complete action.'));
-        //                 if (data.success && form.id === 'generateLinkForm') {
-        //                     navigator.clipboard.writeText(document.getElementById('link').value);
-        //                     showSimplePopup('Link copied to clipboard!');
-        //                 }
-        //             })
-        //             .catch(error => {
-        //                 hideLoadingOverlay();
-        //                 showSimplePopup('An error occurred: ' + error.message);
-        //                 console.error('Error:', error);
-        //             });
-        //         });
-        //     });
-        // });
-        document.querySelectorAll('form').forEach(form => {
-    form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        // Ensure url_Id is not a DOM object
-        const urlIdInput = form.querySelector('input[name="url_Id"]');
-        if (!urlIdInput || !urlIdInput.value || urlIdInput.value.includes('object')) {
-            showSimplePopup('Invalid device ID in form submission.');
-            return;
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'block';
         }
-        showLoadingOverlay();
-        fetch(this.action, {
-            method: 'POST',
-            body: new FormData(this),
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => {
-            hideLoadingOverlay();
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            showSimplePopup(data.message || (data.success ? 'Action completed successfully.' : 'Failed to complete action.'));
-            if (data.success && form.id === 'generateLinkForm') {
-                navigator.clipboard.writeText(document.getElementById('link').value);
-                showSimplePopup('Link copied to clipboard!');
-            }
-        })
-        .catch(error => {
-            hideLoadingOverlay();
-            showSimplePopup('An error occurred: ' + error.message);
-            console.error('Error:', error);
+
+        // Auto-dismiss alerts after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                var alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function(alert) {
+                    var bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 5000);
         });
-    });
-});
-document.querySelectorAll('form').forEach(form => {
-    form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        const urlIdInput = form.querySelector('input[name="url_Id"]');
-        if (!urlIdInput || !urlIdInput.value || urlIdInput.value.includes('object')) {
-            showSimplePopup('Invalid device ID in form submission.');
-            return;
+
+        // Response handling script
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for success/error messages in the response
+            @if(session('response_data'))
+                const responseData = @json(session('response_data'));
+                handleResponse(responseData);
+            @endif
+        });
+
+        function handleResponse(data) {
+            if (data.status_code === 200) {
+                // Handle successful response
+                if (data.value !== undefined) {
+                    // Update field values if this was a GET operation
+                    updateFieldValues(data);
+                }
+                showAlert('Operation completed successfully', 'success');
+            } else if (data.status_code === 202) {
+                // Handle task queued response
+                showAlert('Operation saved as task and will be processed shortly', 'info');
+            } else {
+                // Handle error response
+                showAlert(data.message || 'Operation failed', 'danger');
+            }
         }
-        showLoadingOverlay();
-        fetch(this.action, {
-            method: 'POST',
-            body: new FormData(this),
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => {
-            hideLoadingOverlay();
-            if (!response.ok) {
-                return response.json().then(data => {
-                    throw new Error(data.message || 'Network response was not ok');
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            showSimplePopup(data.message || (data.success ? 'Action completed successfully.' : 'Failed to complete action.'));
-            if (data.success && form.id === 'generateLinkForm') {
-                navigator.clipboard.writeText(document.getElementById('link').value);
-                showSimplePopup('Link copied to clipboard!');
-            }
-            // Update node values in the UI for GET requests
-            if (data.success && data.results) {
-                Object.keys(data.results).forEach(path => {
-                    const input = document.querySelector(`input[name="nodes[${path}][value]"]`);
-                    if (input && data.results[path].value) {
-                        input.value = data.results[path].value;
-                    }
-                });
-            }
-        })
-        .catch(error => {
-            hideLoadingOverlay();
-            showSimplePopup('Error: ' + error.message);
-            console.error('Error:', error);
-        });
-    });
-});
+
+        function updateFieldValues(data) {
+            // This function should update the UI with the new values
+            // You'll need to implement this based on your specific UI structure
+            // Example:
+            // document.querySelector(`[data-path="${data.path}"]`).value = data.value;
+            console.log('Update fields with:', data);
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.role = 'alert';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            document.querySelector('.container').prepend(alertDiv);
+
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(alertDiv);
+                bsAlert.close();
+            }, 5000);
+        }
     </script>
 </body>
 </html>

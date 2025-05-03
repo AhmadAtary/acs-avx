@@ -141,25 +141,25 @@
                     <div class="mb-3" id="deviceAssignmentSection">
                         <label class="form-label">Assign Devices?</label>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="assign_devices" 
+                            <input class="form-check-input" type="radio" name="assign_devices"
                                 id="assignDevicesYes" value="1">
                             <label class="form-check-label btn btn-outline-primary" for="assignDevicesYes">
                                 Yes
                             </label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="assign_devices" 
+                            <input class="form-check-input" type="radio" name="assign_devices"
                                 id="assignDevicesNo" value="0" checked>
                             <label class="form-check-label btn btn-outline-secondary" for="assignDevicesNo">
                                 No
                             </label>
                         </div>
-                    </div> 
+                    </div>
                     <!-- CSV Upload Section (Initially Hidden) -->
                     <div class="mb-3 d-none" id="csvUploadSection">
                         <label class="form-label">Upload Device Serial Numbers (CSV)</label>
-                        <input type="file" class="form-control" 
-                               name="device_csv" 
+                        <input type="file" class="form-control"
+                               name="device_csv"
                                id="deviceCsv"
                                accept=".csv">
                         <small class="form-text text-muted">
@@ -185,7 +185,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                
+
                             @foreach(['bulk_actions', 'files_management', 'models_management', 'user_management'] as $section)
                                     <tr>
                                         <td>{{ ucwords(str_replace('_', ' ', $section)) }}</td>
@@ -252,35 +252,35 @@
                     {{-- Assign Devices --}}
                     <div class="mb-3" id="editDeviceAssignmentSection">
                     <label class="form-label">Assign Devices?</label>
-                    
+
                     <!-- Yes Option (Active when assigned) -->
                     <div class="form-check form-check-inline">
-                        <input 
-                            style="display: none" 
-                            class="form-check-input" 
-                            type="radio" 
-                            name="assign_devices" 
-                            value="1" 
+                        <input
+                            style="display: none"
+                            class="form-check-input"
+                            type="radio"
+                            name="assign_devices"
+                            value="1"
                             id="editAssignDevicesYes"
                             {{ isset($user->access->permissions['assign_devices']['assign']) && $user->access->permissions['assign_devices']['assign'] ? 'checked' : '' }}>
-                        <label 
-                            class="form-check-label btn btn-outline-primary {{ isset($user->access->permissions['assign_devices']['assign']) && $user->access->permissions['assign_devices']['assign'] ? 'active' : '' }}" 
+                        <label
+                            class="form-check-label btn btn-outline-primary {{ isset($user->access->permissions['assign_devices']['assign']) && $user->access->permissions['assign_devices']['assign'] ? 'active' : '' }}"
                             for="editAssignDevicesYes">
                             Yes
                         </label>
                     </div>
-                    
+
                     <!-- No Option (Active when not assigned) -->
                     <div class="form-check form-check-inline">
-                        <input 
-                            style="display: none" 
-                            class="form-check-input" 
-                            type="radio" 
-                            name="assign_devices" 
-                            value="0" 
+                        <input
+                            style="display: none"
+                            class="form-check-input"
+                            type="radio"
+                            name="assign_devices"
+                            value="0"
                             id="editAssignDevicesNo">
-                        <label 
-                            class="form-check-label btn btn-outline-secondary {{ isset($user->access->permissions['assign_devices']['assign']) && $user->access->permissions['assign_devices']['assign'] == 0 ? 'active' : '' }}" 
+                        <label
+                            class="form-check-label btn btn-outline-secondary {{ isset($user->access->permissions['assign_devices']['assign']) && $user->access->permissions['assign_devices']['assign'] == 0 ? 'active' : '' }}"
                             for="editAssignDevicesNo">
                             No
                         </label>
@@ -392,7 +392,7 @@
 <div class="modal fade" id="assignDevicesModal" tabindex="-1" aria-labelledby="assignDevicesModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            
+
             <div class="modal-header">
                 <h5 class="modal-title" id="assignDevicesModalLabel">Device Access Management</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
