@@ -136,8 +136,7 @@ class CustomerSupportController extends Controller
 
     public function manage(Request $request)
     {
-        
-        // Debug: Log incoming request data
+        // Log incoming request data for debugging
         Log::debug('Manage Request Data:', $request->all());
 
         $userId = auth()->id(); // Get the authenticated user ID
@@ -146,27 +145,41 @@ class CustomerSupportController extends Controller
         $action = $request->input('action');
         $nodes = $request->input('nodes');
 
-        // Log: User is attempting to manage device
-        LogController::saveLog('Custome_Support_Device_Action', "CS User attempted to manage device: {$device_id} with action: {$action}");
+        // Validate required inputs
+        if (!$url_id || !$device_id || !$action) {
+            LogController::saveLog('Custome_Support_Device_Action_failed', "Missing required fields for device management (device ID: {$device_id})");
+            return response()->json([
+                'success' => false,
+                'message' => 'Missing required fields: url_Id, device_id, or action.'
+            ], 400);
+        }
 
         // Validate nodes
         if (!$nodes || !is_array($nodes)) {
             LogController::saveLog('Custome_Support_Device_Action_failed', "Invalid nodes provided for device management (device ID: {$device_id})");
-            return redirect()->back()->with('error', 'No valid nodes found in request.');
+            return response()->json([
+                'success' => false,
+                'message' => 'No valid nodes found in request.'
+            ], 400);
         }
 
-        $client = new Client(['verify' => false]); // Disable SSL verification
+        // Log user action
+        LogController::saveLog('Custome_Support_Device_Action', "CS User attempted to manage device: {$device_id} with action: {$action}");
+
+        $client = new Client(['verify' => false]); // TODO: Enable SSL verification in production
         $api_url = "https://10.106.45.1:7557/devices/{$url_id}/tasks?connection_request";
 
-
         try {
-            if ($action == 'GET') {
+            $json_body = [];
+            if ($action === 'GET') {
                 $parameter_names = array_keys($nodes);
-
 
                 if (empty($parameter_names)) {
                     LogController::saveLog('Custome_Support_Device_Action_failed', "No parameters selected for GET request (device ID: {$device_id})");
-                    return redirect()->back()->with('error', 'No parameters selected for GET request.');
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'No parameters selected for GET request.'
+                    ], 400);
                 }
 
                 $json_body = [
@@ -174,19 +187,21 @@ class CustomerSupportController extends Controller
                     'name' => 'getParameterValues',
                     'parameterNames' => $parameter_names,
                 ];
-            } elseif ($action == 'SET') {
+            } elseif ($action === 'SET') {
                 $parameter_values = [];
 
                 foreach ($nodes as $nodePath => $nodeData) {
-                    if (isset($nodeData['value'])) {
+                    if (isset($nodeData['value']) && is_scalar($nodeData['value'])) {
                         $parameter_values[] = [$nodePath, $nodeData['value']];
                     }
                 }
 
-
                 if (empty($parameter_values)) {
                     LogController::saveLog('Custome_Support_Device_Action_failed', "No writable parameters selected for SET request (device ID: {$device_id})");
-                    return redirect()->back()->with('error', 'No writable parameters selected for SET request.');
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'No writable parameters selected for SET request.'
+                    ], 400);
                 }
 
                 $json_body = [
@@ -196,46 +211,57 @@ class CustomerSupportController extends Controller
                 ];
             } else {
                 LogController::saveLog('Custome_Support_Device_Action_failed', "Invalid action specified for device management (device ID: {$device_id})");
-                return redirect()->back()->with('error', 'Invalid action specified.');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid action specified. Use GET or SET.'
+                ], 400);
             }
 
-
+            // Log API request
+            LogController::saveLog('Custome_Support_Device_Action', "CS User Sent {$action} to {$device_id} with payload: " . json_encode($json_body));
 
             $response = $client->post($api_url, ['json' => $json_body]);
-
-            // Log: API request being sent
-            LogController::saveLog('Custome_Support_Device_Action', "CS User Sent {$action} to {$device_id} 'Nodes' => $parameter_values");
-
-
-
-
             $statusCode = $response->getStatusCode();
-            $responseBody = $response->getBody()->getContents();
+            $responseBody = json_decode($response->getBody()->getContents(), true);
 
-
-
-            if ($statusCode == 200) {
-                LogController::saveLog('Custome_Support_Device_Action', "API response received for device management (device ID: {$device_id}) 'status' => 'Operation completed successfully' ");
-                return redirect()->back()->with('success', 'Operation completed successfully.');
-            } elseif ($statusCode == 202) {
+            if ($statusCode === 200) {
+                LogController::saveLog('Custome_Support_Device_Action', "API response received for device management (device ID: {$device_id}) 'status' => 'Operation completed successfully'");
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Operation completed successfully.',
+                    'data' => $responseBody
+                ], 200);
+            } elseif ($statusCode === 202) {
                 LogController::saveLog('Custome_Support_Device_Action', "API response received for device management (device ID: {$device_id}) 'status' => 'Pending as Task'");
-                return redirect()->back()->with('task', 'Pending as Task, Check Device Connection.');
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Operation pending as task. Check device connection.',
+                    'task' => $responseBody
+                ], 202);
             }
 
-            return redirect()->back()->with('error', 'Unexpected API response received.');
+            LogController::saveLog('Custome_Support_Device_Action_failed', "Unexpected API response for device management (device ID: {$device_id}) 'statusCode' => {$statusCode}");
+            return response()->json([
+                'success' => false,
+                'message' => 'Unexpected API response received.'
+            ], 500);
         } catch (RequestException $e) {
-            // Debug: Log RequestException details
             Log::error('Guzzle RequestException:', [
                 'message' => $e->getMessage(),
-                'response' => $e->getResponse() ? $e->getResponse()->getBody()->getContents() : null,
+                'response' => $e->hasResponse() ? $e->getResponse()->getBody()->getContents() : null,
             ]);
 
-            return redirect()->back()->with('error', 'API request failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'API request failed: ' . $e->getMessage()
+            ], 500);
         } catch (\Exception $e) {
-            // Debug: Log general exception details
             Log::error('General Exception:', ['message' => $e->getMessage()]);
 
-            return redirect()->back()->with('error', 'An unexpected error occurred: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An unexpected error occurred: ' . $e->getMessage()
+            ], 500);
         }
     }
 
