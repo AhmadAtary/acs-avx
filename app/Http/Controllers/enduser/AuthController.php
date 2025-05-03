@@ -15,20 +15,26 @@ class AuthController extends Controller
     {
         $link = EndUserLink::where('token', $token)->first();
 
-        if (!$link || $link->is_used || Carbon::now()->gte($link->expires_at)) {
-            // LogController::saveLog('end_user_login_failed', "Invalid or expired link accessed with token: {$token}");
-            // Clear session if link is expired
-            if ($link && Carbon::now()->gte($link->expires_at)) {
-                session()->forget(['end_user_authenticated', 'end_user_username']);
-            }
-            return view('End-user-link.login', ['token' => $token, 'serialNumber' => null])
-                ->with('error', 'Invalid or expired link');
+        if (!$link || $link->is_used) {
+            return view('End-user-link.login', [
+                'token' => $token,
+                'serialNumber' => null,
+            ])->with('error', 'Invalid or expired link. Please contact customer support to generate a new one.');
         }
 
-        // LogController::saveLog('end_user_login_page_access', "User accessed end-user login page with token: {$token}");
-        return view('End-user-link.login', ['token' => $token, 'serialNumber' => $link->username]);
-    }
+        if (Carbon::now()->gte($link->expires_at)) {
+            session()->forget(['end_user_authenticated', 'end_user_username']);
+            return view('End-user-link.login', [
+                'token' => $token,
+                'serialNumber' => null,
+            ])->with('error', 'This link has expired. Please contact customer support to generate a new one.');
+        }
 
+        return view('End-user-link.login', [
+            'token' => $token,
+            'serialNumber' => $link->username,
+        ]);
+    }
     public function login(Request $request)
     {
         $validated = $request->validate([
@@ -63,4 +69,7 @@ class AuthController extends Controller
         // LogController::saveLog('end_user_login_failed', "Invalid credentials for username: {$username}");
         return redirect()->back()->with('error', 'Invalid credentials');
     }
+
+
+   
 }

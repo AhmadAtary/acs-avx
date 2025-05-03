@@ -16,7 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'otp.verify' => \App\Http\Middleware\OtpVerifyMiddleware::class,
             'access.control' => \App\Http\Middleware\AccessControlMiddleware::class,
             'check.permission' => \App\Http\Middleware\CheckPermissions::class,
-        ]);
+            // 'enduser.auth' => \App\Http\Middleware\EnsureEndUserIsAuthenticated::class,
+            ]);
 
         $middleware->append(\App\Http\Middleware\CheckDatabaseConnection::class);
     })

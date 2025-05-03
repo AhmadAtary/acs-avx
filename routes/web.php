@@ -26,6 +26,7 @@ use App\Http\Controllers\enduser\End_user_DeviceController;
 
 
 
+
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -68,8 +69,9 @@ Route::middleware(['auth', 'otp.verify'])->group(function () {
     Route::get('/device/nodes/{model}', [DeviceController::class, 'getStandardNodes'])->name('neighbor.nodes');
     Route::post('/send-task', [TaskMailController::class, 'send'])->name('send.task');
 
-    Route::get('/device/{serialNumber}/diagnostics', [DeviceController::class, 'diagnostics'])->name('device.diagnostics');   
-
+    Route::get('/device/{serialNumber}/diagnostics', [DeviceController::class, 'diagnostics'])->name('device.diagnostics');
+    Route::post('/generate-link', [End_user_DeviceController::class, 'generateLink'])
+    ->name('generate.link');
 });
 
 Route::middleware(['auth', 'otp.verify','eng'])->group(function () {
@@ -203,15 +205,19 @@ Route::middleware(['auth', 'otp.verify','eng'])->group(function () {
 
     Route::get('/analysis', [AnalysisController::class, 'index'])->name('analysis.index');
     Route::get('/analysis/process', [AnalysisController::class, 'process'])->name('analysis.process');
-    
+
+
+
+
 });
 
-Route::get('/device/{url_Id}', [End_user_DeviceController::class, 'show'])->name('device.show');Route::post('/node/update', [End_user_DeviceController::class, 'updateNodes'])->name('node.update');
-Route::post('/generate-link', [End_user_DeviceController::class, 'generateLink'])->name('generate.link');
+
+Route::get('/device/{url_Id}', [End_user_DeviceController::class, 'show'])->name('device.show');
 Route::post('/node/update', [End_user_DeviceController::class, 'updateNodes'])->name('node.update');
 Route::get('/end-user-login/{token}', [AuthController::class, 'showLogin'])->name('end.user.login.show');
 Route::post('/end-user-login', [AuthController::class, 'login'])->name('end.user.login');
-
+Route::get('/end_session', [End_user_DeviceController::class, 'showEndSession'])
+     ->name('end.session');
 
 
 
