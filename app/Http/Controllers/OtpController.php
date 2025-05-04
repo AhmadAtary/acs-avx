@@ -43,7 +43,7 @@ class OtpController extends Controller
             \Mail::to($user->email)->send(new \App\Mail\SendOtp($user, $otp_code));
         }
     
-        return view('otp.prompt');
+        return view('Otp.prompt');
     }
     
     public function resend()
