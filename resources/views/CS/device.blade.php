@@ -87,8 +87,8 @@
                                 <div class="mb-3">
                                     <label class="form-label">End-User Link</label>
                                     <div class="input-group">
-                                        <input type="text" class="form-control" id="link" name="link" value="{{ url('/end-user-login/' . Str::random(32)) }}" readonly onclick="copyText('link')">
-                                        <button type="button" class="btn btn-outline-secondary" onclick="copyText('link')">
+                                        <input type="text" class="form-control" id="link" name="link" value="{{ url('/end-user-login/' . Str::random(32)) }}" readonly onclick="linkGeneration.copyText('link')">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="linkGeneration.copyText('link')">
                                             <i class="bi bi-clipboard"></i>
                                         </button>
                                     </div>
@@ -100,8 +100,8 @@
                                 <div class="mb-3">
                                     <label class="form-label">Password</label>
                                     <div class="input-group">
-                                        <input type="text" class="form-control" id="password" name="password" value="{{ Str::random(12) }}" readonly onclick="copyText('password')">
-                                        <button type="button" class="btn btn-outline-secondary" onclick="copyText('password')">
+                                        <input type="text" class="form-control" id="password" name="password" value="{{ Str::random(12) }}" readonly onclick="linkGeneration.copyText('password')">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="linkGeneration.copyText('password')">
                                             <i class="bi bi-clipboard"></i>
                                         </button>
                                     </div>
@@ -129,8 +129,185 @@
 
             </div>
 
+{{-- //secript for copy text --}}
 
+<script>
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        if (!csrfToken) {
+            console.error('CSRF token not found');
+        }
 
+    // Utility Functions
+    const utils = {
+        showLoading: () => {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.style.display = 'block';
+        },
+        hideLoading: () => {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) overlay.style.display = 'none';
+        },
+        showPopup: (message, isError = false, duration = 5000) => {
+            const popup = document.getElementById('simplePopup');
+            const popupMessage = document.getElementById('popupMessage');
+            if (popup && popupMessage) {
+                popupMessage.innerHTML = message;
+                popup.style.display = 'block';
+                popup.style.background = isError ? '#f8d7da' : '#fff';
+                popup.classList.add('show');
+                setTimeout(() => {
+                    popup.classList.remove('show');
+                    setTimeout(() => popup.style.display = 'none', 300);
+                }, duration);
+            }
+        },
+        fetchData: async (url, options = {}) => {
+            utils.showLoading();
+            try {
+                const response = await fetch(url, {
+                    headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', ...options.headers },
+                    ...options
+                });
+                if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error(`Fetch error: ${error}`);
+                utils.showPopup(`Error: ${error.message}`, true);
+                throw error;
+            } finally {
+                utils.hideLoading();
+            }
+        },
+        updateFieldValue: (path, value) => {
+            const element = document.getElementById(path);
+            if (element) {
+                element.textContent = value;
+                return;
+            }
+            const observer = new MutationObserver((_, obs) => {
+                const el = document.getElementById(path);
+                if (el) {
+                    el.textContent = value;
+                    obs.disconnect();
+                }
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+        }
+    };
+
+    // Link Generation Functions
+    const linkGeneration = {
+        initializeForm: () => {
+            const linkInput = document.getElementById('link');
+            const passwordInput = document.getElementById('password');
+            const expiresAtInput = document.getElementById('expires_at');
+
+            linkInput.value = `${window.location.origin}/end-user-login/${linkGeneration.generateRandomString(32)}`;
+            passwordInput.value = linkGeneration.generateRandomString(12);
+            const now = new Date();
+            now.setMinutes(now.getMinutes() + 10);
+            expiresAtInput.value = now.toISOString().slice(0, 16);
+        },
+        generateRandomString: (length) => {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        },
+        copyText: async (fieldId) => {
+            const input = document.getElementById(fieldId);
+            try {
+                await navigator.clipboard.writeText(input.value);
+                utils.showPopup(`Copied to clipboard!`, false, 2000);
+            } catch (err) {
+                console.error('Copy error:', err);
+                utils.showPopup('Failed to copy text.', true, 2000);
+            }
+        },
+        regenerateLink: async () => {
+            utils.showLoading();
+            try {
+                const linkInput = document.getElementById('link');
+                const passwordInput = document.getElementById('password');
+                linkInput.value = `${window.location.origin}/end-user-login/${linkGeneration.generateRandomString(32)}`;
+                passwordInput.value = linkGeneration.generateRandomString(12);
+                const now = new Date();
+                now.setMinutes(now.getMinutes() + 10);
+                document.getElementById('expires_at').value = now.toISOString().slice(0, 16);
+                utils.showPopup(`New Link Generated!<br>Password: ${passwordInput.value}`, false, 3000);
+            } catch (error) {
+                console.error('Regenerate link error:', error);
+                utils.showPopup(`Error regenerating link: ${error.message}`, true, 3000);
+            } finally {
+                utils.hideLoading();
+            }
+        }
+    };
+
+    // Link Generation Form Handler
+    const generateLinkForm = document.getElementById('generate-link-form');
+    if (generateLinkForm) {
+        document.getElementById('generateLinkModal').addEventListener('show.bs.modal', linkGeneration.initializeForm);
+        generateLinkForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            utils.showLoading();
+
+            try {
+                const linkInput = document.getElementById('link');
+                const passwordInput = document.getElementById('password');
+                const expiresAtInput = document.getElementById('expires_at');
+                const usernameInput = document.getElementById('username');
+
+                const expiresAt = new Date(expiresAtInput.value);
+                if (isNaN(expiresAt.getTime())) {
+                    throw new Error('Invalid expiration date');
+                }
+
+                const formData = new FormData(this);
+                formData.set('link', linkInput.value);
+                formData.set('password', passwordInput.value);
+                formData.set('username', usernameInput.value);
+                formData.set('expires_at', expiresAtInput.value);
+
+                const response = await fetch(generateLinkForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    linkInput.value = data.link || linkInput.value;
+                    passwordInput.value = data.password || passwordInput.value;
+                    expiresAtInput.value = data.expires_at ?
+                        new Date(data.expires_at).toISOString().slice(0, 16) :
+                        expiresAtInput.value;
+
+                    await linkGeneration.copyText('link');
+                    utils.showPopup(`Link Generated Successfully!<br>Password: ${passwordInput.value}`, false, 3000);
+                } else {
+                    throw new Error(data.message || 'Failed to generate link.');
+                }
+            } catch (error) {
+                console.error('Generate link error:', error);
+                utils.showPopup(`Error generating link: ${error.message}`, true, 3000);
+            } finally {
+                utils.hideLoading();
+            }
+        });
+    }
+
+    // Global function for regenerateLink to be called from HTML
+    function regenerateLink() {
+        linkGeneration.regenerateLink();
+    }
+    </script>
             <div class="btn-group">
                 <button class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Actions</button>
                 <ul class="dropdown-menu">
@@ -219,11 +396,11 @@
                                         <td>
                                             @if (isset($nodeValues[$nodeKey]['value']))
                                                 @if ($nodeValues[$nodeKey]['nodeMode'])
-                                                    <input type="text" class="form-control node-value" 
+                                                    <input type="text" class="form-control node-value"
                                                            data-node="{{ $nodeKey }}"
                                                            value="{{ $nodeValues[$nodeKey]['value'] }}">
                                                 @else
-                                                    <input type="hidden" class="node-value" 
+                                                    <input type="hidden" class="node-value"
                                                            data-node="{{ $nodeKey }}"
                                                            value="{{ $nodeValues[$nodeKey]['value'] }}">
                                                     <span>{{ $nodeValues[$nodeKey]['value'] }}</span>
