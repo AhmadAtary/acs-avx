@@ -230,7 +230,7 @@
                         </div>
                     </form>
                     <div id="diagnostics-loading" class="text-center" style="display: none;">
-                        <div class="spinner-border text-primary" role="status"></div>
+                        <!-- <div class="spinner-border text-primary" role="status"></div> -->
                         <p>Running diagnostics, please wait...</p>
                     </div>
                     <div id="diagnostics-result" style="display: none;">

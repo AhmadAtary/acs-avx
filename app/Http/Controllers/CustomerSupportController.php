@@ -229,21 +229,24 @@ class CustomerSupportController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'Operation completed successfully.',
-                    'data' => $responseBody
+                    'data' => $responseBody,
+                    'statusCode' => $statusCode
                 ], 200);
             } elseif ($statusCode === 202) {
                 LogController::saveLog('Custome_Support_Device_Action', "API response received for device management (device ID: {$device_id}) 'status' => 'Pending as Task'");
                 return response()->json([
                     'success' => true,
                     'message' => 'Operation pending as task. Check device connection.',
-                    'task' => $responseBody
+                    'task' => $responseBody,
+                    'statusCode' => $statusCode
                 ], 202);
             }
 
             LogController::saveLog('Custome_Support_Device_Action_failed', "Unexpected API response for device management (device ID: {$device_id}) 'statusCode' => {$statusCode}");
             return response()->json([
                 'success' => false,
-                'message' => 'Unexpected API response received.'
+                'message' => 'Unexpected API response received.',
+                'statusCode' => $statusCode
             ], 500);
         } catch (RequestException $e) {
             Log::error('Guzzle RequestException:', [
@@ -253,14 +256,16 @@ class CustomerSupportController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'API request failed: ' . $e->getMessage()
+                'message' => 'API request failed: ' . $e->getMessage(),
+                'statusCode' => 500
             ], 500);
         } catch (\Exception $e) {
             Log::error('General Exception:', ['message' => $e->getMessage()]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'An unexpected error occurred: ' . $e->getMessage()
+                'message' => 'An unexpected error occurred: ' . $e->getMessage(),
+                'statusCode' => 500
             ], 500);
         }
     }

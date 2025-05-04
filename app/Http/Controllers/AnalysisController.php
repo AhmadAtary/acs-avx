@@ -18,34 +18,50 @@ class AnalysisController extends Controller
 
     public function process(Request $request)
     {
-        if (!$request->has('refresh')) {
-            
-            return response()->json(NetworkAnalysisResult::all());
-        }
-    
-       
+        // Clear existing results
         NetworkAnalysisResult::truncate();
-    
+
         $devices = Device::all();
         $results = [];
-    
+
+        if ($devices->isEmpty()) {
+            \Log::error('No devices found in the database.');
+            return response()->json(['error' => 'No devices found'], 404);
+        }
+
         foreach ($devices as $device) {
-            $model = DeviceModel::where('product_class', $device->_deviceId['_ProductClass'])->first();
-    
-            if (!$model) continue;
-    
+            $deviceData = json_decode(json_encode($device), true);
+
+            $productClass = data_get($deviceData, '_deviceId._ProductClass');
+
+            if (!$productClass) {
+                \Log::error('Device missing _ProductClass: ' . json_encode($deviceData));
+                continue;
+            }
+
+            $model = DeviceModel::where('product_class', $productClass)->first();
+
+            if (!$model) {
+                \Log::error('No model found for product class: ' . $productClass);
+                continue;
+            }
+
             $signalNodes = SignalNode::where('model_id', $model->id)->get();
-            $deviceData = is_array($device) ? $device : json_decode(json_encode($device), true);
-    
+
+            if ($signalNodes->isEmpty()) {
+                \Log::error('No signal nodes found for model ID: ' . $model->id);
+                continue;
+            }
+
             $entry = [
-                'device_id' => $device->_id,
+                'device_id' => $device->_id ?? null,
                 'model_name' => $model->model_name,
             ];
-    
+
             foreach ($signalNodes as $node) {
                 $value = data_get($deviceData, $node->node_path . '._value');
                 $paramKey = strtolower($node->param_name);
-    
+
                 if ($paramKey === 'cell_id') {
                     $entry['cell_id'] = self::normalizeCellId($value);
                 } elseif ($paramKey === 'rsrp') {
@@ -56,17 +72,18 @@ class AnalysisController extends Controller
                     $entry[$paramKey] = $value;
                 }
             }
-    
+
             $results[] = $entry;
         }
-    
+
+        // Aggregate signal data per cell_id
         $aggregatedResults = [];
-    
+
         foreach ($results as $result) {
             if (!isset($result['cell_id'])) continue;
-    
+
             $cellId = $result['cell_id'];
-    
+
             if (!isset($aggregatedResults[$cellId])) {
                 $aggregatedResults[$cellId] = [
                     'device_count' => 0,
@@ -76,26 +93,32 @@ class AnalysisController extends Controller
                     'rssi_count' => 0,
                 ];
             }
-    
+
             $aggregatedResults[$cellId]['device_count']++;
-    
+
             if (isset($result['rsrp'])) {
                 $aggregatedResults[$cellId]['total_rsrp'] += $result['rsrp'];
                 $aggregatedResults[$cellId]['rsrp_count']++;
             }
-    
+
             if (isset($result['rssi'])) {
                 $aggregatedResults[$cellId]['total_rssi'] += $result['rssi'];
                 $aggregatedResults[$cellId]['rssi_count']++;
             }
         }
-    
+
+        // Save aggregated results
         $finalResults = [];
-    
+
         foreach ($aggregatedResults as $cellId => $data) {
             $avg_rsrp = $data['rsrp_count'] > 0 ? $data['total_rsrp'] / $data['rsrp_count'] : null;
             $avg_rssi = $data['rssi_count'] > 0 ? $data['total_rssi'] / $data['rssi_count'] : null;
-    
+
+            if (is_null($avg_rsrp) || is_null($avg_rssi)) {
+                \Log::info("Skipping cell ID $cellId due to missing average values.");
+                continue;
+            }
+            
             $finalResults[] = NetworkAnalysisResult::create([
                 'cell_id' => $cellId,
                 'device_count' => $data['device_count'],
@@ -103,9 +126,10 @@ class AnalysisController extends Controller
                 'avg_rssi' => $avg_rssi,
             ]);
         }
-    
+
         return response()->json(NetworkAnalysisResult::all());
     }
+
     
     private static function normalizeCellId($value)
     {
