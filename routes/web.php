@@ -24,9 +24,6 @@ use App\Http\Controllers\AnalysisController;
 use App\Http\Controllers\enduser\AuthController;
 use App\Http\Controllers\enduser\End_user_DeviceController;
 
-
-
-
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -43,8 +40,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/otp/resend', [OtpController::class, 'resend'])->name('otp.resend');
     Route::post('/otp/verify', [OtpController::class, 'verify'])->name('otp.validation');
 });
-
-
 
 Route::middleware(['auth', 'otp.verify'])->group(function () {
 
@@ -69,9 +64,8 @@ Route::middleware(['auth', 'otp.verify'])->group(function () {
     Route::get('/device/nodes/{model}', [DeviceController::class, 'getStandardNodes'])->name('neighbor.nodes');
     Route::post('/send-task', [TaskMailController::class, 'send'])->name('send.task');
 
-    Route::get('/device/{serialNumber}/diagnostics', [DeviceController::class, 'diagnostics'])->name('device.diagnostics');
-    Route::post('/generate-link', [End_user_DeviceController::class, 'generateLink'])
-    ->name('generate.link');
+    Route::get('/device/{serialNumber}/diagnostics', [DeviceController::class, 'diagnostics'])->name('device.diagnostics');   
+
 });
 
 Route::middleware(['auth', 'otp.verify','eng'])->group(function () {
@@ -199,25 +193,21 @@ Route::middleware(['auth', 'otp.verify','eng'])->group(function () {
     Route::post('/wifi/standard-nodes/store', [DeviceStandardNodeController::class, 'store'])->name('standard-nodes.store');
     Route::get('/wifi/standard-nodes/{serialNumber}', [DeviceStandardNodeController::class, 'getStandardNodes'])->name('standard-nodes.get');
 
-
+// This is the Routes for the network analysis
+// Signal Nodes to insert the Datamodel for the Cell ID, RSRP, and RSSI
     Route::get('/signal-node', [NetworkController::class, 'create'])->name('signal-nodes.create');
     Route::post('/signal-node/store', [NetworkController::class, 'storeMultiple'])->name('signal-nodes.storeMultiple');
-
     Route::get('/analysis', [AnalysisController::class, 'index'])->name('analysis.index');
     Route::get('/analysis/process', [AnalysisController::class, 'process'])->name('analysis.process');
-
-
-
-
+    
 });
 
-
-Route::get('/device/{url_Id}', [End_user_DeviceController::class, 'show'])->name('device.show');
+Route::get('/device/{url_Id}', [End_user_DeviceController::class, 'show'])->name('device.show');Route::post('/node/update', [End_user_DeviceController::class, 'updateNodes'])->name('node.update');
+Route::post('/generate-link', [End_user_DeviceController::class, 'generateLink'])->name('generate.link');
 Route::post('/node/update', [End_user_DeviceController::class, 'updateNodes'])->name('node.update');
 Route::get('/end-user-login/{token}', [AuthController::class, 'showLogin'])->name('end.user.login.show');
 Route::post('/end-user-login', [AuthController::class, 'login'])->name('end.user.login');
-Route::get('/end_session', [End_user_DeviceController::class, 'showEndSession'])
-     ->name('end.session');
+
 
 
 
