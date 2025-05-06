@@ -36,7 +36,7 @@ class FileController extends Controller
         // Log the action (viewing files)
         LogController::saveLog("software_files_managment", "User opened Software files managmanet page ");
 
-        return view('files.indexFiles', compact('files', 'models'));
+        return view('Files.indexFiles', compact('files', 'models'));
     }
 
     // Store a new file

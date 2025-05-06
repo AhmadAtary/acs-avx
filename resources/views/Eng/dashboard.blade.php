@@ -367,21 +367,6 @@
     chart.render();
   
 
-    let count = 0;
-    let target = {{ $devices_count }}; // Laravel variable
-    let duration = 1000; // Animation duration in milliseconds
-    let stepTime = Math.abs(Math.floor(duration / target));
-
-    function counterAnimation() {
-      let interval = setInterval(() => {
-        count++;
-        document.getElementById("deviceCounter").innerText = count;
-        if (count >= target) {
-          clearInterval(interval);
-        }
-      }, stepTime);
-    }
-
-    counterAnimation();
+    document.getElementById("deviceCounter").innerText = {{ $devices_count }};
     </script>
 @endsection

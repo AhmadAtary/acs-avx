@@ -1,9 +1,10 @@
 @extends('layouts.app')
+
 @section('title', 'Device Info')
 
 @section('content')
 <div class="container">
-    <!-- Header Section -->
+    <!-- Page Header -->
     <div class="row align-items-center mb-3">
         <div class="col-md-6">
             <h1>Device Info</h1>
@@ -26,12 +27,12 @@
                 </ul>
             </div>
             <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#deviceLogsModal" data-device-id="{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? '' }}">Check Device Logs</button>
-            <button id="checkWifiBtn" class="btn btn-secondary" style="display: none;">Check Nearby WiFi</button>
+            <button id="checkWifiBtn" class="btn btn-secondary" disabled>Check Nearby WiFi</button>
         </div>
     </div>
     <hr>
 
-    <!-- Device Info Section -->
+    <!-- Device Information -->
     <div class="row">
         <!-- Device Details -->
         <div class="col-md-4">
@@ -46,7 +47,7 @@
             </table>
         </div>
 
-        <!-- Signal Status (Conditional) -->
+        <!-- Signal Status -->
         @if(isset($signalStatus['4G']))
         <div class="col-md-4">
             <table class="table table-striped">
@@ -199,7 +200,7 @@
             <h4>Nearby WiFi Signals</h4>
             <table class="table">
                 <thead>
-                    <tr><th>SSID</th><th>Signal</th><th>Channel</th><th>BSSID</th><th>Mode</th></tr>
+                    <tr><th>SSID</th><th>Channel</th></tr>
                 </thead>
                 <tbody id="wifiTableBody"></tbody>
             </table>
@@ -230,7 +231,6 @@
                         </div>
                     </form>
                     <div id="diagnostics-loading" class="text-center" style="display: none;">
-                        <!-- <div class="spinner-border text-primary" role="status"></div> -->
                         <p>Running diagnostics, please wait...</p>
                     </div>
                     <div id="diagnostics-result" style="display: none;">
@@ -248,7 +248,7 @@
 
     <!-- Loading Overlay -->
     <div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 9998;">
-        <div class="spinner-border text-primary" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+        <div class="spinner-border text-primary" style="position: absolute; top: 50%; left: 50%;"></div>
     </div>
 
     <!-- Popup Notification -->
@@ -257,621 +257,30 @@
     </div>
 </div>
 @endsection
-
+<!-- Load CSS and JavaScript -->
 @section('styles')
-<style>
-    .card-img-top {
-        width: 100%;
-        height: 200px;
-        object-fit: contain;
-        object-position: top;
-    }
-    .signal-indicator {
-        display: inline-block;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        margin-left: 10px;
-    }
-    .strong { background-color: green; }
-    .medium { background-color: orange; }
-    .weak { background-color: red; }
-    .unknown { background-color: gray; }
-    .node-content {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .node-name, .node-value {
-        font-family: monospace;
-        font-size: 14px;
-    }
-    .node-name { font-weight: bold; flex-grow: 1; }
-    .expand-icon {
-        cursor: pointer;
-        margin-right: 10px;
-        font-size: 12px;
-    }
-    ul {
-        list-style: none;
-        padding-left: 20px;
-    }
-    ul.collapsed { display: none; }
-    ul.expanded { display: block; }
-    .actions button {
-        margin-left: 10px;
-        padding: 3px 8px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-    .actions .get { background-color: #007bff; color: white; }
-    .actions .set { background-color: #28a745; color: white; }
-    .highlight {
-        background-color: yellow;
-        padding: 2px 4px;
-        border-radius: 3px;
-    }
-    #simplePopup {
-        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    #simplePopup.show {
-        opacity: 1;
-        transform: translateY(0);
-    }
-</style>
+    <link rel="stylesheet" href="{{ asset('css/eng/device-info.css') }}" onload="console.log('CSS loaded successfully')" onerror="console.error('Failed to load CSS')">
 @endsection
 
 @section('scripts')
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const serialNumber = "{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? 'Unknown' }}";
-    const csrfToken = "{{ csrf_token() }}";
-
-    // Utility Functions
-    const utils = {
-        loadingCount: 0,
-        loadingTimeout: null,
-        MIN_LOADING_TIME: 300, // Minimum time to show loading overlay (ms)
-        DEBOUNCE_TIME: 100, // Delay before showing loading overlay (ms)
-
-        showLoading: () => {
-            if (utils.loadingCount === 0) {
-                utils.loadingTimeout = setTimeout(() => {
-                    const overlay = document.getElementById('loadingOverlay');
-                    if (overlay) {
-                        overlay.style.display = 'block';
-                    }
-                }, utils.DEBOUNCE_TIME);
+    <!-- Ensure jQuery is loaded -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" onload="console.log('jQuery loaded successfully')" onerror="console.error('Failed to load jQuery')"></script>
+    <script src="{{ asset('js/eng/device-info.js') }}" onload="console.log('JS loaded successfully')" onerror="console.error('Failed to load JS')"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof DeviceInfoModule === 'undefined') {
+                console.error('DeviceInfoModule is not defined. Check if device-info.js is loaded correctly.');
+                return;
             }
-            utils.loadingCount++;
-        },
-
-        hideLoading: () => {
-            utils.loadingCount = Math.max(0, utils.loadingCount - 1);
-            if (utils.loadingCount === 0) {
-                clearTimeout(utils.loadingTimeout);
-                setTimeout(() => {
-                    const overlay = document.getElementById('loadingOverlay');
-                    if (overlay) {
-                        overlay.style.display = 'none';
-                    }
-                }, utils.MIN_LOADING_TIME);
-            }
-        },
-
-        showPopup: (message) => {
-            const popup = document.getElementById('simplePopup');
-            const popupMessage = document.getElementById('popupMessage');
-            if (popup && popupMessage) {
-                popupMessage.textContent = message;
-                popup.style.display = 'block';
-                popup.classList.add('show');
-                setTimeout(() => {
-                    popup.classList.remove('show');
-                    setTimeout(() => popup.style.display = 'none', 300);
-                }, 3000);
-            }
-        },
-
-        fetchData: async (url, options = {}) => {
-            utils.showLoading();
-            const startTime = Date.now();
             try {
-                const response = await fetch(url, {
-                    headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', ...options.headers },
-                    ...options
+                DeviceInfoModule.init({
+                    serialNumber: "{{ $deviceData['_deviceId']['children']['_SerialNumber']['value'] ?? 'Unknown' }}",
+                    csrfToken: "{{ csrf_token() }}"
                 });
-                if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-                return await response.json();
+                console.log('DeviceInfoModule initialized successfully');
             } catch (error) {
-                console.error(`Fetch error: ${error}`);
-                utils.showPopup(`Error: ${error.message}`);
-                throw error;
-            } finally {
-                // Ensure minimum loading time
-                const elapsed = Date.now() - startTime;
-                if (elapsed < utils.MIN_LOADING_TIME) {
-                    await new Promise(resolve => setTimeout(resolve, utils.MIN_LOADING_TIME - elapsed));
-                }
-                utils.hideLoading();
+                console.error('Failed to initialize DeviceInfoModule:', error);
             }
-        },
-
-        updateFieldValue: (path, value) => {
-            const element = document.getElementById(path);
-            if (element) {
-                element.textContent = value;
-                return;
-            }
-            const observer = new MutationObserver((_, obs) => {
-                const el = document.getElementById(path);
-                if (el) {
-                    el.textContent = value;
-                    obs.disconnect();
-                }
-            });
-            observer.observe(document.body, { childList: true, subtree: true });
-        }
-    };
-
-    // Tree View and Search
-    const treeView = {
-        init: () => {
-            document.querySelectorAll(".expand-icon").forEach(toggle => {
-                // Remove existing listeners to prevent duplicates
-                toggle.removeEventListener('click', toggle.clickHandler);
-                toggle.clickHandler = function() {
-                    const parentLi = this.closest("li");
-                    const childUl = parentLi.querySelector("ul");
-                    if (childUl) {
-                        childUl.classList.toggle("collapsed");
-                        childUl.classList.toggle("expanded");
-                        this.textContent = childUl.classList.contains("expanded") ? "▼" : "▶";
-                    }
-                };
-                toggle.addEventListener("click", toggle.clickHandler);
-            });
-        },
-
-        search: () => {
-            const searchBar = document.getElementById("search-bar");
-            const clearButton = document.getElementById("clear-search");
-            const treeItems = document.querySelectorAll(".node-content");
-
-            if (!searchBar || !clearButton) {
-                console.warn("Search bar or clear button not found.");
-                return;
-            }
-
-            searchBar.removeEventListener('input', searchBar.inputHandler);
-            searchBar.inputHandler = function () {
-                const query = searchBar.value.trim().toLowerCase();
-                treeView.resetTree();
-                if (!query) return;
-
-                let found = false;
-                treeItems.forEach(item => {
-                    const valueElement = item.querySelector(".node-value");
-                    const nameElement = item.querySelector(".node-name");
-                    const nodePath = valueElement?.id?.toLowerCase() || "";
-                    const nodeName = nameElement?.textContent?.toLowerCase() || "";
-                    const nodeValue = valueElement?.textContent?.toLowerCase() || "";
-
-                    if (nodePath.includes(query) || nodeName.includes(query) || nodeValue.includes(query)) {
-                        found = true;
-                        treeView.highlightMatches(item, query, nodePath, nodeName, nodeValue);
-                        treeView.expandParentNodes(item);
-                    }
-                });
-
-                if (!found) {
-                    console.log("No matching nodes found.");
-                }
-            };
-            searchBar.addEventListener("input", searchBar.inputHandler);
-
-            clearButton.removeEventListener('click', clearButton.clickHandler);
-            clearButton.clickHandler = function () {
-                searchBar.value = "";
-                treeView.resetTree();
-            };
-            clearButton.addEventListener("click", clearButton.clickHandler);
-        },
-
-        highlightMatches: (item, query, path, name, value) => {
-            const valueElement = item.querySelector(".node-value");
-            const nameElement = item.querySelector(".node-name");
-            if (path.includes(query)) valueElement?.classList.add("highlight");
-            else if (name.includes(query)) nameElement?.classList.add("highlight");
-            else if (value.includes(query)) valueElement?.classList.add("highlight");
-        },
-
-        expandParentNodes: (item) => {
-            let parent = item.closest("ul");
-            while (parent) {
-                parent.classList.remove("collapsed");
-                parent = parent.parentElement.closest("ul");
-            }
-        },
-
-        resetTree: () => {
-            document.querySelectorAll(".highlight").forEach(el => el.classList.remove("highlight"));
-            document.querySelectorAll("ul").forEach(ul => ul.classList.add("collapsed"));
-        }
-    };
-
-    // Device Actions
-    const deviceActions = {
-        getNode: async (button) => {
-            const { path, type } = button.dataset;
-            try {
-                const data = await utils.fetchData('/device-action/get-Node', {
-                    method: 'POST',
-                    body: JSON.stringify({ serialNumber, path, type })
-                });
-                if (data.status_code === 200) {
-                    utils.updateFieldValue(path, data.value);
-                    utils.showPopup('Value fetched successfully.');
-                } else if (data.status_code === 202) {
-                    utils.showPopup('Fetch value saved as task.');
-                } else {
-                    utils.showPopup('Fetch failed.');
-                }
-            } catch {
-                utils.showPopup('Error fetching value.');
-            }
-        },
-
-        setNode: async (button) => {
-            const { path, type, value: currentValue } = button.dataset;
-            const modal = $('#setValueModal');
-            modal.modal('show');
-            document.getElementById('currentValue').value = currentValue || '';
-            document.getElementById('newValue').value = '';
-            document.getElementById('saveValueButton').setAttribute('data-path', path);
-            document.getElementById('saveValueButton').setAttribute('data-type', type);
-        },
-
-        saveNodeValue: async () => {
-            const newValue = document.getElementById('newValue').value;
-            const path = document.getElementById('saveValueButton').dataset.path;
-            const type = document.getElementById('saveValueButton').dataset.type;
-
-            if (!newValue) {
-                utils.showPopup('Please enter a new value.');
-                return;
-            }
-
-            try {
-                const data = await utils.fetchData('/device-action/set-Node', {
-                    method: 'POST',
-                    body: JSON.stringify({ serialNumber, path, type, value: newValue })
-                });
-                if (data.status_code === 200) {
-                    utils.updateFieldValue(path, newValue);
-                    utils.showPopup(`Value set successfully. (Status Code: ${data.status_code})`);
-                } else if (data.status_code === 202) {
-                    utils.showPopup(`Set value saved as task. (Status Code: ${data.status_code})`);
-                } else {
-                    utils.showPopup(`Failed to set value. (Status Code: ${data.status_code})`);
-                }
-            } catch {
-                utils.showPopup('Error setting value.');
-            } finally {
-                $('#setValueModal').modal('hide');
-            }
-        },
-
-        executeCommand: async (action, serialNumber) => {
-            try {
-                const data = await utils.fetchData(`/device-action/${action}`, {
-                    method: 'POST',
-                    body: JSON.stringify({ serialNumber })
-                });
-                utils.showPopup(data.success ? `Device ${action} request accepted.` : `${action} failed: ${data.message}`);
-            } catch {
-                utils.showPopup(`${action} error occurred.`);
-            }
-        }
-    };
-
-    // Device Logs
-    const deviceLogs = {
-        init: () => {
-            const modal = document.getElementById('deviceLogsModal');
-            modal.removeEventListener('show.bs.modal', modal.showHandler);
-            modal.showHandler = async (event) => {
-                const deviceId = event.relatedTarget.dataset.deviceId;
-                if (!deviceId) {
-                    document.getElementById('deviceLogsTableBody').innerHTML = '<tr><td colspan="4" class="text-center text-warning">Device ID not found.</td></tr>';
-                    return;
-                }
-                await deviceLogs.fetch(deviceId);
-            };
-            modal.addEventListener('show.bs.modal', modal.showHandler);
-        },
-
-        fetch: async (deviceId, page = 1) => {
-            const tableBody = document.getElementById('deviceLogsTableBody');
-            tableBody.innerHTML = '<tr><td colspan="4" class="text-center">Loading...</td></tr>';
-
-            try {
-                const data = await utils.fetchData(`/device-logs/${deviceId}?page=${page}`);
-                if (!data.logs || data.logs.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No logs available.</td></tr>';
-                    return;
-                }
-                tableBody.innerHTML = data.logs.map(log => `
-                    <tr>
-                        <td>${log.username || 'Unknown'}</td>
-                        <td>${log.action || 'N/A'}</td>
-                        <td>${log.response || 'N/A'}</td>
-                        <td>${log.created_at ? new Date(log.created_at).toLocaleString() : 'N/A'}</td>
-                    </tr>
-                `).join('');
-            } catch {
-                tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Failed to load logs.</td></tr>';
-            }
-        }
-    };
-
-    // Heatmap
-    const heatmap = {
-        init: async () => {
-            const heatmapRow = document.getElementById('HeatmapRow');
-            const heatmapContainer = document.getElementById('heatmap');
-            const MAX_DISPLAY_RADIUS = 180;
-            const MIN_DISTANCE = 30;
-
-            try {
-                const { data: devices } = await utils.fetchData(`/device/hosts/${serialNumber}`);
-                if (!devices || devices.length === 0) {
-                    heatmapRow.style.display = 'none';
-                    return;
-                }
-
-                heatmapRow.style.display = 'flex';
-                heatmap.createCircles(heatmapContainer);
-
-                const totalDevices = devices.length;
-                devices.forEach((device, index) => {
-                    const angle = (index / totalDevices) * Math.PI * 2;
-                    const signal = device.signalStrength || 0;
-                    const distance = heatmap.getDistance(signal);
-                    heatmap.createNode(device, angle, distance, heatmapContainer);
-                    heatmap.addToTable(device);
-                });
-
-                heatmap.ensureTooltip();
-            } catch {
-                heatmapRow.style.display = 'none';
-            }
-        },
-
-        getDistance: (signal) => {
-            if (signal == null || signal === 0) return 30;
-            if (signal >= -20) return 60;
-            if (signal >= -40) return 90;
-            if (signal >= -60) return 120;
-            if (signal >= -80) return 150;
-            return 180;
-        },
-
-        createCircles: (container) => {
-            [30, 60, 90, 120, 150, 180].forEach(radius => {
-                const circle = document.createElement('div');
-                circle.className = 'radar-circle';
-                circle.style.cssText = `width: ${radius * 2}px; height: ${radius * 2}px; left: ${250 - radius}px; top: ${250 - radius}px;`;
-                container.appendChild(circle);
-            });
-        },
-
-        createNode: (device, angle, distance, container) => {
-            const node = document.createElement('div');
-            node.className = 'device-node';
-            const signal = device.signalStrength || 0;
-            node.setAttribute('data-signal', signal === 0 ? 'unknown' : signal >= -30 ? 'strong' : signal >= -70 ? 'medium' : 'weak');
-            node.style.cssText = `left: ${250 + Math.cos(angle) * distance - 15}px; top: ${250 + Math.sin(angle) * distance - 15}px; z-index: 10;`;
-            node.innerHTML = '<i class="fa-solid fa-user"></i>';
-            node.addEventListener('mouseenter', (e) => heatmap.showTooltip(e, device));
-            node.addEventListener('mouseleave', heatmap.hideTooltip);
-            container.appendChild(node);
-        },
-
-        addToTable: (device) => {
-            const row = document.createElement('tr');
-            const signalClass = device.signalStrength ? (device.signalStrength < -70 ? 'weak-signal' : 'good-signal') : '';
-            row.innerHTML = `
-                <td>${device.hostName || 'Unknown Device'}</td>
-                <td class="${signalClass}">${device.signalStrength ? `${device.signalStrength} dBm` : 'N/A'}</td>
-            `;
-            document.getElementById('deviceTableBody').appendChild(row);
-        },
-
-        ensureTooltip: () => {
-            let tooltip = document.getElementById('tooltip');
-            if (!tooltip) {
-                tooltip = document.createElement('div');
-                tooltip.id = 'tooltip';
-                tooltip.className = 'tooltip';
-                document.body.appendChild(tooltip);
-            }
-            tooltip.style.cssText = `
-                position: fixed; padding: 10px; background: rgba(0, 0, 0, 0.85); color: white; border-radius: 4px;
-                font-size: 12px; pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 9999;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); max-width: 200px; word-wrap: break-word;
-            `;
-        },
-
-        showTooltip: (event, device) => {
-            const tooltip = document.getElementById('tooltip');
-            tooltip.innerHTML = `
-                <strong>${device.hostName || 'Unknown'}</strong><br>
-                IP: ${device.ipAddress || 'N/A'}<br>
-                MAC: ${device.macAddress || 'N/A'}<br>
-                ${device.signalStrength ? `RSSI: ${device.signalStrength} dBm` : 'RSSI: N/A'}
-            `;
-            tooltip.style.left = `${event.clientX + 15}px`;
-            tooltip.style.top = `${event.clientY - 15}px`;
-            tooltip.style.opacity = '1';
-        },
-
-        hideTooltip: () => document.getElementById('tooltip').style.opacity = '0'
-    };
-
-    // WiFi Signals
-    const wifiSignals = {
-        init: async () => {
-            const checkWifiBtn = document.getElementById('checkWifiBtn');
-            try {
-                const wifiList = await utils.fetchData(`/wifi/standard-nodes/${serialNumber}`);
-                checkWifiBtn.style.display = wifiList.length > 0 ? 'inline-block' : 'none';
-
-                checkWifiBtn.removeEventListener('click', checkWifiBtn.clickHandler);
-                checkWifiBtn.clickHandler = () => wifiSignals.fetch();
-                checkWifiBtn.addEventListener('click', checkWifiBtn.clickHandler);
-            } catch {
-                checkWifiBtn.style.display = 'none';
-            }
-        },
-
-        fetch: async () => {
-            const modal = document.getElementById('wifiModal');
-            const tableBody = document.getElementById('wifiTableBody');
-            const recommendation = document.getElementById('recommendation');
-
-            try {
-                const wifiList = await utils.fetchData(`/wifi/standard-nodes/${serialNumber}`);
-                tableBody.innerHTML = wifiList.map(wifi => `
-                    <tr>
-                        <td>${wifi.SSID}</td>
-                        <td>${wifi.Signal}</td>
-                        <td>${wifi.Channel}</td>
-                        <td>${wifi.BSSID}</td>
-                        <td>${wifi.Mode}</td>
-                    </tr>
-                `).join('');
-
-                if (wifiList.length > 0 && wifiList.some(w => w.Channel <= 14)) {
-                    const interferenceScore = Array(12).fill(0);
-                    wifiList.forEach(w => {
-                        const ch = Number(w.Channel);
-                        const signal = Number(w.Signal);
-                        if (ch >= 1 && ch <= 11) {
-                            for (let offset = -2; offset <= 2; offset++) {
-                                const target = ch + offset;
-                                if (target >= 1 && target <= 11) {
-                                    interferenceScore[target] += (1 / (Math.abs(offset) + 1)) * Math.abs(signal);
-                                }
-                            }
-                        }
-                    });
-                    const bestChannel = interferenceScore
-                        .map((score, i) => ({ channel: i, score }))
-                        .filter(c => c.channel >= 1 && c.channel <= 11)
-                        .sort((a, b) => a.score - b.score)[0];
-                    recommendation.textContent = `📶 Best 2.4GHz Channel: ${bestChannel.channel} (Score: ${bestChannel.score.toFixed(2)})`;
-                } else {
-                    recommendation.textContent = wifiList.length > 0 ? 'No 2.4GHz channels detected.' : 'No WiFi networks detected.';
-                }
-
-                modal.style.display = 'block';
-            } catch {
-                tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Failed to load WiFi signals.</td></tr>';
-            }
-        },
-
-        setupModal: () => {
-            const modal = document.getElementById('wifiModal');
-            const closeButton = document.querySelector('.modal .close');
-            closeButton.removeEventListener('click', closeButton.clickHandler);
-            closeButton.clickHandler = () => modal.style.display = 'none';
-            closeButton.addEventListener('click', closeButton.clickHandler);
-
-            window.removeEventListener('click', window.clickHandler);
-            window.clickHandler = e => e.target === modal && (modal.style.display = 'none');
-            window.addEventListener('click', window.clickHandler);
-        }
-    };
-
-    // Diagnostics
-    const diagnostics = {
-        init: () => {
-            let selectedSerial = null;
-            document.querySelectorAll('.diagnostics-button').forEach(btn => {
-                btn.removeEventListener('click', btn.clickHandler);
-                btn.clickHandler = () => {
-                    selectedSerial = btn.dataset.serialNumber;
-                    document.getElementById('diagnostics-result').style.display = 'none';
-                    document.getElementById('diagnostics-loading').style.display = 'none';
-                    document.getElementById('diagnostics-form').reset();
-                };
-                btn.addEventListener('click', btn.clickHandler);
-            });
-
-            const runBtn = document.getElementById('run-diagnostics-btn');
-            runBtn.removeEventListener('click', runBtn.clickHandler);
-            runBtn.clickHandler = async () => {
-                const host = document.getElementById('diagnostics-host').value;
-                const method = document.getElementById('diagnostics-method').value;
-                if (!host || !method || !selectedSerial) {
-                    utils.showPopup('Please fill in all fields.');
-                    return;
-                }
-
-                document.getElementById('diagnostics-loading').style.display = 'block';
-                document.getElementById('diagnostics-result').style.display = 'none';
-
-                try {
-                    const data = await utils.fetchData(`/device/${selectedSerial}/diagnostics?host=${encodeURIComponent(host)}&method=${method}`);
-                    document.getElementById('diagnostics-loading').style.display = 'none';
-                    document.getElementById('diagnostics-result').style.display = 'block';
-                    document.getElementById('diagnostics-data').textContent = JSON.stringify(data, null, 2);
-                } catch {
-                    document.getElementById('diagnostics-loading').style.display = 'none';
-                    document.getElementById('diagnostics-result').style.display = 'block';
-                    document.getElementById('diagnostics-data').textContent = 'Diagnostics failed.';
-                }
-            };
-            runBtn.addEventListener('click', runBtn.clickHandler);
-        }
-    };
-
-    // Initialize Components
-    treeView.init();
-    treeView.search();
-    deviceLogs.init();
-    heatmap.init();
-    wifiSignals.init();
-    wifiSignals.setupModal();
-    diagnostics.init();
-
-    // Event Listeners
-    document.querySelectorAll('.get-button').forEach(btn => {
-        btn.removeEventListener('click', btn.clickHandler);
-        btn.clickHandler = () => deviceActions.getNode(btn);
-        btn.addEventListener('click', btn.clickHandler);
-    });
-
-    document.querySelectorAll('.set-button').forEach(btn => {
-        btn.removeEventListener('click', btn.clickHandler);
-        btn.clickHandler = () => deviceActions.setNode(btn);
-        btn.addEventListener('click', btn.clickHandler);
-    });
-
-    const saveValueButton = document.getElementById('saveValueButton');
-    saveValueButton.removeEventListener('click', saveValueButton.clickHandler);
-    saveValueButton.clickHandler = deviceActions.saveNodeValue;
-    saveValueButton.addEventListener('click', saveValueButton.clickHandler);
-
-    document.querySelectorAll('.reboot-device, .reset-device').forEach(btn => {
-        btn.removeEventListener('click', btn.clickHandler);
-        btn.clickHandler = () => deviceActions.executeCommand(btn.classList.contains('reboot-device') ? 'reboot' : 'reset', btn.dataset.serialNumber);
-        btn.addEventListener('click', btn.clickHandler);
-    });
-});
-</script>
+        });
+    </script>
 @endsection

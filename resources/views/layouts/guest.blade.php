@@ -10,8 +10,8 @@
     <link rel="icon" href="{{ asset('assets/AVXAV Logos/Mini icon.ico') }}" type="image/png">
 
     <!-- Loader -->
-    <link href="{{ asset('assets/css/pace.min.css') }}" rel="stylesheet">
-    <script src="{{ asset('assets/js/pace.min.js') }}"></script>
+    <link href="{{ asset('css/pace.min.css') }}" rel="stylesheet">
+    <script src="{{ asset('js/pace.min.js') }}"></script>
 
     <!-- Plugins -->
     <link href="{{ asset('assets/plugins/perfect-scrollbar/css/perfect-scrollbar.css') }}" rel="stylesheet">
@@ -19,12 +19,12 @@
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/plugins/metismenu/mm-vertical.css') }}">
 
     <!-- Bootstrap CSS -->
-    <link href="{{ asset('assets/css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Material+Icons+Outlined" rel="stylesheet">
 
     <!-- Main CSS -->
-    <link href="{{ asset('assets/css/bootstrap-extended.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/bootstrap-extended.css') }}" rel="stylesheet">
     <link href="{{ asset('sass/main.css') }}" rel="stylesheet">
     <link href="{{ asset('sass/dark-theme.css') }}" rel="stylesheet">
     <link href="{{ asset('sass/blue-theme.css') }}" rel="stylesheet">
@@ -36,8 +36,8 @@
     @yield('content')
 
     <!-- Plugins -->
-    <script src="{{ asset('assets/js/jquery.min.js') }}"></script>
-    <script src="{{ asset('assets/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ asset('js/jquery.min.js') }}"></script>
+    <script src="{{ asset('js/bootstrap.bundle.min.js') }}"></script>
 
     <script>
         $(document).ready(function () {

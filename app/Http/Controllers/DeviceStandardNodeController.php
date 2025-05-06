@@ -33,10 +33,8 @@ class DeviceStandardNodeController extends Controller
         $wifiSignals = [];
     
         foreach ($paths as $path) {
-            // Only focus on paths with NeighborAP.{i}
-            if (!str_contains($path, 'NeighborAP')) continue;
+            if (!str_contains($path, 'Result')) continue;
     
-            // Strip trailing parameter to get base path: e.g., InternetGatewayDevice.SystemConfig.WiFi.NeighborAP
             $segments = explode('.', $path);
             $basePath = [];
     
@@ -54,16 +52,15 @@ class DeviceStandardNodeController extends Controller
                 if (!is_array($ap)) continue;
     
                 $wifiSignals[] = [
-                    'SSID' => $ap['SSID']['_value'] ?? 'N/A',
-                    'Signal' => $ap['Signal']['_value'] ?? 'N/A',
+                    'SSID'    => $ap['SSID']['_value'] ?? 'N/A',
+                    'Signal'  => $ap['Signal']['_value'] ?? 'N/A',
                     'Channel' => $ap['Channel']['_value'] ?? 'N/A',
-                    'BSSID' => $ap['BSSID']['_value'] ?? 'N/A',
-                    'Mode' => $ap['Mode']['_value'] ?? 'N/A',
+                    'BSSID'   => $ap['BSSID']['_value'] ?? 'N/A',
+                    'Mode'    => $ap['Mode']['_value'] ?? 'N/A',
                 ];
             }
     
-            // Only run once since all info usually in one place
-            break;
+            break; // We assume data is only in one relevant section
         }
     
         return response()->json($wifiSignals);

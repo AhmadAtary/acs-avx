@@ -48,7 +48,7 @@ Route::middleware(['auth', 'otp.verify'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::post('/profile/update', [ProfileController::class, 'update'])->name('profile.update');
 
-    Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
+    Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
     Route::get('/Customer-serves/device', [CustomerSupportController::class, 'show'])->middleware(['auth', 'verified'])->name('customer.device');
 
@@ -207,6 +207,7 @@ Route::post('/generate-link', [End_user_DeviceController::class, 'generateLink']
 Route::post('/node/update', [End_user_DeviceController::class, 'updateNodes'])->name('node.update');
 Route::get('/end-user-login/{token}', [AuthController::class, 'showLogin'])->name('end.user.login.show');
 Route::post('/end-user-login', [AuthController::class, 'login'])->name('end.user.login');
+Route::get('/end-session', [AuthController::class, 'endSession'])->name('end.session');
 
 
 

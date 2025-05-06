@@ -10,22 +10,22 @@
   <link rel="icon" href="{{ asset('assets/AVXAV Logos/Mini icon.ico') }}" type="image/png">
 
   <!-- loader-->
-  <link href="{{ asset('assets/css/pace.min.css') }}" rel="stylesheet">
-  <script src="{{ asset('assets/js/pace.min.js') }}"></script>
+  <link href="{{ asset('css/pace.min.css') }}" rel="stylesheet">
+  <script src="{{ asset('js/pace.min.js') }}"></script>
   <meta name="csrf-token" content="{{ csrf_token() }}">
 
   <!-- plugins -->
   <link href="{{ asset('assets/plugins/perfect-scrollbar/css/perfect-scrollbar.css') }}" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="{{ asset('assets/plugins/metismenu/metisMenu.min.css') }}">
   <link rel="stylesheet" type="text/css" href="{{ asset('assets/plugins/simplebar/css/simplebar.css') }}">
-  <link rel="stylesheet" href="{{ asset('assets/css/extra-icons.css')}}">
-  <link href="{{ asset('assets/css/bootstrap.min.css') }}" rel="stylesheet">
+  <link rel="stylesheet" href="{{ asset('css/extra-icons.css')}}">
+  <link href="{{ asset('css/bootstrap.min.css') }}" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css?family=Material+Icons+Outlined" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
   <!-- main css -->
-  <link href="{{ asset('assets/css/bootstrap-extended.css') }}" rel="stylesheet">
+  <link href="{{ asset('css/bootstrap-extended.css') }}" rel="stylesheet">
   <link href="{{ asset('sass/main.css') }}" rel="stylesheet">
   <link href="{{ asset('sass/dark-theme.css') }}" rel="stylesheet">
   <link href="{{ asset('sass/blue-theme.css') }}" rel="stylesheet">
@@ -102,8 +102,8 @@
   <!-- End Footer -->
 
   <!-- Scripts -->
-  <script src="{{ asset('assets/js/bootstrap.bundle.min.js') }}"></script>
-  <script src="{{ asset('assets/js/jquery.min.js') }}"></script>
+  <script src="{{ asset('js/bootstrap.bundle.min.js') }}"></script>
+  <script src="{{ asset('js/jquery.min.js') }}"></script>
   <script src="{{ asset('assets/plugins/perfect-scrollbar/js/perfect-scrollbar.js') }}"></script>
   <script src="{{ asset('assets/plugins/metismenu/metisMenu.min.js') }}"></script>
   <script src="{{ asset('assets/plugins/apexchart/apexcharts.min.js') }}"></script>

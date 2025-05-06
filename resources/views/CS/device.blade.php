@@ -409,7 +409,7 @@
 
    <!-- Loading Overlay -->
    <div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 9998;">
-        <div class="spinner-border text-primary" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"></div>
+        <div class="spinner-border text-primary" style="position: absolute; top: 50%; left: 50%;"></div>
     </div>
 
     <!-- Popup Notification -->
@@ -420,10 +420,10 @@
 @endsection
 
 @section('styles')
-<link rel="stylesheet" href="{{ asset('assets/css/cs/device-info.css') }}">
+<link rel="stylesheet" href="{{ asset('css/cs/device-info.css') }}">
 @endsection
 
 @section('scripts')
-<script src="{{ asset('assets/js/cs/device-info.js') }}"></script>
+<script src="{{ asset('js/cs/device-info.js') }}"></script>
 @endsection
 

@@ -46,7 +46,6 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%);
             z-index: 9999;
         }
     </style>
@@ -79,53 +78,6 @@
                 <!-- Empty for now -->
             </div>
         </div>
-
-
-
-
-        <script>
-const COUNTDOWN_DURATION = 10 * 60 * 1000;
-const LOGIN_URL = "{{ route('end.session') }}";
-
-function formatTime(ms) {
-    const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
-    const seconds = String(totalSeconds % 60).padStart(2, '0');
-    return `${minutes}:${seconds}`;
-}
-
-function startTimer() {
-    const display = document.getElementById("sessionTimer");
-    let endTime = localStorage.getItem("sessionEndTime");
-
-    if (!endTime) {
-        endTime = Date.now() + COUNTDOWN_DURATION;
-        localStorage.setItem("sessionEndTime", endTime);
-    } else {
-        endTime = parseInt(endTime);
-    }
-
-    const timerInterval = setInterval(() => {
-        const remaining = endTime - Date.now();
-
-        if (remaining <= 0) {
-            clearInterval(timerInterval);
-            localStorage.removeItem("sessionEndTime");
-            // Force full page reload (bypass any AJAX/Single Page App behavior)
-            window.location.href = LOGIN_URL; // Or window.location.replace(LOGIN_URL)
-        } else {
-            if (display) display.textContent = formatTime(remaining);
-        }
-    }, 1000);
-}
-
-document.addEventListener('DOMContentLoaded', startTimer);
-        </script>
-
-
-
-
-
         <!-- Node Table -->
         <div class="row mt-4">
             <div class="col-12">
@@ -225,6 +177,44 @@ document.addEventListener('DOMContentLoaded', startTimer);
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+    const COUNTDOWN_DURATION = 10 * 60 * 1000;
+    const LOGIN_URL = "{{ route('end.session') }}";
+
+    function formatTime(ms) {
+        const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+        const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+        const seconds = String(totalSeconds % 60).padStart(2, '0');
+        return `${minutes}:${seconds}`;
+    }
+
+    function startTimer() {
+        const display = document.getElementById("sessionTimer");
+        let endTime = localStorage.getItem("sessionEndTime");
+
+        if (!endTime) {
+            endTime = Date.now() + COUNTDOWN_DURATION;
+            localStorage.setItem("sessionEndTime", endTime);
+        } else {
+            endTime = parseInt(endTime);
+        }
+
+        const timerInterval = setInterval(() => {
+            const remaining = endTime - Date.now();
+
+            if (remaining <= 0) {
+                clearInterval(timerInterval);
+                localStorage.removeItem("sessionEndTime");
+                // Force full page reload (bypass any AJAX/Single Page App behavior)
+                window.location.href = LOGIN_URL; // Or window.location.replace(LOGIN_URL)
+            } else {
+                if (display) display.textContent = formatTime(remaining);
+            }
+        }, 1000);
+    }
+
+    document.addEventListener('DOMContentLoaded', startTimer);
+    </script>
     <script>
         function showLoading() {
             document.getElementById('loadingOverlay').style.display = 'block';

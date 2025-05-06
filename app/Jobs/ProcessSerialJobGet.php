@@ -59,7 +59,7 @@ class ProcessSerialJobGet implements ShouldQueue
         ];
 
         $client = new Client();
-        $response = $client->post("https://172.18.0.1:7557/devices/{$urlId}/tasks?connection_request", [
+        $response = $client->post("https://10.106.45.1:7557/devices/{$urlId}/tasks?connection_request", [
             'json' => $json_body,
             'verify' => false, // Disable SSL verification
         ]);
