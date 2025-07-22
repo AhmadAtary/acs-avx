@@ -127,7 +127,18 @@
                         <td>${device._deviceId._OUI || "N/A"}</td>
                         <td>${device._deviceId._ProductClass || "N/A"}</td>
                         <td>${device.InternetGatewayDevice?.DeviceInfo?.SoftwareVersion?._value || "N/A"}</td>
-                        <td>${device.InternetGatewayDevice?.DeviceInfo?.UpTime?._value || "N/A"}</td>
+                        <td>
+                            ${(() => {
+                                const uptimeSeconds = device.InternetGatewayDevice?.DeviceInfo?.UpTime?._value || null;
+                                if (uptimeSeconds) {
+                                    const hours = Math.floor(uptimeSeconds / 3600);
+                                    const minutes = Math.floor((uptimeSeconds % 3600) / 60);
+                                    return `${hours}h ${minutes}m`;
+                                } else {
+                                    return "0h 1m";
+                                }
+                            })()}
+                        </td>
                         <td>${device._lastInform || "N/A"}</td>
                     `;
                 });

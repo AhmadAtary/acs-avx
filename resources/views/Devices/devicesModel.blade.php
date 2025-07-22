@@ -14,8 +14,10 @@
     .card-body {
         text-align: center; /* Centers the content inside the card */
     }
+    .chart-container {
+        height: 400px; /* Set a fixed height for the chart */
+    }
 </style>
-
 
 <div class="row row-cols-1 row-cols-lg-2 row-cols-xl-3">
     @if($devices_Models->isNotEmpty())

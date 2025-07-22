@@ -97,7 +97,7 @@
 
   <!-- Start Footer -->
   <footer class="page-footer">
-    <p class="mb-0">Copyright © 2025. All rights reserved.</p>
+    <p class="mb-0">Copyright © 2025. All rights reserved. | Version 0.4</p>
   </footer>
   <!-- End Footer -->
 

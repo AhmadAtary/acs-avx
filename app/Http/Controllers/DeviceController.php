@@ -11,6 +11,7 @@ use App\Models\File;
 use App\Http\Controllers\LogController; 
 use App\Http\Controllers\DeviceLogController;
 use App\Services\DiagnosticsService;
+use App\Models\DeviceSoftwareCount;
 
 
 class DeviceController extends Controller
@@ -214,6 +215,20 @@ class DeviceController extends Controller
         // Log: User accessed the Models page
         LogController::saveLog('model_page_access', "User opened the Models Page for Model: {$model}");
     
+        $deviceCountBySoftware = DeviceSoftwareCount::select('software', 'count')
+            ->where('model', $model)
+            ->get();
+        
+
+        LogController::saveLog('device_count_access', "User accessed device count for Model: {$model} with count: " . $deviceCountBySoftware->count());
+
+        $formattedSoftwareData = [
+            'labels' => $deviceCountBySoftware->pluck('software'),
+            'counts' => $deviceCountBySoftware->pluck('count')
+        ];
+        
+        // dd($formattedSoftwareData);  
+        
         // Fetch devices based on the model
         $devices = Device::select(
             '_deviceId._SerialNumber', 
@@ -221,12 +236,12 @@ class DeviceController extends Controller
             '_deviceId._OUI', 
             '_deviceId._ProductClass', 
             'InternetGatewayDevice.DeviceInfo.SoftwareVersion._value', 
-            'InternetGatewayDevice.DeviceInfo.UpTime._value', 
+            'InternetGatewayDevice.DeviceInfo.UpTime._value',
             '_lastInform'
         )->where('_deviceId._ProductClass', $model)->paginate(200);
     
         
-        return view('Devices.devicesModelIndex', compact('devices', 'model'));
+        return view('Devices.devicesModelIndex', compact('devices', 'model', 'formattedSoftwareData'));
     }
     
 
@@ -255,12 +270,12 @@ class DeviceController extends Controller
     
         // Perform the search with filtering by model and optional query
         $devices = Device::select(
-            '_deviceId._SerialNumber',
-            '_deviceId._Manufacturer',
-            '_deviceId._OUI',
-            '_deviceId._ProductClass',
-            'InternetGatewayDevice.DeviceInfo.SoftwareVersion._value as SoftwareVersion',
-            'InternetGatewayDevice.DeviceInfo.UpTime._value as UpTime',
+            '_deviceId._SerialNumber', 
+            '_deviceId._Manufacturer', 
+            '_deviceId._OUI', 
+            '_deviceId._ProductClass', 
+            'InternetGatewayDevice.DeviceInfo.SoftwareVersion._value', 
+            'InternetGatewayDevice.DeviceInfo.UpTime._value',
             '_lastInform'
         )
             ->where('_deviceId._ProductClass', $model) // Filter by the provided model
